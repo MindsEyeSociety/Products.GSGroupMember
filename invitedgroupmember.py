@@ -1,4 +1,5 @@
-from zope.interface.interface import Interface
+from zope.interface import implements, Interface
+from zope.component import createObject, adapts
 from zope.schema import *
 
 import sqlalchemy as sa
@@ -202,7 +203,7 @@ class TooManyInvitations(Exception):
 
 class GSInvitedGroupMember:
     implements(IGSInvitedGroupMember)
-    adapts(IGSCustomUser, IGSGroupInfo)
+    adapts(ICustomUser, IGSGroupInfo)
 
     MAX_INVITATIONS = 5
 
@@ -248,7 +249,7 @@ class GSInvitedGroupMember:
 
     def add_invitation(self, invitingUser, message=''):
         if len(self.invitations) >= self.MAX_INVITATIONS:
-            m = u'Not adding invitation for %s (%s) on %s (%s) to %s (%s) '
+            m = u'Not adding invitation for %s (%s) on %s (%s) to %s (%s) '\
               u'as there are too many invitations (%d) already.' %\
               (self.userInfo.name, self.userInfo.id, 
                self.siteInfo.name, self.siteInfo.id, 
@@ -274,7 +275,7 @@ class GSInvitedGroupMember:
            self.invitingUser.name, self.invitingUser.id)
         log.info(m)
         
-        assert self.hasInvitation, u'%s (%s) has no invitations' %
+        assert self.hasInvitation, u'%s (%s) has no invitations' %\
           (self.userInfo.name, self.userInfo.id)
         retval = u'%s has been invited to join %s' % \
           (self.userInfo.name, self.groupInfo.name)
@@ -283,7 +284,7 @@ class GSInvitedGroupMember:
 
     def accept_invitation(self):
         assert not(self.isMember), '%s (%s) is already a member of %s (%s)'%\
-          (self.userInfo.name, self.userInfo.id
+          (self.userInfo.name, self.userInfo.id,
            self.groupInfo.name, self.groupInfo.id)
            
         m = u'Accepting the invitation to the group %s (%s) for the user '\
@@ -297,10 +298,10 @@ class GSInvitedGroupMember:
         self.queries.accept_invitations()
         
         assert self.isMember, '%s (%s) is not a member of %s (%s)' %\
-          (self.userInfo.name, self.userInfo.id
+          (self.userInfo.name, self.userInfo.id,
            self.groupInfo.name, self.groupInfo.id)
         assert not(self.hasInvitation), '%s (%s) has invites to %s (%s)' %\
-          (self.userInfo.name, self.userInfo.id
+          (self.userInfo.name, self.userInfo.id,
            self.groupInfo.name, self.groupInfo.id)
         retval = u'Accepting invitations is not implemented'
         assert type(retval) == unicode
@@ -308,7 +309,7 @@ class GSInvitedGroupMember:
 
     def decline_invitation(self):
         assert not(self.isMember), '%s (%s) is already a member of %s (%s)'%\
-          (self.userInfo.name, self.userInfo.id
+          (self.userInfo.name, self.userInfo.id,
            self.groupInfo.name, self.groupInfo.id)
 
         self.queries.reject_invitations()
@@ -321,7 +322,7 @@ class GSInvitedGroupMember:
         self.remove_invitations()
 
         assert not(self.isMember), '%s (%s) is a member of %s (%s)'%\
-          (self.userInfo.name, self.userInfo.id
+          (self.userInfo.name, self.userInfo.id,
            self.groupInfo.name, self.groupInfo.id)
 
         retval = u'Declining invitations is not implemented'
