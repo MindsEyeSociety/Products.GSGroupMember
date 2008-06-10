@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<configure xmlns="http://namespaces.zope.org/zope"
+  xmlns:browser="http://namespaces.zope.org/browser"
+  xmlns:rdb="http://namespaces.zope.org/rdb"
+  xmlns:sqlos="http://namespaces.sqlobject.org/sqlos"
+  xmlns:five="http://namespaces.zope.org/five">
+
+  <!-- declare a marker interface on the Folder class to allow us 
+    to add marker Interfaces, views and adaptation -->
+  <five:implements 
+    class="OFS.Folder.Folder"
+    interface="zope.app.folder.interfaces.IFolder" />
+  <!-- make it known to Five -->
+  <five:traversable 
+    class="OFS.Folder.Folder" />
+  
+  <interface 
+    interface=".invitedgroupmember.IGSInvitedGroupMember" />
+
+</configure>
+
