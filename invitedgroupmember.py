@@ -155,15 +155,6 @@ class InvitationQuery(object):
               it.c.group_id == groupId))
         d.execute()
 
-    def alter_invitations(self, userId, siteId, groupId, values):
-        clause = sa.and_(it.c.userId == userID, 
-          it.c.siteId == siteId,
-          it.c.groupId == groupId)
-
-        it = self.invitationTable
-        u = it.update(clause, values=values)
-        u.execute()
-
     def accept_invitations(self, userId, siteId, groupId):
         assert userId
         assert siteId
@@ -187,6 +178,15 @@ class InvitationQuery(object):
           'accepted':       False,
         }
         self.alter_invitations(userId, siteId, groupId, values)
+
+    def alter_invitations(self, userId, siteId, groupId, values):
+        clause = sa.and_(it.c.userId == userID, 
+          it.c.siteId == siteId,
+          it.c.groupId == groupId)
+
+        it = self.invitationTable
+        u = it.update(clause, values=values)
+        u.execute()
         
 class TooManyInvitations(Exception):
     '''Too many invitation exists, so the user cannot be invited to
@@ -315,7 +315,7 @@ class GSInvitedGroupMember:
         self.queries.reject_invitations()
 
         m = u'Declined the invitation to the group %s (%s) on %s for the '\
-          u' user %s (%s). Invitation made by %s (%s)'%\
+          u'user %s (%s). Invitation made by %s (%s)'%\
           (self.groupInfo.name, self.groupInfo.id,
            self.userInfo.name, self.userInfo.id)
         log.info(m)
@@ -325,7 +325,7 @@ class GSInvitedGroupMember:
           (self.userInfo.name, self.userInfo.id,
            self.groupInfo.name, self.groupInfo.id)
 
-        retval = u'Declining invitations is not implemented'
+        retval = u'Invitation to join the group declined'
         assert type(retval) == unicode
         return retval
 

@@ -16,6 +16,9 @@
   
   <interface 
     interface=".invitedgroupmember.IGSInvitedGroupMember" />
+  <vocabulary 
+      name="SiteMemberNonGroupMember"
+      factory=".sitemembernongroupmember.SiteMembersNonGroupMembers"/>
 
 </configure>
 
