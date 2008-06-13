@@ -9,11 +9,14 @@ from zope.app.form.browser import MultiCheckBoxWidget, SelectWidget,\
   TextAreaWidget
 from zope.security.interfaces import Forbidden
 from zope.app.apidoc.interface import getFieldsInOrder
-from Products.XWFCore import XWFUtils
-from interfaceCoreProfile import *
-from Products.CustomUserFolder.interfaces import ICustomUser, IGSUserInfo
 
-class GSEditImageForm(PageForm):
+from Products.XWFCore import XWFUtils
+from Products.CustomUserFolder.interfaces import ICustomUser, IGSUserInfo
+from interfaces import IGSInviteSiteMembers
+
+from Products.GSProfile.edit_profile import multi_check_box_widget
+
+class GSInviteSiteMembers(PageForm):
     label = u'Invite Site Members'
     pageTemplateFileName = 'browser/templates/invitesitemembers.pt'
     template = ZopeTwoPageTemplateFile(pageTemplateFileName)
@@ -21,9 +24,15 @@ class GSEditImageForm(PageForm):
 
     def __init__(self, context, request):
         PageForm.__init__(self, context, request)
+        self.context = context
+        self.request = request
+        
         self.siteInfo = createObject('groupserver.SiteInfo', context)
         self.groupInfo= createObject('groupserver.GroupInfo', context)
         
+        self.form_fields['nonGroupMembers'].custom_widget = \
+          multi_check_box_widget
+
     # --=mpj17=--
     # The "form.action" decorator creates an action instance, with
     #   "handle_invite" set to the success handler,

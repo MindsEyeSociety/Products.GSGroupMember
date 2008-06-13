@@ -20,5 +20,11 @@
       name="SiteMemberNonGroupMember"
       factory=".sitemembernongroupmember.SiteMembersNonGroupMembers"/>
 
+  <browser:page 
+    for="Products.XWFChat.interfaces.IGSGroupFolder"
+    name="admin_invite_site_member.html"
+    class=".invitesitemembers.GSInviteSiteMembers"
+    permission="zope2.ManageUsers"/>
+
 </configure>
 

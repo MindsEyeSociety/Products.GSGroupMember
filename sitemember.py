@@ -61,41 +61,31 @@ class SiteMembers(object):
                 assert retval.token == retval.value
                 return retval
         raise LookupError, token
-
-    @property
-    def admin(self):
-        if self.__admin == None:
-            self.__admin = self.request.AUTHENTICATED_USER
-            assert self.__admin
-            self.__adminInfo = IGSUserInfo(self.__admin)
-            roles = self.__admin.getRolesInContext(self.groupInfo.groupObj)
-            assert ('GroupAdmin' in roles) or ('DivisionAdmin' in roles), \
-              '%s (%s) is not an administrator of %s (%s) on %s (%s)' % \
-                (self.__adminInfo.name, self.__adminInfo.id, 
-                 self.groupInfo.name, self.groupInfo.id,
-                 self.siteInfo.get_name(), self.siteInfo.get_id())
-        return self.__admin
-
+        
     @property
     def acl_users(self):
         if self.__acl_users == None:
-            self.__acl_users = \
-              getattr(self.siteInfo.siteObj.site_root(), 'acl_users', None)
-        assert self.__acl_users
+            sr = self.context.site_root()
+            assert sr, 'No site root'
+            self.__acl_users = sr.acl_users
+        assert self.__acl_users, 'No ACL Users'
         return self.__acl_users        
   
     def get_site_member_group_user_ids(self):
-        siteMemberGroupId = '%s_member' % self.siteInfo.id
+        siteMemberGroupId = '%s_member' % self.__siteInfo.id
         siteMemberGroup = self.acl_users.getGroupById(siteMemberGroupId)
-
         assert siteMemberGroup,\
           u'Could not get site-member group for %s (%s)' %\
-          (self.siteInfo.name, self.siteInfo.id)
-        assert type(siteMemberGroup) == list
-        types = [type(u)==str for u in siteMemberGroup]
+          (self.__siteInfo.name, self.__siteInfo.id)
+  
+        retval = [uid for uid in siteMemberGroup.getUsers() 
+                  if self.acl_users.getUser(uid)]
+        assert type(retval) == list,\
+          'Retval is a %s, not a list' % type(siteMemberGroup)
+        types = [type(u)==str for u in retval]
         assert reduce(lambda a, b: a and b, types, True),\
           u'Not all strings returned'
-        return siteMemberGroup
+        return retval
         
     @property
     def members(self):
@@ -103,13 +93,13 @@ class SiteMembers(object):
         assert self.__siteInfo
         if self.__members == None:
             userId = self.context.getId()
-            m = u'Generating membership list for %s (%s) for %s (%s)' %\
-              (self.admin.name, self.admin.id,
-               self.siteInfo.name, self.siteInfo.id)
+            m = u'Generating membership list for %s (%s)' %\
+              (self.__siteInfo.name, self.__siteInfo.id)
             log.info(m)
             siteMemberGroupIds = self.get_site_member_group_user_ids()
-            self.__members = [createObject('groupserver.UserFromId', uid)
-              for uid in siteMemberGroup]
+            self.__members =\
+              [createObject('groupserver.UserFromId', self.context, uid)
+               for uid in siteMemberGroupIds]
         assert type(self.__members) == list
         return self.__members
 

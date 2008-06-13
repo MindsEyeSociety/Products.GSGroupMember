@@ -68,26 +68,20 @@ class SiteMembersNonGroupMembers(object):
         raise LookupError, token
 
     @property
-    def admin(self):
-        if self.__admin == None:
-            self.__admin = self.request.AUTHENTICATED_USER
-            assert self.__admin
-            self.__adminInfo = IGSUserInfo(self.__admin)
-            roles = self.__admin.getRolesInContext(self.groupInfo.groupObj)
-            assert ('GroupAdmin' in roles) or ('DivisionAdmin' in roles), \
-              '%s (%s) is not an administrator of %s (%s) on %s (%s)' % \
-                (self.__adminInfo.name, self.__adminInfo.id, 
-                 self.groupInfo.name, self.groupInfo.id,
-                 self.siteInfo.get_name(), self.siteInfo.get_id())
-        return self.__admin
-        
+    def acl_users(self):
+        if self.__acl_users == None:
+            sr = self.context.site_root()
+            assert sr, 'No site root'
+            self.__acl_users = sr.acl_users
+        assert self.__acl_users, 'No ACL Users'
+        return self.__acl_users
+
     @property
     def nonMembers(self):
         m = u'Getting the list of members of %s (%s) who are not members '\
-          u'of %s (%s) for %s (%s)' %\
+          u'of %s (%s)' %\
           (self.__siteInfo.name, self.__siteInfo.id,
-           self.__groupInfo.name, self.__groupInfo.id, 
-           self.admin.name, self.admin.id)
+           self.__groupInfo.name, self.__groupInfo.id)
         log.info(m)
         
         groupMemberGroupId = '%s_member' % self.__groupInfo.id

@@ -7,8 +7,6 @@ from zope.schema.vocabulary import SimpleVocabulary
 from zope.contentprovider.interfaces import IContentProvider
 from zope.component import createObject
 
-from sitemember import SiteMember
-
 class IGSInviteSiteMembers(Interface):
     nonGroupMembers = List(title=u'Non Group Members',
       description=u'Members this site that are not members of this group.',
