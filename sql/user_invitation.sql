@@ -6,7 +6,7 @@ CREATE TABLE user_invitation (
     GROUP_ID          TEXT                        NOT NULL,
     INVITATION_DATE   TIMESTAMP WITH TIME ZONE    NOT NULL,
     RESPONSE_DATE     TIMESTAMP WITH TIME ZONE    DEFAULT NULL,
-    ACCEPTED          BOOL                        DEFAULT FALSE,
+    ACCEPTED          BOOL                        DEFAULT FALSE
 );
 --=mpj17=-- There is no foreign key for user_id, yet
 

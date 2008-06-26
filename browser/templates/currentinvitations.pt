@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" 
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+  xmlns:tal="http://xml.zope.org/namespaces/tal"
+  xmlns:metal="http://xml.zope.org/namespaces/metal"
+  metal:use-macro="context/@@groupserver_layout/page">
+  <head>
+    <title metal:fill-slot="title">
+      Invitaions for
+      <span tal:replace="view/userInfo/name">A User</span>:
+      <span tal:replace="view/siteInfo/name">A Site</span>
+    </title>
+  </head>
+  <body>
+    <tal:block metal:fill-slot="contextnavigation">
+      <span 
+        tal:replace="structure provider:groupserver.ProfileContextMenu">
+        Context Menu
+      </span>
+    </tal:block>
+    <div metal:fill-slot="body">
+      <h1>Invitations for
+        <span class="fn" tal:content="view/userInfo/name">A User</span>
+      </h1>
+      <ul id="invitations">
+        <tal:block repeat="invitation view/currentInvitations">
+          <li tal:content="invitation">invitation</li>
+        </tal:block>
+      </ul>
+    </div>
+  </body>
+</html>
+
