@@ -23,8 +23,8 @@
   <browser:page 
     for="Products.CustomUserFolder.interfaces.ICustomUser"
     name="invitations.html"
-    class=".currentinvitations.GSCurrentInviations"
-    template="browser/templates/currentinvitations.pt" 
+    class=".invitationslog.GSInviationsLog"
+    template="browser/templates/invitationslog.pt" 
     permission="zope2.View" />
 
 </configure>
