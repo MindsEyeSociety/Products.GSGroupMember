@@ -19,16 +19,74 @@
         Context Menu
       </span>
     </tal:block>
-    <div metal:fill-slot="body">
+    <tal:block metal:fill-slot="body"
+      define="munge_date python:modules['Products.XWFCore.XWFUtils'].munge_date">
       <h1>Invitations for
         <span class="fn" tal:content="view/userInfo/name">A User</span>
       </h1>
-      <ul id="invitations">
-        <tal:block repeat="invitation view/currentInvitations">
-          <li tal:content="invitation">invitation</li>
-        </tal:block>
-      </ul>
-    </div>
+      <h2 id="current">Current Invitations</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Group</th>
+            <th>Inviting User</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr tal:repeat="invitation view/currentInvitations">
+            <td>
+              <a class="group" href="#"
+                tal:content="invitation/group/name"
+                tal:attributes="href  invitation/group/url">The Group</a>
+            </td>
+            <td>
+              <a class="fn" href="#"
+                tal:content="invitation/inviting_user/name"
+                tal:attributes="href invitation/inviting_user/url">The
+                Inviting User</a>
+            </td>
+            <td class="date" 
+              tal:content="python:munge_date(view.context, invitation['invitation_date'])">The Date</td>
+          </tr>
+        </tbody>
+      </table>
+      <h2 id="past">Past Invitations</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Group</th>
+            <th>Inviting User</th>
+            <th>Date Invited</th>
+            <th>Response</th>
+            <th>Response Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr tal:repeat="invitation view/pastInvitations">
+            <td>
+              <a class="group" href="#"
+                tal:content="invitation/group/name"
+                tal:attributes="href  invitation/group/url">The Group</a>
+            </td>
+            <td>
+              <a class="fn" href="#"
+                tal:content="invitation/inviting_user/name"
+                tal:attributes="href invitation/inviting_user/url">The
+                Inviting User</a>
+            </td>
+            <td class="date" 
+              tal:content="python:munge_date(view.context, invitation['invitation_date'])">The Date</td>
+            <td class="response" 
+              tal:content="python:view.get_response(invitation['accepted'])">
+              The Response
+            </td>
+            <td class="date" 
+              tal:content="python:munge_date(view.context, invitation['response_date'])">The Response Date</td>
+          </tr>
+        </tbody>
+      </table>      
+    </tal:block>
   </body>
 </html>
 

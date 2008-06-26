@@ -30,7 +30,7 @@ class GroupMemberQuery(object):
           inviting_user_id = invtUsrId,
           invitation_date = d)
     
-    def get_current_invitiations(self, siteId, userId):
+    def get_current_invitiations_for_site(self, siteId, userId):
         assert siteId
         assert userId
         uit = self.userInvitationTable
@@ -40,7 +40,8 @@ class GroupMemberQuery(object):
         s.append_whereclause(uit.c.site_id  == siteId)
         s.append_whereclause(uit.c.user_id  == userId)
         s.append_whereclause(uit.c.response_date == None)
-        
+        s.order_by(sa.desc(uit.c.invitation_date))
+
         r = s.execute()
 
         retval = []
@@ -51,6 +52,61 @@ class GroupMemberQuery(object):
               'user_id':          x['user_id'],
               'inviting_user_id': x['inviting_user_id'],
               'invitation_date':  x['invitation_date']} for x in r]
+
+        assert type(retval) == list
+        return retval
+
+    def get_past_invitiations_for_site(self, siteId, userId):
+        assert siteId
+        assert userId
+        uit = self.userInvitationTable
+        cols = [uit.c.site_id, uit.c.group_id, uit.c.user_id, 
+                uit.c.inviting_user_id, uit.c.invitation_date,
+                uit.c.response_date, uit.c.accepted]
+        s = sa.select(cols, distinct=True)
+        s.append_whereclause(uit.c.site_id  == siteId)
+        s.append_whereclause(uit.c.user_id  == userId)
+        s.append_whereclause(uit.c.response_date != None)
+        s.order_by(sa.desc(uit.c.invitation_date))
+
+        r = s.execute()
+
+        retval = []
+        if r.rowcount:
+            retval = [{
+              'site_id':          x['site_id'],
+              'group_id':         x['group_id'],
+              'user_id':          x['user_id'],
+              'inviting_user_id': x['inviting_user_id'],
+              'invitation_date':  x['invitation_date'],
+              'response_date':    x['response_date'],
+              'accepted':         x['accepted']} for x in r]
+
+        assert type(retval) == list
+        return retval
+
+    def get_invitations_sent_by_user(self, siteId, invitingUserId):
+        assert siteId
+        assert invitingUserId
+        uit = self.userInvitationTable
+        cols = [uit.c.site_id, uit.c.group_id, uit.c.user_id, 
+                uit.c.invitation_date, uit.c.response_date, uit.c.accepted]
+        s = sa.select(cols, distinct=True)
+        s.append_whereclause(uit.c.site_id  == siteId)
+        s.append_whereclause(uit.c.inviting_user_id  == invitingUserId)
+        s.order_by(sa.desc(uit.c.invitation_date))
+
+        r = s.execute()
+
+        retval = []
+        if r.rowcount:
+            retval = [{
+              'site_id':          x['site_id'],
+              'group_id':         x['group_id'],
+              'user_id':          x['user_id'],
+              'invitation_date':  x['invitation_date'],
+              'response_date':    x['response_date'],
+              'accepted':         x['accepted']} for x in r]
 
         assert type(retval) == list
         return retval
@@ -75,5 +131,5 @@ class GroupMemberQuery(object):
           uit.c.user_id  == userid)
         v = {uit.c.response_date: d, uit.c.accepted: status}
         u = uit.update(c, values=v)
-        u.execute()
+        u.execute()        
 
