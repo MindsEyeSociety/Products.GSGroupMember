@@ -18,9 +18,18 @@ class GSInviationsLog(BrowserView):
         da = self.context.zsqlalchemy 
         assert da, 'No data-adaptor found'
         self.groupMemberQuery = GroupMemberQuery(da)
+        
+        self.__currentInvitations = None
+        self.__pastInvitations = None
 
     @property
     def currentInvitations(self):
+        if self.__currentInvitations == None:
+            self.__currentInvitations = self.get_currentInvitations()
+        assert type(self.__currentInvitations) == list
+        return self.__currentInvitations
+        
+    def get_currentInvitations(self):
         m = u'Generating a list of current group-invitations for %s (%s) '\
           u'on %s (%s).' %\
             (self.userInfo.name, self.userInfo.id,
@@ -42,6 +51,12 @@ class GSInviationsLog(BrowserView):
 
     @property
     def pastInvitations(self):
+        if self.__pastInvitations == None:
+            self.__pastInvitations = self.get_pastInvitations()
+        assert type(self.__pastInvitations) == list
+        return self.__pastInvitations
+
+    def get_pastInvitations(self):
         m = u'Generating a list of current past group-invitations for '\
           u'%s (%s) on %s (%s).' %\
             (self.userInfo.name, self.userInfo.id,
