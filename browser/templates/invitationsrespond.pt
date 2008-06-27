@@ -19,6 +19,12 @@
         Context Menu
       </span>
     </tal:block>
+    <div metal:fill-slot="messages"
+      tal:define="result view/process_form;
+      isError python:result.get('error', False);"
+      tal:condition="python:result and result.has_key('message')"
+      tal:attributes="class python:(isError and 'message-error') or 'message-result'"
+      tal:content="structure result/message"/>
     <tal:block metal:fill-slot="body"
       define="md python:modules['Products.XWFCore.XWFUtils'].munge_date;
         ctx view/context">
@@ -26,6 +32,19 @@
       <form id="response" tal:condition="view/currentInvitations"
         enctype="multipart/form-data" method="post" action="." 
         tal:attributes="action request/URL">
+        <p tal:define="plural python:len(view.currentInvitations)>1">
+          You have been invited to join the following 
+          groups<span tal:condition="plural">s</span>.
+          To accept or decline to the
+          invitation<span tal:condition="plural">s</span>, set your
+          response <span tal:condition="plural">for each group</span>
+          below, and click the <samp class="button">Respond</samp> button.
+          You will become a member of 
+          <span tal:condition="not:plural">the group if you accept
+            the invitation.</span>
+          <span tal:condition="plural">any group you accept the invitation
+            to join.</span>
+        </p>
         <div class="group-invitation" 
           tal:repeat="invitation view/currentInvitations">
           <h3 class="group" 
@@ -47,17 +66,20 @@
               day</span>.
           </p>
           <fieldset tal:define="gid invitation/group/id">
-            <input type="radio" class="radioType" 
-              name="foo" id="foo-accept" value="accept"
+            <input type="radio" checked="" 
+              value="accept" class="radioType"
+              name="foo" id="foo-accept" 
               tal:attributes="name string:${gid}-respond;
                 id string:${gid}-accept;
                 value string:${gid}-accept"/> 
             <label class="radioLabel" id="foo-accept-label"
               for="foo-accept" 
               tal:attributes="id string:${gid}-accept-label;
-                for string:${gid}-accept">Accept</label>
+                for string:${gid}-accept">Accept the invitation to join
+                <span class="group"
+                  tal:content="invitation/group/name">this group</span></label>
             <br/>
-            <input type="radio" class="radioType" 
+            <input type="radio" class="radioType"
               name="foo" id="foo-decline"
               tal:attributes="name string:${gid}-respond;
                 id string:${gid}-decline;
@@ -65,9 +87,12 @@
             <label class="radioLabel" id="foo-decline-label"
               for="foo-decline" 
               tal:attributes="id string:${gid}-decline-label;
-                for string:${gid}-decline">Decline</label>
+                for string:${gid}-decline">Decline the invitation to join
+                <span class="group"
+                  tal:content="invitation/group/name">this group</span></label>
           </fieldset>
         </div><!--group-invitation-->
+        <input type="hidden" class="hidden" name="submitted" value=""/>
         <input class="button" type="submit" value="Respond" 
           id="respond-button" name="respond-button"/>
       </form><!--current-->
