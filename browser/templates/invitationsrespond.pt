@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" 
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+  xmlns:tal="http://xml.zope.org/namespaces/tal"
+  xmlns:metal="http://xml.zope.org/namespaces/metal"
+  metal:use-macro="context/@@groupserver_layout/page">
+  <head>
+    <title metal:fill-slot="title">
+      Respond to Invitations:
+      <span tal:replace="view/userInfo/name">A User</span>:
+      <span tal:replace="view/siteInfo/name">A Site</span>
+    </title>
+  </head>
+  <body>
+    <tal:block metal:fill-slot="contextnavigation">
+      <span 
+        tal:replace="structure provider:groupserver.ProfileContextMenu">
+        Context Menu
+      </span>
+    </tal:block>
+    <tal:block metal:fill-slot="body"
+      define="md python:modules['Products.XWFCore.XWFUtils'].munge_date;
+        ctx view/context">
+      <h1>Respond to Invitations to Join Groups</h1>
+      <form id="response" tal:condition="view/currentInvitations"
+        enctype="multipart/form-data" method="post" action="." 
+        tal:attributes="action request/URL">
+        <div class="group-invitation" 
+          tal:repeat="invitation view/currentInvitations">
+          <h3 class="group" 
+            tal:attributes="id string:group-${invitation/group/id}"
+            tal:content="invitation/group/name">
+            The Group
+          </h3>
+          <p>
+            <a class="fn" href="#"
+              tal:content="invitation/inviting_user/name"
+              tal:attributes="href invitation/inviting_user/url">A user</a>
+            sent you an invitation to join
+            <a class="group" href="#"
+              tal:content="invitation/group/name"
+              tal:attributes="href invitation/group/url">a group</a>
+            on
+            <span class="date"
+              tal:content="python:md(ctx, invitation['invitation_date'])">a
+              day</span>.
+          </p>
+          <fieldset tal:define="gid invitation/group/id">
+            <input type="radio" class="radioType" 
+              name="foo" id="foo-accept" value="accept"
+              tal:attributes="name string:${gid}-respond;
+                id string:${gid}-accept;
+                value string:${gid}-accept"/> 
+            <label class="radioLabel" id="foo-accept-label"
+              for="foo-accept" 
+              tal:attributes="id string:${gid}-accept-label;
+                for string:${gid}-accept">Accept</label>
+            <br/>
+            <input type="radio" class="radioType" 
+              name="foo" id="foo-decline"
+              tal:attributes="name string:${gid}-respond;
+                id string:${gid}-decline;
+                value string:${gid}-decline"/> 
+            <label class="radioLabel" id="foo-decline-label"
+              for="foo-decline" 
+              tal:attributes="id string:${gid}-decline-label;
+                for string:${gid}-decline">Decline</label>
+          </fieldset>
+        </div><!--group-invitation-->
+        <input class="button" type="submit" value="Respond" 
+          id="respond-button" name="respond-button"/>
+      </form><!--current-->
+    </tal:block>
+  </body>
+</html>
+
