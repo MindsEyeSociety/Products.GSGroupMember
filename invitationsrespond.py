@@ -20,8 +20,7 @@ class GSInviationsRespond(BrowserView):
         self.groupMemberQuery = GroupMemberQuery(da)
         
         self.__currentInvitations = None
-        self.__pastInvitations = None
-
+        
     @property
     def currentInvitations(self):
         if self.__currentInvitations == None:
@@ -75,38 +74,23 @@ class GSInviationsRespond(BrowserView):
               if  '-respond' in k]
             responses = [form['%s-respond' % k] for k in groupIds]          
 
-            print responses
+            result['error'] = False            
+            m = u''
 
             accepted = [k.split('-accept')[0] for k in responses
               if '-accept' in k]
-            print accepted
-            acceptedGroups = [createObject('groupserver.GroupInfo',
-              self.groupsInfo.groupsObj, g) for g in accepted]
-              
-            declined = [k.split('-decline')[0] for k in responses
-              if '-decline' in k]
-            print declined
-            declinedGroups = [createObject('groupserver.GroupInfo',
-              self.groupsInfo.groupsObj, g) for g in declined]
-            
-            am = ', '.join(['%s (%s)' % (g.name, g.id) 
-                            for g in acceptedGroups])
-            m = u'%s (%s) accepting invitations to join the groups '\
-              u'%s on %s (%s)' % (self.userInfo.name, self.userInfo.id,
-              am, self.siteInfo.name, self.siteInfo.id)
-            log.info(m)
-            
-            dm = ', '.join(['%s (%s)' % (g.name, g.id) 
-                            for g in declinedGroups])
-            m = u'%s (%s) declining invitations to join the groups '\
-              u'%s on %s (%s)' % (self.userInfo.name, self.userInfo.id,
-              dm, self.siteInfo.name, self.siteInfo.id)
-            log.info(m)
-
-            result['error'] = False
-            
-            m = u''
             if accepted:
+                acceptedGroups = [createObject('groupserver.GroupInfo',
+                  self.groupsInfo.groupsObj, g) for g in accepted]
+                am = ', '.join(['%s (%s)' % (g.name, g.id) 
+                                for g in acceptedGroups])
+                lm = u'%s (%s) accepting invitations to join the groups '\
+                  u'%s on %s (%s)' % (self.userInfo.name, self.userInfo.id,
+                  am, self.siteInfo.name, self.siteInfo.id)
+                log.info(lm)
+
+                self.accept_invitations(accepted)
+                
                 acceptedLinks = ['<a href="%s">%s</a>' % (g.url, g.name)
                   for g in acceptedGroups]
                 if len(acceptedLinks) > 1:
@@ -122,7 +106,21 @@ class GSInviationsRespond(BrowserView):
                   u'%s.' % (i, a, t)
             else:
                 m = u'You did not accept any invitations.'
+                
+            declined = [k.split('-decline')[0] for k in responses
+              if '-decline' in k]
             if declined:
+                declinedGroups = [createObject('groupserver.GroupInfo',
+                  self.groupsInfo.groupsObj, g) for g in declined]
+                dm = ', '.join(['%s (%s)' % (g.name, g.id) 
+                                for g in declinedGroups])
+                lm = u'%s (%s) declining invitations to join the groups '\
+                  u'%s on %s (%s)' % (self.userInfo.name, self.userInfo.id,
+                  dm, self.siteInfo.name, self.siteInfo.id)
+                log.info(lm)
+                
+                self.decline_invitations(declined)
+                
                 declinedLinks = ['<a href="%s">%s</a>' % (g.url, g.name)
                   for g in declinedGroups]
                 if len(declinedLinks) > 1:
@@ -140,7 +138,8 @@ class GSInviationsRespond(BrowserView):
                   u'<li>You did not decline any invitations.</li</ul>' % m
 
             result['message'] = m
-            
+            self.__currentInvitations = None            
+    
             assert result.has_key('error')
             assert type(result['error']) == bool
             assert result.has_key('message')
@@ -150,4 +149,21 @@ class GSInviationsRespond(BrowserView):
         assert type(result['form']) == dict
         return result
 
+    def accept_invitations(self, groupIds):
+        inviteIds = [i['group_id'] for i in self.currentInvitations]
+        for gid in groupIds:
+            assert gid in inviteIds, 'Not invited to %s' % gid
+
+        ai = self.groupMemberQuery.accept_invitation
+        for gid in groupIds:
+            ai(self.siteInfo.id, gid, self.userInfo.id)
+
+    def decline_invitations(self, groupIds):
+        inviteIds = [i['group_id'] for i in self.currentInvitations]
+        for gid in groupIds:
+            assert gid in self.currentInvitations, 'Not invited to %s' % gid
+
+        di = self.groupMemberQuery.decline_invitation
+        for gid in groupIds:
+            di(self.siteInfo.id, gid, self.userInfo.id)
 

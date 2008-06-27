@@ -128,7 +128,7 @@ class GroupMemberQuery(object):
         c = sa.and_(
           uit.c.site_id  == siteId, 
           uit.c.group_id == groupId,
-          uit.c.user_id  == userid)
+          uit.c.user_id  == userId)
         v = {uit.c.response_date: d, uit.c.accepted: status}
         u = uit.update(c, values=v)
         u.execute()        
