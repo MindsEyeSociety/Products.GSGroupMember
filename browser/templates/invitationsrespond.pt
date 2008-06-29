@@ -96,6 +96,11 @@
         <input class="button" type="submit" value="Respond" 
           id="respond-button" name="respond-button"/>
       </form><!--current-->
+      <p tal:condition="not:view/currentInvitations">
+        There are no invitations awaiting your response.
+        The groups you are a member of are listed on 
+        <a href="#" tal:attributes="href view/userInfo/url">your profile.</a>
+      </p>
     </tal:block>
   </body>
 </html>

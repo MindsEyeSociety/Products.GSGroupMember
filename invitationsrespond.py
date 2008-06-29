@@ -109,6 +109,8 @@ class GSInviationsRespond(BrowserView):
                 
             declined = [k.split('-decline')[0] for k in responses
               if '-decline' in k]
+            for d in declined:
+                assert d not in accepted
             if declined:
                 declinedGroups = [createObject('groupserver.GroupInfo',
                   self.groupsInfo.groupsObj, g) for g in declined]
@@ -150,15 +152,42 @@ class GSInviationsRespond(BrowserView):
         return result
 
     def accept_invitations(self, groupIds):
+        '''Accept the invitations to the groups
+        
+        DESCRIPTION
+          Accept the invitations to a list of groups, joining the groups.
+            
+        ARGUMENTS
+          "groupIds": A list of group-identifiers
+            
+        RETURNS
+          None
+            
+        SIDE EFFECTS
+          The current user ("self.context") is joined to the groups. The
+          invitations are marked as accepted, and the current date is
+          put down as the response-date.
+        '''
+        assert type(groupIds) == list
+        
         inviteIds = [i['group_id'] for i in self.currentInvitations]
+        accept_invite = self.groupMemberQuery.accept_invitation
         for gid in groupIds:
             assert gid in inviteIds, 'Not invited to %s' % gid
-
-        ai = self.groupMemberQuery.accept_invitation
-        for gid in groupIds:
-            ai(self.siteInfo.id, gid, self.userInfo.id)
+            memberGroup = '%s_member' % gid
+            self.context.add_groupWithNotification(memberGroup)
+            accept_invite(self.siteInfo.id, gid, self.userInfo.id)
 
     def decline_invitations(self, groupIds):
+        '''
+        DESCRIPTION
+        
+        ARGUMENTS
+        
+        RETURNS
+        
+        SIDE EFFECTS
+        '''
         inviteIds = [i['group_id'] for i in self.currentInvitations]
         for gid in groupIds:
             assert gid in self.currentInvitations, 'Not invited to %s' % gid
