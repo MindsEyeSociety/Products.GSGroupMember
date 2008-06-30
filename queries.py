@@ -15,15 +15,15 @@ class GroupMemberQuery(object):
           autoload=True)
 
     def add_invitation(self, invitiationId, siteId, groupId, userId, invtUsrId):
-        assert invitiationId
-        assert siteId
-        assert groupId
-        assert userId
-        assert invtUsrId
+        assert invitiationId, 'invitiationId is %s' % invitiationId
+        assert siteId, 'siteId is %s' % siteId
+        assert groupId, 'groupId is %s' % groupId
+        assert userId, 'userId is %s' % userId
+        assert invtUsrId, 'invtUsrId is %s' % invtUsrId
         
         d = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
         i = self.userInvitationTable.insert()
-        i.execute(invitiation_id = invitationId,
+        i.execute(invitation_id = invitiationId,
           site_id = siteId,
           group_id = groupId,
           user_id = userId,
@@ -35,13 +35,15 @@ class GroupMemberQuery(object):
         assert userId
         uit = self.userInvitationTable
         cols = [uit.c.site_id, uit.c.group_id, uit.c.user_id, 
-                uit.c.inviting_user_id, uit.c.invitation_date]
-        s = sa.select(cols, distinct=True)
+                uit.c.inviting_user_id, 
+                sa.func.max(uit.c.invitation_date).label('date')]
+        s = sa.select(cols)
         s.append_whereclause(uit.c.site_id  == siteId)
         s.append_whereclause(uit.c.user_id  == userId)
         s.append_whereclause(uit.c.response_date == None)
-        s.order_by(sa.desc(uit.c.invitation_date))
-
+        s.order_by(sa.desc('date'))
+        s.group_by(uit.c.site_id, uit.c.group_id, uit.c.user_id, 
+            uit.c.inviting_user_id)
         r = s.execute()
 
         retval = []
@@ -51,7 +53,7 @@ class GroupMemberQuery(object):
               'group_id':         x['group_id'],
               'user_id':          x['user_id'],
               'inviting_user_id': x['inviting_user_id'],
-              'invitation_date':  x['invitation_date']} for x in r]
+              'invitation_date':  x['date']} for x in r]
 
         assert type(retval) == list
         return retval
