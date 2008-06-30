@@ -14,4 +14,14 @@ class IGSInviteSiteMembers(Interface):
       value_type=Choice(title=u'Members', vocabulary='SiteMemberNonGroupMember'),
       unique=True,
       default=[])
+      
+class IGSInvitationGroups(Interface):
+    invitation_groups = List(title=u'Invitation Groups',
+      description=u'The groups to invite to user to. The user is not a '\
+        u'member of any of these groups, but you are an admistrator of '\
+        u'these groups.',
+      value_type=Choice(title=u'Group',
+                        vocabulary='groupserver.InvitationGroups'),
+      unique=True,
+      required=True)
 

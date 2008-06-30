@@ -20,6 +20,12 @@
       name="SiteMemberNonGroupMember"
       factory=".sitemembernongroupmember.SiteMembersNonGroupMembers"/>
 
+  <!--Utilities-->
+  <vocabulary 
+      name="groupserver.InvitationGroups"
+      factory=".groupmembership.InvitationGroupsForSite"/>
+
+  <!--Pages-->
   <browser:page 
     for="Products.CustomUserFolder.interfaces.ICustomUser"
     name="invitations.html"
@@ -33,6 +39,12 @@
     class=".invitationsrespond.GSInviationsRespond"
     template="browser/templates/invitationsrespond.pt" 
     permission="zope2.ManageProperties" />
+
+  <browser:page 
+    for="Products.CustomUserFolder.interfaces.ICustomUser"
+    name="invite.html"
+    class=".inviteuser.InviteUserForm"
+    permission="zope2.Public"/>
 
 </configure>
 
