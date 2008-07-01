@@ -189,10 +189,8 @@ class GSInviationsRespond(BrowserView):
         SIDE EFFECTS
         '''
         inviteIds = [i['group_id'] for i in self.currentInvitations]
-        for gid in groupIds:
-            assert gid in self.currentInvitations, 'Not invited to %s' % gid
-
         di = self.groupMemberQuery.decline_invitation
         for gid in groupIds:
+            assert gid in inviteIds, 'Not invited to %s' % gid
             di(self.siteInfo.id, gid, self.userInfo.id)
 

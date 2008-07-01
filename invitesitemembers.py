@@ -30,7 +30,7 @@ class GSInviteSiteMembers(PageForm):
         self.siteInfo = createObject('groupserver.SiteInfo', context)
         self.groupInfo= createObject('groupserver.GroupInfo', context)
         
-        self.form_fields['nonGroupMembers'].custom_widget = \
+        self.form_fields['site_members'].custom_widget = \
           multi_check_box_widget
 
     # --=mpj17=--

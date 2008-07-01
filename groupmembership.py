@@ -8,7 +8,7 @@ from zope.schema.interfaces import ITokenizedTerm, IVocabulary,\
 from zope.interface.common.mapping import IEnumerableMapping 
 import AccessControl
 
-from Products.CustomUserFolder.userinfo import GSUserInfo
+from Products.CustomUserFolder.interfaces import IGSUserInfo
 
 import logging
 log = logging.getLogger('GSGroupMember GroupMembership')
@@ -21,7 +21,8 @@ class JoinableGroupsForSite(object):
 
     def __init__(self, context):
         self.context = context
-        self.userInfo = GSUserInfo(context)
+        self.userInfo = createObject('groupserver.UserFromId', 
+                                     context, context.getId())
         self.__userId = context.getId()
         self.__groupsInfo = createObject('groupserver.GroupsInfo', context)
         self.siteInfo = createObject('groupserver.SiteInfo', context)
@@ -132,6 +133,117 @@ class InvitationGroupsForSite(JoinableGroupsForSite):
 
         assert type(retval) == list
         return retval
+
+class SiteMembers(object):
+    implements(IVocabulary, IVocabularyTokenized)
+    __used_for__ = IEnumerableMapping
+
+    def __init__(self, context):
+        self.context = context
+        self.siteInfo = createObject('groupserver.SiteInfo', context)
+        
+        self.__members = None
+       
+    def __iter__(self):
+        """See zope.schema.interfaces.IIterableVocabulary"""
+        retval = [SimpleTerm(u.id, u.id,u.name)
+                  for u in self.members]
+        for term in retval:
+            assert term
+            assert ITitledTokenizedTerm in providedBy(term)
+            assert term.token == term.value
+        return iter(retval)
+
+    def __len__(self):
+        """See zope.schema.interfaces.IIterableVocabulary"""
+        return len(self.members)
+
+    def __contains__(self, value):
+        """See zope.schema.interfaces.IBaseVocabulary"""
+        retval = False
+        retval = value in [u.id for u in self.members]
+        assert type(retval) == bool
+        return retval
+
+    def getQuery(self):
+        """See zope.schema.interfaces.IBaseVocabulary"""
+        return None
+
+    def getTerm(self, value):
+        """See zope.schema.interfaces.IBaseVocabulary"""
+        return self.getTermByToken(value)
+        
+    def getTermByToken(self, token):
+        """See zope.schema.interfaces.IVocabularyTokenized"""
+        for u in self.members:
+            if u.id == token:
+                retval = SimpleTerm(u.id, u.id, u.name)
+                assert retval
+                assert ITitledTokenizedTerm in providedBy(retval)
+                assert retval.token == retval.value
+                return retval
+        raise LookupError, token
+
+    @property
+    def members(self):
+        assert self.context
+        
+        if self.__members == None:
+            users = get_group_users(self.context, self.siteInfo.id)
+            self.__members = [createObject('groupserver.UserFromId',  
+                                            self.context, u.getId()) 
+                             for u in users]
+        assert type(self.__members) == list
+        return self.__members
+
+class SiteMembersNonGroupMembers(SiteMembers):
+    def __init__(self, context):
+        SiteMembers.__init__(self, context)
+        self.groupInfo = createObject('groupserver.GroupInfo', context)
+        
+        self.__members = None
+
+    @property
+    def members(self):
+        assert self.context
+        
+        if self.__members == None:
+            users = get_group_users(self.context, self.siteInfo.id,
+                                    self.groupInfo.id)
+            self.__members = [createObject('groupserver.UserFromId',  
+                                            self.context, u.getId()) 
+                             for u in users]
+        assert type(self.__members) == list
+        return self.__members
+
+def get_group_users(context, groupId, excludeGroup = None):
+    assert context # What *is* the context?
+    assert groupId
+    assert type(groupId) == str
+    assert type(excludeGroup) == str
+    
+    memberGroupId  = '%s_member' % groupId
+
+    site_root = context.site_root()
+    assert site_root, 'No site_root'
+    assert hasattr(site_root, 'acl_users'), 'No acl_users at site_root'
+    acl_users = site_root.acl_users
+    memberGroup = acl_users.getGroupById(memberGroupId, [])
+    users = [acl_users.getUser(uid) for uid in memberGroup.getUsers()]
+
+    if excludeGroup:
+        memberExcludeGroup = '%s_member' % excludeGroup
+        print memberExcludeGroup
+        retval = []
+        for u in users:
+            if memberExcludeGroup not in u.getGroups():
+                retval.append(u)
+                print u.getGroups()
+        print retval
+    else:
+        retval = users
+    assert type(retval) == list
+    return retval
 
 def get_groups_on_site(site):
     retval = []

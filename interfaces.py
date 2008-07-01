@@ -7,14 +7,6 @@ from zope.schema.vocabulary import SimpleVocabulary
 from zope.contentprovider.interfaces import IContentProvider
 from zope.component import createObject
 
-class IGSInviteSiteMembers(Interface):
-    nonGroupMembers = List(title=u'Non Group Members',
-      description=u'Members this site that are not members of this group.',
-      required=True,
-      value_type=Choice(title=u'Members', vocabulary='SiteMemberNonGroupMember'),
-      unique=True,
-      default=[])
-      
 class IGSInvitationGroups(Interface):
     invitation_groups = List(title=u'Invitation Groups',
       description=u'The groups to invite to user to. The user is not a '\
@@ -24,4 +16,14 @@ class IGSInvitationGroups(Interface):
                         vocabulary='groupserver.InvitationGroups'),
       unique=True,
       required=True)
+
+class IGSInviteSiteMembers(Interface):
+    site_members = List(title=u'Site Members',
+      description=u'The members of this site that are not a member of '\
+        u'this group.',
+      value_type=Choice(title=u'Group',
+                        vocabulary='groupserver.SiteMembersNonGroupMembers'),
+      unique=True,
+      required=True)
+
 

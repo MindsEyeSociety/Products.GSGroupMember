@@ -17,13 +17,17 @@
   <interface 
     interface=".invitedgroupmember.IGSInvitedGroupMember" />
   <vocabulary 
-      name="SiteMemberNonGroupMember"
-      factory=".sitemembernongroupmember.SiteMembersNonGroupMembers"/>
+    name="SiteMemberNonGroupMember"
+    factory=".sitemembernongroupmember.SiteMembersNonGroupMembers"/>
 
   <!--Utilities-->
   <vocabulary 
-      name="groupserver.InvitationGroups"
-      factory=".groupmembership.InvitationGroupsForSite"/>
+    name="groupserver.InvitationGroups"
+    factory=".groupmembership.InvitationGroupsForSite"/>
+
+  <vocabulary 
+    name="groupserver.SiteMembersNonGroupMembers"
+    factory=".groupmembership.SiteMembersNonGroupMembers"/>
 
   <!--Pages-->
   <browser:page 
@@ -45,6 +49,12 @@
     name="invite.html"
     class=".inviteuser.InviteUserForm"
     permission="zope2.Public"/>
+
+  <browser:page 
+    for="Products.XWFChat.interfaces.IGSGroupFolder"
+    name="admin_invite_site_members.html"
+    class=".invitesitemembers.GSInviteSiteMembers"
+    permission="zope2.ManageProperties"/>
 
 </configure>
 

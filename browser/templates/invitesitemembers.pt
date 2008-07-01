@@ -67,12 +67,6 @@
             GSPopupFormHelp.init('#invite-site-members');
         });
       </script>
-      <script type="text/javascript" 
-        src="/++resource++jquery-1.2.1.min.js">&#160;</script>
-      <script type="text/javascript" 
-        src="/++resource++wymeditor/jquery.wymeditor.pack.js">&#160;</script>
-      <script type="text/javascript" 
-        src="/++resource++wymeditor/init.js">&#160;</script>
     </tal:block>
   </body>
 </html>
