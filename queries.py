@@ -156,4 +156,19 @@ class GroupMemberQuery(object):
         u = uit.update(c, values=v)
         u.execute()        
 
+    def get_count_current_invitations_in_group(self, siteId, groupId, userId):
+        uit = self.userInvitationTable
+        cols = [sa.func.count(uit.c.invitation_id.distinct())]
+        s = sa.select(cols)
+        s.append_whereclause(uit.c.site_id  == siteId)
+        s.append_whereclause(uit.c.group_id  == groupId)
+        s.append_whereclause(uit.c.user_id  == userId)
+        s.append_whereclause(uit.c.response_date == None)
+
+        r = s.execute()
+        retval = r.scalar()
+        if retval == None:
+            retval = 0
+        assert retval >= 0
+        return retval
 
