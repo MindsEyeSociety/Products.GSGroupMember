@@ -233,13 +233,10 @@ def get_group_users(context, groupId, excludeGroup = None):
 
     if excludeGroup:
         memberExcludeGroup = '%s_member' % excludeGroup
-        print memberExcludeGroup
         retval = []
         for u in users:
             if memberExcludeGroup not in u.getGroups():
                 retval.append(u)
-                print u.getGroups()
-        print retval
     else:
         retval = users
     assert type(retval) == list

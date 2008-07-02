@@ -29,7 +29,28 @@ class GroupMemberQuery(object):
           user_id = userId,
           inviting_user_id = invtUsrId,
           invitation_date = d)
-    
+
+    def get_invitation(self, invitationId, current=True):
+        uit = self.userInvitationTable
+        cols = [uit.c.site_id, uit.c.group_id, uit.c.user_id, 
+                uit.c.inviting_user_id, uit.c.invitation_date]
+        s = sa.select(cols)
+        s.append_whereclause(uit.c.invitation_id == invitationId)
+        if current:
+            s.append_whereclause(uit.c.response_date == None)
+        r = s.execute()
+
+        retval = None
+        if r.rowcount:
+            result = r.fetchone()
+            retval = {
+              'site_id':          result['site_id'],
+              'group_id':         result['group_id'],
+              'user_id':          result['user_id'],
+              'inviting_user_id': result['inviting_user_id'],
+              'invitation_date':  result['invitation_date']}
+        return retval
+            
     def get_current_invitiations_for_site(self, siteId, userId):
         assert siteId
         assert userId
@@ -134,4 +155,5 @@ class GroupMemberQuery(object):
         v = {uit.c.response_date: d, uit.c.accepted: status}
         u = uit.update(c, values=v)
         u.execute()        
+
 

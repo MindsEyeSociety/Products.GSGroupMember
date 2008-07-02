@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" 
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+  xmlns:tal="http://xml.zope.org/namespaces/tal"
+  xmlns:metal="http://xml.zope.org/namespaces/metal"
+  metal:use-macro="context/@@groupserver_site_home_layout/page">
+  <head>
+    <title metal:fill-slot="title">
+      Invitation Not Found:
+      <span tal:replace="view/siteInfo/get_name">A Site</span>
+    </title>
+    
+  </head>
+  <body metal:fill-slot="body">
+    <h1>Invitation Not Found</h1>
+      <p>
+        The invitation-indetifier that you were trying to use was not found.
+        Please check the link you followed, as it may be broken over two
+        lines.
+        If the link is broken, fix it by pasting both parts into the 
+        location-bar (also known as the <q>address</q> bar) 
+        of your Web browser.
+      </p>
+      <p tal:define="sprt python:modules['Products.XWFCore.XWFUtils'].get_support_email;
+        supportEmail python:sprt(view.context, view.siteInfo.get_id())">
+        Otherwise,
+        <a href="#" title="Email Support"
+          tal:attributes="href string:mailto:${supportEmail}?Subject=Invitation Not Found (${request/form/id})">report 
+          this error</a> if you need more assistance.
+      </p>
+      <p tal:condition="python:request.form.has_key('id')">
+        The identifier that was used to search for the user was
+        <code class="postId"
+          tal:content="python:request.form['id']">00000000</code>.
+      </p>
+  </body>
+</html>
+

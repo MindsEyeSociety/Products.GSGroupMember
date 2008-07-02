@@ -7,9 +7,10 @@ from zope.component import createObject
 import AccessControl
 from Products.CustomUserFolder.interfaces import ICustomUser, IGSUserInfo
 from Products.GSProfile.edit_profile import multi_check_box_widget
-from Products.XWFCore.XWFUtils import convert_int2b62
+
 from interfaces import IGSInvitationGroups
 from queries import GroupMemberQuery
+from utils import invite_id
 
 import logging
 log = logging.getLogger('GSInviteUserForm')
@@ -41,13 +42,13 @@ class InviteUserForm(PageForm):
           self.context, viewingUser.getId())
 
         self.status = u''
+        groupNames = []
         for gid in data['invitation_groups']:
-            istr = time.asctime() + self.siteInfo.id +\
-              gid + self.userInfo.id + viewingUserInfo.id
-            inum = long(md5.new(istr).hexdigest(), 16)
-            inviteId = str(convert_int2b62(inum))
             groupInfo = createObject('groupserver.GroupInfo', 
               self.groupsInfo.groupsObj, gid)
+              
+            inviteId = invite_id(self.siteInfo.id, groupInfo.id, 
+                                 self.userInfo.id, viewingUserInfo.id)
 
             self.groupMemberQuery.add_invitation(inviteId, 
               self.siteInfo.id, gid, self.userInfo.id, 
@@ -64,6 +65,25 @@ class InviteUserForm(PageForm):
             msg = u'<li><a class="group" href="%s">%s</a></li>' %\
               (groupInfo.url, groupInfo.name)
             self.status = '%s\n%s' % (self.status, msg)
+            
+            groupNames.append(groupInfo.name)
+
+        if len(groupNames) > 1:
+              c = u', '.join(groupNames[:-1])
+              g = u' and '.join((c, groupNames[-1]))
+        else:
+              g = groupNames[0]
+        responseURL = '%s/r/group_invitation/%s' % (self.siteInfo.url, 
+                                                    inviteId)
+        n_dict={'userFn': self.userInfo.name,
+                'invitingUserFn': viewingUserInfo.name,
+                'siteName': self.siteInfo.name,
+                'siteURL': self.siteInfo.url,
+                'groupName': g,
+                'responseURL': responseURL}
+        self.context.send_notification('invite_join_group', 'default',
+          n_dict=n_dict)
+
         self.status = u'<p>Invited <a class="fn" href="%s">%s</a> to '\
           u'join</p><ul>%s</ul>' %\
             (self.userInfo.url, self.userInfo.name, self.status)

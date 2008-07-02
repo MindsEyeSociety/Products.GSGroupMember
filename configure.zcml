@@ -53,8 +53,24 @@
   <browser:page 
     for="Products.XWFChat.interfaces.IGSGroupFolder"
     name="admin_invite_site_members.html"
-    class=".invitesitemembers.GSInviteSiteMembers"
+    class=".invitesitemembers.GSInviteSiteMembersForm"
     permission="zope2.ManageProperties"/>
 
+  <adapter for="Products.GSRedirect.interfaces.IGSRedirectTraversal"
+    factory=".invitationredirect.GSInvitationResponseRedirect"
+    provides="Products.GSRedirect.interfaces.IGSRedirect"
+    name="group_invitation" />
+
+  <browser:pages
+    for="Products.GSContent.interfaces.IGSSiteFolder"
+    class="Products.GSContent.view.GSContentView"
+    permission="zope2.Public">
+    <browser:page
+      name="invite-user-not-found"
+      template="browser/templates/invite_user_not_found.pt" />
+    <browser:page
+      name="invite-user-no-id"
+      template="browser/templates/invite_user_no_id.pt" />
+  </browser:pages>
 </configure>
 
