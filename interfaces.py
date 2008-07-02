@@ -22,7 +22,7 @@ class IGSInviteSiteMembers(Interface):
       description=u'The members of this site that are not a member of '\
         u'this group.',
       value_type=Choice(title=u'Group',
-                        vocabulary='groupserver.SiteMembersNonGroupMembers'),
+                      vocabulary='groupserver.InviteMembersNonGroupMembers'),
       unique=True,
       required=True)
 

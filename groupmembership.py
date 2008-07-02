@@ -9,6 +9,8 @@ from zope.interface.common.mapping import IEnumerableMapping
 import AccessControl
 
 from Products.CustomUserFolder.interfaces import IGSUserInfo
+from Products.XWFCore.XWFUtils import getOption
+from queries import GroupMemberQuery
 
 import logging
 log = logging.getLogger('GSGroupMember GroupMembership')
@@ -94,12 +96,16 @@ class InvitationGroupsForSite(JoinableGroupsForSite):
       Technically, they are groups the user ("context") is not a member
       of, but the viewing user
       ("AccessControl.getSecurityManager().getUser()") has administrator
-      rights to.
+      rights to and the user (context) has not been invited to too much.
     '''
     def __init__(self, context):
         JoinableGroupsForSite.__init__(self, context)
         self.__groups = None
-                
+        
+        da = self.context.zsqlalchemy 
+        assert da, 'No data-adaptor found'
+        self.groupMemberQuery = GroupMemberQuery(da)
+
         viewingUser = AccessControl.getSecurityManager().getUser()
         self.viewingUserInfo = createObject('groupserver.UserFromId', 
           context, viewingUser.getId())
@@ -119,9 +125,13 @@ class InvitationGroupsForSite(JoinableGroupsForSite):
         siteGroups = get_groups_on_site(self.siteInfo.siteObj)
         user = self.userInfo.user
         admin = self.viewingUserInfo.user
+        c = self.groupMemberQuery.get_count_current_invitations_in_group
+        u = self.userInfo
+        n = getOption(user, 'max_invites_to_group', 5)
         retval = [g for g in siteGroups 
                   if (not(user_member_of_group(user, g))
-                      and user_admin_of_group(admin, g))]
+                      and user_admin_of_group(admin, g)
+                      and (c(self.siteInfo.id, g.getId(), u.id) <= n))]
 
         bottom = time.time()
         m = u'Generated invitation groups of %s (%s) for %s (%s) on %s '\
@@ -189,6 +199,7 @@ class SiteMembers(object):
         assert self.context
         
         if self.__members == None:
+            # Get all members of the site, who are not members of the group
             users = get_group_users(self.context, self.siteInfo.id)
             self.__members = [createObject('groupserver.UserFromId',  
                                             self.context, u.getId()) 
@@ -216,7 +227,39 @@ class SiteMembersNonGroupMembers(SiteMembers):
         assert type(self.__members) == list
         return self.__members
 
+class InviteSiteMembersNonGroupMembers(SiteMembersNonGroupMembers):
+    def __init__(self, context):
+        SiteMembersNonGroupMembers.__init__(self, context)
+        
+        self.__members = None
+        
+        da = self.context.zsqlalchemy 
+        assert da, 'No data-adaptor found'
+        self.groupMemberQuery = GroupMemberQuery(da)
+
+    @property
+    def members(self):
+        assert self.context
+        c = self.groupMemberQuery.get_count_current_invitations_in_group
+        n = getOption(self.siteInfo.siteObj, 'max_invites_to_group', 5)
+        sid = self.siteInfo.id
+        gid = self.groupInfo.id
+        if self.__members == None:
+            # Get all members of the site, who are not members of the group
+            users = get_group_users(self.context, sid, gid)
+            self.__members = [createObject('groupserver.UserFromId',  
+                                            self.context, u.getId()) 
+                             for u in users
+                             if (c(sid, gid, u.getId())<=n)]
+        assert type(self.__members) == list
+        return self.__members
+
 def get_group_users(context, groupId, excludeGroup = None):
+    '''Get the Members of a User Group
+    
+    Get the members of the user-group, identified by "groupId" who are
+    not members of "excludeGroup"
+    '''
     assert context # What *is* the context?
     assert groupId
     assert type(groupId) == str
@@ -240,6 +283,7 @@ def get_group_users(context, groupId, excludeGroup = None):
     else:
         retval = users
     assert type(retval) == list
+    # --=mpj17=-- I should really check that I am actually returning users.
     return retval
 
 def get_groups_on_site(site):
