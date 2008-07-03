@@ -13,6 +13,7 @@ from Products.GSContent.interfaces import IGSGroupInfo
 from Products.XWFChat.interfaces import IGSGroupFolder
 from Products.XWFCore.XWFUtils import getOption
 from queries import GroupMemberQuery
+from utils import *
 
 import logging
 log = logging.getLogger('GSGroupMember GroupMembership')
@@ -464,15 +465,18 @@ def invite_to_groups(userInfo, invitingUserInfo, groups):
         
     assert groupInfos != []
     
-    siteInfo = groupInfo[0].siteInfo
-    da = siteInfo.siteObj.zsqlalchemy 
+    siteInfo = groupInfos[0].siteInfo
+
+    #--=mpj17=-- Arse to Zope. Really, arse to Zope and its randomly failing
+    #            acquisition.
+    da = siteInfo.siteObj.aq_parent.aq_parent.zsqlalchemy
     assert da, 'No data-adaptor found'
     groupMemberQuery = GroupMemberQuery(da)
 
     groupNames = []    
     for groupInfo in groupInfos:
         assert IGSGroupInfo.providedBy(groupInfo)
-        assert not(user_member_of_group(user.user, groupInfo.groupObj)), \
+        assert not(user_member_of_group(userInfo, groupInfo)), \
           'User %s (%s) already in %s (%s)' % \
         (userInfo.name, userInfo.id, groupInfo.name, groupInfo.name)
     
@@ -481,14 +485,14 @@ def invite_to_groups(userInfo, invitingUserInfo, groups):
 
         m = u'invite_to_group: %s (%s) inviting %s (%s) to join %s (%s) on '\
           u'%s (%s) with id %s'%\
-          (viewingUserInfo.name, viewingUserInfo.id,
+          (invitingUserInfo.name, invitingUserInfo.id,
             userInfo.name, userInfo.id,
             groupInfo.name, groupInfo.id,
             siteInfo.name, siteInfo.id,
             inviteId)
         log.info(m)
         groupMemberQuery.add_invitation(inviteId, siteInfo.id, groupInfo.id, 
-            userInfo.id, viewingUserInfo.id)
+            userInfo.id, invitingUserInfo.id)
 
         groupNames.append(groupInfo.name)
 
@@ -500,7 +504,7 @@ def invite_to_groups(userInfo, invitingUserInfo, groups):
     
     responseURL = '%s/r/group_invitation/%s' % (siteInfo.url, inviteId)
     n_dict={'userFn': userInfo.name,
-            'invitingUserFn': viewingUserInfo.name,
+            'invitingUserFn': invitingUserInfo.name,
             'siteName': siteInfo.name,
             'siteURL': siteInfo.url,
             'groupName': g,
