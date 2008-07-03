@@ -8,7 +8,9 @@ from zope.schema.interfaces import ITokenizedTerm, IVocabulary,\
 from zope.interface.common.mapping import IEnumerableMapping 
 import AccessControl
 
-from Products.CustomUserFolder.interfaces import IGSUserInfo
+from Products.CustomUserFolder.interfaces import IGSUserInfo, ICustomUser
+from Products.GSContent.interfaces import IGSGroupInfo
+from Products.XWFChat.interfaces import IGSGroupFolder
 from Products.XWFCore.XWFUtils import getOption
 from queries import GroupMemberQuery
 
@@ -254,7 +256,7 @@ class InviteSiteMembersNonGroupMembers(SiteMembersNonGroupMembers):
         assert type(self.__members) == list
         return self.__members
 
-def get_group_users(context, groupId, excludeGroup = None):
+def get_group_users(context, groupId, excludeGroup = ''):
     '''Get the Members of a User Group
     
     Get the members of the user-group, identified by "groupId" who are
@@ -265,7 +267,7 @@ def get_group_users(context, groupId, excludeGroup = None):
     assert type(groupId) == str
     assert type(excludeGroup) == str
     
-    memberGroupId  = '%s_member' % groupId
+    memberGroupId  = member_id(groupId)
 
     site_root = context.site_root()
     assert site_root, 'No site_root'
@@ -274,8 +276,8 @@ def get_group_users(context, groupId, excludeGroup = None):
     memberGroup = acl_users.getGroupById(memberGroupId, [])
     users = [acl_users.getUser(uid) for uid in memberGroup.getUsers()]
 
-    if excludeGroup:
-        memberExcludeGroup = '%s_member' % excludeGroup
+    if excludeGroup != '':
+        memberExcludeGroup = member_id(excludeGroup)
         retval = []
         for u in users:
             if memberExcludeGroup not in u.getGroups():
@@ -284,6 +286,21 @@ def get_group_users(context, groupId, excludeGroup = None):
         retval = users
     assert type(retval) == list
     # --=mpj17=-- I should really check that I am actually returning users.
+    #assert reduce(lambda a, b: a and b, 
+    #              [ICustomUser.providedBy(u) for u in retval], True)
+    return retval
+
+#############
+# Utilities #
+#############
+
+def member_id(groupId):
+    assert type(groupId) == str
+    assert groupId != ''
+    
+    retval = '%s_member' % groupId
+    
+    assert type(retval) == str
     return retval
 
 def get_groups_on_site(site):
@@ -297,10 +314,40 @@ def get_groups_on_site(site):
     return retval
 
 def user_member_of_group(user, group):
+    '''Is the user the member of the group
+    
+    ARGUMENTS
+        "user":  A Custom User.
+        "group": A GroupServer group-folder.
+        
+    RETURNS
+        True if the user is the member of the group. False otherwise.
+    '''
+    assert ICustomUser.providedBy(user), '%s is not a user' % user
+    assert IGSGroupFolder.providedBy(group), '%s is not a group' % group
+    
     retval = 'GroupMember' in user.getRolesInContext(group)
+    
+    # Thundering great sanity check
+    memberGroup = member_id(group.getId())
+    userGroups = user.getGroups()
+    if retval and (memberGroup not in userGroups):
+        m = u'(%s) has the GroupMember role for (%s) but is not in  %s'%\
+          (user.getId(), group.getId(), memberGroup)
+        log.error(m)
+    elif not(retval) and (memberGroup in userGroups):
+        m = u'(%s) is in %s, but does not have the GroupMember role in (%s)'%\
+          (user.getId(), memberGroup, group.getId())
+        log.error(m)
+        
     assert type(retval) == bool
     return retval
-    
+
+def user_member_of_site(user, site):
+    retval = 'DivisionMember' in user.getRolesInContext(site)
+    assert type(retval) == bool
+    return retval
+
 def user_admin_of_group(user, group):
     retval = (user_group_admin_of_group(user, group) or 
               user_division_admin_of_group(user, group))
@@ -316,4 +363,51 @@ def user_division_admin_of_group(user, group):
     retval = ('DivisionAdmin' in user.getRolesInContext(group))
     assert type(retval) == bool
     return retval
+
+def join_group(user, groupInfo):
+    '''Join the user to a group
+    
+    DESCRIPTION
+      Joins the user to a group, and the site the group is in 
+      (if necessary).
+      
+    ARGUMENTS
+      "user":       The CustomUser that is joined to the group.
+      "groupInfo":  The group that the user is joined to.
+      
+    RETURNS
+      None.
+      
+    SIDE EFFECTS
+      The user is a member of the group, and a member of the site that the
+      group belongs to.
+    '''
+    assert ICustomUser.providedBy(user), '%s is not a user' % user
+    assert IGSGroupInfo.providedBy(groupInfo), '%s is not a GroupInfo' %\
+      groupInfo
+    assert not(user_member_of_group(user, groupInfo.groupObj)), \
+      'User %s (%s) already in %s (%s)' % \
+      (fn, uid, groupInfo.name, groupInfo.name, groupInfo.id)
+    
+    siteInfo = groupInfo.siteInfo
+    fn = user.getProperty('fn', '')
+    uid = user.getId()
+
+    m = u'join_group: adding the user %s (%s) to the group %s (%s) '\
+        u'on %s (%s)' % \
+        (fn,                   uid, 
+         groupInfo.get_name(), groupInfo.get_id(),
+         siteInfo.get_name(), siteInfo.get_id())
+    log.info(m)
+    user.add_groupWithNotification(member_id(groupInfo.id))
+
+    if not(user_member_of_site(user, siteInfo.siteObj)):
+        m = u'join_group: the user %s (%s) is not a '\
+            u' member of the site %s (%s)' % \
+              (fn, uid, siteInfo.get_name(), siteInfo.get_id())
+        log.info(m)
+        user.add_groupWithNotification(member_id(siteInfo.id))
+
+    assert user_member_of_group(user, groupInfo.groupObj)
+    assert user_member_of_site(user, siteInfo.siteObj)
 

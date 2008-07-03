@@ -3,6 +3,7 @@ from Products.Five import BrowserView
 from zope.component import createObject
 from Products.CustomUserFolder.userinfo import GSUserInfo
 from queries import GroupMemberQuery
+from groupmembership import join_group
 
 import logging
 log = logging.getLogger('GSGroupMember')
@@ -89,7 +90,7 @@ class GSInviationsRespond(BrowserView):
                   am, self.siteInfo.name, self.siteInfo.id)
                 log.info(lm)
 
-                self.accept_invitations(accepted)
+                self.accept_invitations(acceptedGroups)
                 
                 acceptedLinks = ['<a href="%s">%s</a>' % (g.url, g.name)
                   for g in acceptedGroups]
@@ -151,14 +152,14 @@ class GSInviationsRespond(BrowserView):
         assert type(result['form']) == dict
         return result
 
-    def accept_invitations(self, groupIds):
+    def accept_invitations(self, groups):
         '''Accept the invitations to the groups
         
         DESCRIPTION
           Accept the invitations to a list of groups, joining the groups.
             
         ARGUMENTS
-          "groupIds": A list of group-identifiers
+          "groupIds": A list of groups
             
         RETURNS
           None
@@ -168,15 +169,16 @@ class GSInviationsRespond(BrowserView):
           invitations are marked as accepted, and the current date is
           put down as the response-date.
         '''
-        assert type(groupIds) == list
+        assert type(groups) == list
         
         inviteIds = [i['group_id'] for i in self.currentInvitations]
         accept_invite = self.groupMemberQuery.accept_invitation
-        for gid in groupIds:
-            assert gid in inviteIds, 'Not invited to %s' % gid
-            memberGroup = '%s_member' % gid
-            self.context.add_groupWithNotification(memberGroup)
-            accept_invite(self.siteInfo.id, gid, self.userInfo.id)
+        for groupInfo in groups:
+            assert groupInfo.id in inviteIds, \
+              'Not invited to join %s' % groupInfo.id
+            join_group(self.context, groupInfo)
+            self.groupMemberQuery.accept_invitation(self.siteInfo.id, 
+                  groupInfo.id, self.userInfo.id)
 
     def decline_invitations(self, groupIds):
         '''

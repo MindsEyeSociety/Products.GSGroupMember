@@ -17,6 +17,11 @@
   <interface 
     interface=".invitedgroupmember.IGSInvitedGroupMember" />
 
+  <!--Vocabularies-->
+  <vocabulary 
+    name="JoinableGroups"
+    factory=".groupmembership.JoinableGroupsForSite"/>
+
   <vocabulary 
     name="groupserver.InvitationGroups"
     factory=".groupmembership.InvitationGroupsForSite"/>
