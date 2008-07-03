@@ -177,8 +177,9 @@ class GSInviationsRespond(BrowserView):
             assert groupInfo.id in inviteIds, \
               'Not invited to join %s' % groupInfo.id
             join_group(self.context, groupInfo)
-            self.groupMemberQuery.accept_invitation(self.siteInfo.id, 
-                  groupInfo.id, self.userInfo.id)
+            self.notifiy_admin_accept(groupInfo)
+            accept_invite.accept_invitation(self.siteInfo.id, groupInfo.id,
+                                            self.userInfo.id)
 
     def decline_invitations(self, groupIds):
         '''
@@ -194,5 +195,32 @@ class GSInviationsRespond(BrowserView):
         di = self.groupMemberQuery.decline_invitation
         for gid in groupIds:
             assert gid in inviteIds, 'Not invited to %s' % gid
+            self.notifiy_admin_decline(groupInfo)
             di(self.siteInfo.id, gid, self.userInfo.id)
+
+    def notifiy_admin_accept(self, groupInfo):
+        self.notify_admin(groupInfo, 'invite_join_group_accepted')
+        
+    def notifiy_admin_decline(self, groupInfo):
+        self.notify_admin(groupInfo, 'invite_join_group_declined')
+
+    def notifiy_admin(self, groupInfo, notificationId):
+        invites = [i for i in self.currentInvitations
+                   if i['group_id'] == groupInfo.id]
+        seenAdmins = []
+        for invite in invites:
+            adminInfo = createObject('groupserver.UserFromId', 
+                                     self.context, i['inviting_user_id'])
+            if adminInfo.id not in seenAdmins:
+                seenAdmins.append(adminInfo.id)
+                    n_dict = {
+                        'adminFn':   adminInfo.name,
+                        'userFn':    self.userInfo.name,
+                        'groupName': groupInfo.name,
+                        'groupURL':  groupInfo.url,
+                        'siteName':  self.siteInfo.name
+                    }
+                    adminInfo.user.send_notification(notificationId, 
+                                                     'default', 
+                                                     n_dict=n_dict)
 

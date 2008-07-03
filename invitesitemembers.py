@@ -15,7 +15,7 @@ import AccessControl
 from Products.CustomUserFolder.interfaces import ICustomUser, IGSUserInfo
 from Products.GSProfile.edit_profile import multi_check_box_widget
 from interfaces import IGSInviteSiteMembers
-from utils import invite_id
+from groupmembership import invite_to_groups
 
 import logging
 log = logging.getLogger('GSInviteSiteMembersForm')
