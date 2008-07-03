@@ -9,8 +9,7 @@ from Products.CustomUserFolder.interfaces import ICustomUser, IGSUserInfo
 from Products.GSProfile.edit_profile import multi_check_box_widget
 
 from interfaces import IGSInvitationGroups
-from queries import GroupMemberQuery
-from utils import invite_id
+from groupmembership import invite_to_groups
 
 import logging
 log = logging.getLogger('GSInviteUserForm')
@@ -28,10 +27,6 @@ class InviteUserForm(PageForm):
         self.groupsInfo = createObject('groupserver.GroupsInfo', context)
         self.userInfo = IGSUserInfo(context)
 
-        da = self.context.zsqlalchemy 
-        assert da, 'No data-adaptor found'
-        self.groupMemberQuery = GroupMemberQuery(da)
-
         self.form_fields['invitation_groups'].custom_widget =\
           multi_check_box_widget
         
@@ -42,51 +37,22 @@ class InviteUserForm(PageForm):
           self.context, viewingUser.getId())
 
         self.status = u''
-        groupNames = []
-        for gid in data['invitation_groups']:
-            groupInfo = createObject('groupserver.GroupInfo', 
-              self.groupsInfo.groupsObj, gid)
-              
-            inviteId = invite_id(self.siteInfo.id, groupInfo.id, 
-                                 self.userInfo.id, viewingUserInfo.id)
+        
+        gso = self.groupsInfo.groupsObj
+        groups = [createObject('groupserver.GroupInfo', gso, gid) 
+                  for gid in data['invitation_groups']]
+        invite_to_groups(self.userInfo, viewingUserInfo, groups)
 
-            self.groupMemberQuery.add_invitation(inviteId, 
-              self.siteInfo.id, gid, self.userInfo.id, 
-              viewingUserInfo.id)
-
-            m = u'%s (%s) inviting %s (%s) to join %s (%s) on %s (%s) with id %s'%\
-              (viewingUserInfo.name, viewingUserInfo.id,
-               self.userInfo.name, self.userInfo.id,
-               groupInfo.name, groupInfo.id,
-               self.siteInfo.name, self.siteInfo.id,
-               inviteId)
-            log.info(m)
-
-            msg = u'<li><a class="group" href="%s">%s</a></li>' %\
-              (groupInfo.url, groupInfo.name)
-            self.status = '%s\n%s' % (self.status, msg)
-            
-            groupNames.append(groupInfo.name)
-
-        if len(groupNames) > 1:
-              c = u', '.join(groupNames[:-1])
-              g = u' and '.join((c, groupNames[-1]))
+        gn = ['<a href="%s">%s</a>' %(g.url, g.name) for g in groups]
+        if len(gn) > 1:
+              c = u', '.join(gn[:-1])
+              g = u' and '.join((c, gn[-1]))
         else:
-              g = groupNames[0]
-        responseURL = '%s/r/group_invitation/%s' % (self.siteInfo.url, 
-                                                    inviteId)
-        n_dict={'userFn': self.userInfo.name,
-                'invitingUserFn': viewingUserInfo.name,
-                'siteName': self.siteInfo.name,
-                'siteURL': self.siteInfo.url,
-                'groupName': g,
-                'responseURL': responseURL}
-        self.context.send_notification('invite_join_group', 'default',
-          n_dict=n_dict)
-
+              g = gn[0]
+            
         self.status = u'<p>Invited <a class="fn" href="%s">%s</a> to '\
-          u'join</p><ul>%s</ul>' %\
-            (self.userInfo.url, self.userInfo.name, self.status)
+          u'join %s</p>' %\
+            (self.userInfo.url, self.userInfo.name, g)
         assert type(self.status) == unicode
         
     def handle_invite_action_failure(self, action, data, errors):

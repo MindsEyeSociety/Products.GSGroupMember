@@ -15,7 +15,6 @@ import AccessControl
 from Products.CustomUserFolder.interfaces import ICustomUser, IGSUserInfo
 from Products.GSProfile.edit_profile import multi_check_box_widget
 from interfaces import IGSInviteSiteMembers
-from queries import GroupMemberQuery
 from utils import invite_id
 
 import logging
@@ -34,10 +33,6 @@ class GSInviteSiteMembersForm(PageForm):
         
         self.siteInfo = createObject('groupserver.SiteInfo', context)
         self.groupInfo= createObject('groupserver.GroupInfo', context)
-        
-        da = self.context.zsqlalchemy 
-        assert da, 'No data-adaptor found'
-        self.groupMemberQuery = GroupMemberQuery(da)
 
         self.form_fields['site_members'].custom_widget = \
           multi_check_box_widget
@@ -57,32 +52,7 @@ class GSInviteSiteMembersForm(PageForm):
             userInfo = createObject('groupserver.UserFromId',
                                     self.context, userId)
 
-            inviteId = invite_id(self.siteInfo.id, self.groupInfo.id,
-                                 userInfo.id, viewingUserInfo.id)
-
-            self.groupMemberQuery.add_invitation(inviteId, 
-              self.siteInfo.id, self.groupInfo.id, userInfo.id, 
-              viewingUserInfo.id)
-              
-            responseURL = '%s/r/group_invitation/%s' % (self.siteInfo.url, 
-                                                        inviteId)
-            n_dict={'userFn': userInfo.name,
-                    'invitingUserFn': viewingUserInfo.name,
-                    'siteName': self.siteInfo.name,
-                    'siteURL': self.siteInfo.url,
-                    'groupName': self.groupInfo.name,
-                    'responseURL': responseURL}
-            userInfo.user.send_notification('invite_join_group', 'default',
-              n_dict=n_dict)
-
-            m = u'%s (%s) inviting %s (%s) to join %s (%s) on %s (%s) with id %s'%\
-              (viewingUserInfo.name, viewingUserInfo.id,
-               userInfo.name, userInfo.id,
-               self.groupInfo.name, self.groupInfo.id,
-               self.siteInfo.name, self.siteInfo.id,
-               inviteId)
-            log.info(m)
-
+            invite_to_groups(userInfo, viewingUserInfo, self.groupInfo)
             msg = u'<li><a class="fn" href="%s">%s</a></li>' %\
               (userInfo.url, userInfo.name)
             self.status = '%s\n%s' % (self.status, msg)
@@ -100,6 +70,4 @@ class GSInviteSiteMembersForm(PageForm):
             self.status = u'<p>There is an error:</p>'
         else:
             self.status = u'<p>There are errors:</p>'
-
-
 

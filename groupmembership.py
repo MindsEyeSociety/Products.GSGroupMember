@@ -303,6 +303,20 @@ def member_id(groupId):
     assert type(retval) == str
     return retval
 
+def groupInfo_to_group(g):
+    if IGSGroupInfo.providedBy(g):
+        group = g.groupObj
+    else:
+        group = g
+    return group    
+
+def userInfo_to_user(u):
+    if IGSUserInfo.providedBy(u):
+        user = u.user
+    else:
+        user = u
+    return user
+
 def get_groups_on_site(site):
     retval = []
     assert hasattr(site, 'groups'), u'No groups on the site %s' % site.getId()
@@ -313,7 +327,7 @@ def get_groups_on_site(site):
     assert type(retval) == list
     return retval
 
-def user_member_of_group(user, group):
+def user_member_of_group(u, g):
     '''Is the user the member of the group
     
     ARGUMENTS
@@ -323,8 +337,8 @@ def user_member_of_group(user, group):
     RETURNS
         True if the user is the member of the group. False otherwise.
     '''
-    assert ICustomUser.providedBy(user), '%s is not a user' % user
-    assert IGSGroupFolder.providedBy(group), '%s is not a group' % group
+    group = groupInfo_to_group(g)
+    user = userInfo_to_user(u)
     
     retval = 'GroupMember' in user.getRolesInContext(group)
     
@@ -342,24 +356,31 @@ def user_member_of_group(user, group):
         
     assert type(retval) == bool
     return retval
-
+    return user
+    
 def user_member_of_site(user, site):
     retval = 'DivisionMember' in user.getRolesInContext(site)
     assert type(retval) == bool
     return retval
 
-def user_admin_of_group(user, group):
+def user_admin_of_group(u, g):
+    group = groupInfo_to_group(g)
+    user = userInfo_to_user(u)
     retval = (user_group_admin_of_group(user, group) or 
               user_division_admin_of_group(user, group))
     assert type(retval) == bool
     return retval
 
-def user_group_admin_of_group(user, group):
+def user_group_admin_of_group(u, g):
+    group = groupInfo_to_group(g)
+    user = userInfo_to_user(u)
     retval = ('GroupAdmin' in user.getRolesInContext(group))
     assert type(retval) == bool
     return retval
 
-def user_division_admin_of_group(user, group):
+def user_division_admin_of_group(u, g):
+    group = groupInfo_to_group(g)
+    user = userInfo_to_user(u)
     retval = ('DivisionAdmin' in user.getRolesInContext(group))
     assert type(retval) == bool
     return retval
@@ -410,4 +431,80 @@ def join_group(user, groupInfo):
 
     assert user_member_of_group(user, groupInfo.groupObj)
     assert user_member_of_site(user, siteInfo.siteObj)
+
+def invite_to_groups(userInfo, invitingUserInfo, groups):
+    '''Invite the user to join a group
+    
+    DESCRIPTION
+      Invites an existing user to join a group.
+      
+    ARGUMENTS
+      "user":       The CustomUser that is invited to join the group.
+      "invitingUserInfo": The user that isi inviting the other to join the 
+                          group.
+      "groups":  The group (or groups) that the user is joined to.
+      
+    RETURNS
+      None.
+      
+    SIDE EFFECTS
+      An invitation is added to the database, and a notification is
+      sent out to the user.
+    '''
+    assert IGSUserInfo.providedBy(userInfo), '%s is not a IGSUserInfo' %\
+      userInfo
+    assert IGSUserInfo.providedBy(invitingUserInfo),\
+      '%s is not a IGSUserInfo' % userInfo
+
+    # --=mpj17=-- Haskell an his polymorphism can get knotted
+    if type(groups) == list:
+        groupInfos = groups
+    else:
+        groupInfos = [groups]
+        
+    assert groupInfos != []
+    
+    siteInfo = groupInfo[0].siteInfo
+    da = siteInfo.siteObj.zsqlalchemy 
+    assert da, 'No data-adaptor found'
+    groupMemberQuery = GroupMemberQuery(da)
+
+    groupNames = []    
+    for groupInfo in groupInfos:
+        assert IGSGroupInfo.providedBy(groupInfo)
+        assert not(user_member_of_group(user.user, groupInfo.groupObj)), \
+          'User %s (%s) already in %s (%s)' % \
+        (userInfo.name, userInfo.id, groupInfo.name, groupInfo.name)
+    
+        inviteId = invite_id(siteInfo.id, groupInfo.id, 
+                              userInfo.id, invitingUserInfo.id)
+
+        m = u'invite_to_group: %s (%s) inviting %s (%s) to join %s (%s) on '\
+          u'%s (%s) with id %s'%\
+          (viewingUserInfo.name, viewingUserInfo.id,
+            userInfo.name, userInfo.id,
+            groupInfo.name, groupInfo.id,
+            siteInfo.name, siteInfo.id,
+            inviteId)
+        log.info(m)
+        groupMemberQuery.add_invitation(inviteId, siteInfo.id, groupInfo.id, 
+            userInfo.id, viewingUserInfo.id)
+
+        groupNames.append(groupInfo.name)
+
+        if len(groupNames) > 1:
+              c = u', '.join(groupNames[:-1])
+              g = u' and '.join((c, groupNames[-1]))
+        else:
+              g = groupNames[0]
+    
+    responseURL = '%s/r/group_invitation/%s' % (siteInfo.url, inviteId)
+    n_dict={'userFn': userInfo.name,
+            'invitingUserFn': viewingUserInfo.name,
+            'siteName': siteInfo.name,
+            'siteURL': siteInfo.url,
+            'groupName': g,
+            'responseURL': responseURL}
+    userInfo.user.send_notification('invite_join_group', 'default', 
+        n_dict=n_dict)
 
