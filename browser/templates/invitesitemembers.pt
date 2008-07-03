@@ -34,11 +34,18 @@
         
         <h1 tal:content="view/label">Invite Site Members</h1>
         <p>
-          You know. Stuff.
+          To invite existing site members to join
+          <span class="group" 
+            tal:content="view/groupInfo/name">this group</span>,
+          select them from the list below and click the
+          <samp class="button" 
+            tal:define="action python:[a for a in view.actions][0].label"
+            tal:content="action">Big R</samp> 
+          button.
         </p>
-        <tal:block define="widgets view/widgets">
+        <div id="site-members" tal:define="widgets view/widgets">
           <tal:block replace="structure provider:groupserver.FormWidgets"/>
-        </tal:block>
+        </div>
         <div class="buttons" tal:condition="view/availableActions">
           <tal:block repeat="action view/actions">
             <div class="formelementbutton">

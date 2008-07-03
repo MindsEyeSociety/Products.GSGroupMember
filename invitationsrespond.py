@@ -122,7 +122,7 @@ class GSInviationsRespond(BrowserView):
                   dm, self.siteInfo.name, self.siteInfo.id)
                 log.info(lm)
                 
-                self.decline_invitations(declined)
+                self.decline_invitations(declinedGroups)
                 
                 declinedLinks = ['<a href="%s">%s</a>' % (g.url, g.name)
                   for g in declinedGroups]
@@ -178,10 +178,9 @@ class GSInviationsRespond(BrowserView):
               'Not invited to join %s' % groupInfo.id
             join_group(self.context, groupInfo)
             self.notifiy_admin_accept(groupInfo)
-            accept_invite.accept_invitation(self.siteInfo.id, groupInfo.id,
-                                            self.userInfo.id)
+            accept_invite(self.siteInfo.id, groupInfo.id, self.userInfo.id)
 
-    def decline_invitations(self, groupIds):
+    def decline_invitations(self, groups):
         '''
         DESCRIPTION
         
@@ -193,16 +192,17 @@ class GSInviationsRespond(BrowserView):
         '''
         inviteIds = [i['group_id'] for i in self.currentInvitations]
         di = self.groupMemberQuery.decline_invitation
-        for gid in groupIds:
-            assert gid in inviteIds, 'Not invited to %s' % gid
+        for groupInfo in groups:
+            assert groupInfo.id in inviteIds, \
+              'Not invited to join %s' % groupInfo.id
             self.notifiy_admin_decline(groupInfo)
-            di(self.siteInfo.id, gid, self.userInfo.id)
+            di(self.siteInfo.id, groupInfo.id, self.userInfo.id)
 
     def notifiy_admin_accept(self, groupInfo):
-        self.notify_admin(groupInfo, 'invite_join_group_accepted')
+        self.notifiy_admin(groupInfo, 'invite_join_group_accepted')
         
     def notifiy_admin_decline(self, groupInfo):
-        self.notify_admin(groupInfo, 'invite_join_group_declined')
+        self.notifiy_admin(groupInfo, 'invite_join_group_declined')
 
     def notifiy_admin(self, groupInfo, notificationId):
         invites = [i for i in self.currentInvitations
@@ -213,14 +213,14 @@ class GSInviationsRespond(BrowserView):
                                      self.context, i['inviting_user_id'])
             if adminInfo.id not in seenAdmins:
                 seenAdmins.append(adminInfo.id)
-                    n_dict = {
-                        'adminFn':   adminInfo.name,
-                        'userFn':    self.userInfo.name,
-                        'groupName': groupInfo.name,
-                        'groupURL':  groupInfo.url,
-                        'siteName':  self.siteInfo.name
-                    }
-                    adminInfo.user.send_notification(notificationId, 
-                                                     'default', 
-                                                     n_dict=n_dict)
+                n_dict = {
+                    'adminFn':   adminInfo.name,
+                    'userFn':    self.userInfo.name,
+                    'groupName': groupInfo.name,
+                    'groupURL':  groupInfo.url,
+                    'siteName':  self.siteInfo.name
+                }
+                adminInfo.user.send_notification(notificationId, 
+                                                  'default', 
+                                                  n_dict=n_dict)
 
