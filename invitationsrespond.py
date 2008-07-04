@@ -2,6 +2,7 @@
 from Products.Five import BrowserView
 from zope.component import createObject
 from Products.CustomUserFolder.userinfo import GSUserInfo
+from utils import inform_ptn_coach_of_join
 from queries import GroupMemberQuery
 from groupmembership import join_group
 
@@ -200,6 +201,12 @@ class GSInviationsRespond(BrowserView):
 
     def notifiy_admin_accept(self, groupInfo):
         self.notifiy_admin(groupInfo, 'invite_join_group_accepted')
+
+        ptnCoachId = groupInfo.get_property('ptn_coach_id', '')
+        if ptnCoachId:
+            ptnCoachInfo = createObject('groupserver.UserFromId', 
+                                        self.context, ptnCoachId)
+            inform_ptn_coach_of_join(ptnCoachInfo, self.userInfo, groupInfo)
         
     def notifiy_admin_decline(self, groupInfo):
         self.notifiy_admin(groupInfo, 'invite_join_group_declined')
@@ -207,19 +214,22 @@ class GSInviationsRespond(BrowserView):
     def notifiy_admin(self, groupInfo, notificationId):
         invites = [i for i in self.currentInvitations
                    if i['group_id'] == groupInfo.id]
+
+        n_dict = {
+            'adminFn':   '',
+            'userFn':    self.userInfo.name,
+            'groupName': groupInfo.name,
+            'groupURL':  groupInfo.url,
+            'siteName':  self.siteInfo.name
+        }
+
         seenAdmins = []
         for invite in invites:
             adminInfo = createObject('groupserver.UserFromId', 
                                      self.context, i['inviting_user_id'])
             if adminInfo.id not in seenAdmins:
                 seenAdmins.append(adminInfo.id)
-                n_dict = {
-                    'adminFn':   adminInfo.name,
-                    'userFn':    self.userInfo.name,
-                    'groupName': groupInfo.name,
-                    'groupURL':  groupInfo.url,
-                    'siteName':  self.siteInfo.name
-                }
+                n_dict['adminFn'] =   adminInfo.name
                 adminInfo.user.send_notification(notificationId, 
                                                   'default', 
                                                   n_dict=n_dict)
