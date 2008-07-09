@@ -11,7 +11,9 @@ class GroupMemberQuery(object):
 
         engine = da.engine
         metadata = sa.BoundMetaData(engine)
-        self.userInvitationTable = sa.Table('user_invitation', metadata, 
+        self.userInvitationTable = sa.Table(
+          'user_group_member_invitation', 
+          metadata, 
           autoload=True)
 
     def add_invitation(self, invitiationId, siteId, groupId, userId, invtUsrId):

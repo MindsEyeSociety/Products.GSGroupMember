@@ -1,4 +1,4 @@
-CREATE TABLE user_invitation (
+CREATE TABLE user_group_member_invitation (
     INVITATION_ID     TEXT                        PRIMARY KEY,
     USER_ID           TEXT                        NOT NULL,
     INVITING_USER_ID  TEXT                        NOT NULL,
