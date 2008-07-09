@@ -118,6 +118,7 @@ class InvitationGroupsForSite(JoinableGroupsForSite):
         if self.__groups == None:
             self.__groups = [createObject('groupserver.GroupInfo', g)
                              for g in self.get_invitation_groups()]
+            self.__groups.sort(sort_by_name)
         assert type(self.__groups) == list
         return self.__groups
 
@@ -254,7 +255,7 @@ class InviteSiteMembersNonGroupMembers(SiteMembersNonGroupMembers):
                                             self.context, u.getId()) 
                              for u in users
                              if (c(sid, gid, u.getId())<=n)]
-            self.__members.sort(sort_by_fn)
+            self.__members.sort(sort_by_name)
         assert type(self.__members) == list
         return self.__members
 
@@ -319,9 +320,9 @@ def userInfo_to_user(u):
         user = u
     return user
 
-def sort_by_fn(a, b):
-    assert IGSUserInfo.providedBy(a)
-    assert IGSUserInfo.providedBy(b)
+def sort_by_name(a, b):
+    assert hasattr(a, 'name')
+    assert hasattr(b, 'name')
     
     if   (a.name < b.name):
         retval = -1
