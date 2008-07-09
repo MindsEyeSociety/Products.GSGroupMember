@@ -254,6 +254,7 @@ class InviteSiteMembersNonGroupMembers(SiteMembersNonGroupMembers):
                                             self.context, u.getId()) 
                              for u in users
                              if (c(sid, gid, u.getId())<=n)]
+            self.__members.sort(sort_by_fn)
         assert type(self.__members) == list
         return self.__members
 
@@ -317,6 +318,20 @@ def userInfo_to_user(u):
     else:
         user = u
     return user
+
+def sort_by_fn(a, b):
+    assert IGSUserInfo.providedBy(a)
+    assert IGSUserInfo.providedBy(b)
+    
+    if   (a.name < b.name):
+        retval = -1
+    elif (a.name == b.name):
+        retval =  0
+    else:#a.name > b.name
+        retval =  1
+        
+    assert type(retval) == int
+    return retval
 
 def get_groups_on_site(site):
     retval = []
