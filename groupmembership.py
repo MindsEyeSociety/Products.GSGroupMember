@@ -11,7 +11,7 @@ import AccessControl
 from Products.CustomUserFolder.interfaces import IGSUserInfo, ICustomUser
 from Products.GSContent.interfaces import IGSGroupInfo
 from Products.XWFChat.interfaces import IGSGroupFolder
-from Products.XWFCore.XWFUtils import getOption
+from Products.XWFCore.XWFUtils import getOption, sort_by_name
 from queries import GroupMemberQuery
 from utils import *
 
@@ -147,6 +147,10 @@ class InvitationGroupsForSite(JoinableGroupsForSite):
 
         assert type(retval) == list
         return retval
+
+###########
+# Members #
+###########
 
 class SiteMembers(object):
     implements(IVocabulary, IVocabularyTokenized)
@@ -319,20 +323,6 @@ def userInfo_to_user(u):
     else:
         user = u
     return user
-
-def sort_by_name(a, b):
-    assert hasattr(a, 'name')
-    assert hasattr(b, 'name')
-    
-    if   (a.name < b.name):
-        retval = -1
-    elif (a.name == b.name):
-        retval =  0
-    else:#a.name > b.name
-        retval =  1
-        
-    assert type(retval) == int
-    return retval
 
 def get_groups_on_site(site):
     retval = []
