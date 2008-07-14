@@ -297,6 +297,16 @@ def get_group_users(context, groupId, excludeGroup = ''):
     #              [ICustomUser.providedBy(u) for u in retval], True)
     return retval
 
+def get_unverified_group_users(context, groupId, excludeGroup = ''):
+    da = context.zsqlalchemy 
+    assert da, 'No data-adaptor found'
+    groupMemberQuery = GroupMemberQuery(da)
+
+    group_users = get_group_users(context, groupId, excludeGroup)
+
+    return groupMemberQuery.get_unverified_members(group_users)
+
+
 #############
 # Utilities #
 #############

@@ -15,6 +15,10 @@ class GroupMemberQuery(object):
           'user_group_member_invitation', 
           metadata, 
           autoload=True)
+        self.userEmailTable = sa.Table(
+          'user_email', 
+          metadata, 
+          autoload=True)
 
     def add_invitation(self, invitiationId, siteId, groupId, userId, invtUsrId):
         assert invitiationId, 'invitiationId is %s' % invitiationId
@@ -172,5 +176,24 @@ class GroupMemberQuery(object):
         if retval == None:
             retval = 0
         assert retval >= 0
+        return retval
+
+    def get_unverified_members(self, group_users):
+        uet = self.userEmailTable
+        
+        uid_dict = {}
+        for user in group_users:
+            uid_dict[user.getId()] = user
+        
+        s = sa.select([uet.c.user_id])
+        inStatement = uet.c.user_id.in_(*uid_dict.keys())
+        s.append_whereclause(inStatement)
+        s.append_whereclause(uet.c.verified_date == None)
+
+        r = s.execute()
+        retval = []
+        for row in r:
+            retval.append(uid_dict[row['user_id']])
+            
         return retval
 
