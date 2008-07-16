@@ -344,6 +344,8 @@ def get_groups_on_site(site):
     assert type(retval) == list
     return retval
 
+# Membership Checks
+
 def user_member_of_group(u, g):
     '''Is the user the member of the group
     
@@ -399,6 +401,16 @@ def user_division_admin_of_group(u, g):
     group = groupInfo_to_group(g)
     user = userInfo_to_user(u)
     retval = ('DivisionAdmin' in user.getRolesInContext(group))
+    assert type(retval) == bool
+    return retval
+
+def user_participation_coach_of_group(userInfo, groupInfo):
+    assert IGSUserInfo.providedBy(userInfo), '%s is not a IGSUserInfo' %\
+      userInfo
+    assert IGSGroupInfo.providedBy(groupInfo)
+    ptnCoachId = groupInfo.get_property('ptn_coach_id', '')
+    retval = user_member_of_group(userInfo, groupInfo)\
+      and (userInfo.id == ptnCoachId)
     assert type(retval) == bool
     return retval
 
