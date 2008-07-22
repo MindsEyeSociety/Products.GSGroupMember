@@ -20,9 +20,12 @@ class GSGroupMemberPostingInfo(object):
           '%s is not a group' % group
         #assert ICustomUser.providedBy(user), '%s is not a user' % user
         
-        site_root = group.aq_parent.aq_parent.aq_parent.aq_parent.aq_parent
-        self.site_root = site_root
-        
+        # --=mpj17=-- I shit you not\ldots
+        n = group
+        while not(hasattr(n, 'site_root')):
+            n = n.aq_parent
+        self.site_root = site_root = n
+
         mailingListManager = self.mailingListManager = site_root.ListManager
         mailingList = self.mailingList =\
           mailingListManager.get_list(group.getId())
