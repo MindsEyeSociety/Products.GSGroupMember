@@ -1,0 +1,30 @@
+<span xmlns:metal="http://xml.zope.org/namespaces/metal" 
+  xmlns:tal="http://xml.zope.org/namespaces/tal"
+  class="canPost">
+  <span tal:condition="python:statusNum == 0">You can post</span>
+  <span tal:condition="python:statusNum &amp; 1" class="not-a-member">
+    You cannot post because you are not a member of this group.
+  </span>
+  <span tal:condition="python:statusNum &amp; 2" class="not-logged-in">
+    You cannot post because posting is restricted to group members only.
+  </span>
+  <span tal:condition="python:statusNum &amp; 4" class="no-preferred-email">
+    You cannot post because you have no default email address.
+  </span>
+  <span tal:condition="python:statusNum &amp; 8" class="not-a-member">
+    You cannot post because you are a member of this group.
+  </span>
+  <span tal:condition="python:statusNum &amp; 16" class="not-a-posting-member">
+    You cannot post because you are not a posting member.
+  </span>
+  <span tal:condition="python:statusNum &amp; 13" class="exceeded-posting-rate">
+    You cannot post because you have exceeded the posting rate.
+  </span>
+  <span tal:condition="python:statusNum &amp; 64" class="blocked-from-posting">
+    You cannot post because you have been blocked from posting.
+  </span>
+  <span tal:condition="python:statusNum &amp; 128" class="profile-attributes">
+    You cannot post because you have not set some required profile 
+    attributes.
+  </span>
+</span>
