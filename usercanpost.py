@@ -120,7 +120,7 @@ class GSGroupMemberPostingInfo(object):
             self.__statusNum = self.__statusNum + 2
         else:
             self.__status = u'logged in'
-            self.__statusNum = self.__statusNum + 0
+            self.__statusNum = 0
             
         assert type(self.__status) == unicode
         assert type(retval) == bool
@@ -257,7 +257,7 @@ class GSGroupMemberPostingInfo(object):
             if not(self.userInfo.get_property(p, None)):
               retval = False
               field = [a for n, a in self.get_site_properties() if n == p][0]
-              self.__status = u'the required property %s is not set' %\
+              self.__status = u'required attribute %s is not set' %\
                 field.title
               self.__statusNum = self.__statusNum + 128
               break

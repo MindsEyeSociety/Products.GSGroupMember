@@ -34,6 +34,11 @@ class IGSUserCanPostContentProvider(IContentProvider):
         u"determined if the user could post.",
       required=False,
       default=0)
+      
+    status = Text(title=u"Posting Status",
+      description=u'The posting status of the user.',
+      required=False,
+      default=u"")
     
     pageTemplateFileName = Text(title=u"Page Template File Name",
       description=u'The name of the ZPT file that is used to render the '\

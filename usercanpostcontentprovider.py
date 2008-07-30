@@ -30,7 +30,7 @@ class GSUserCanPostContentProvider(object):
 
         self.siteInfo = createObject('groupserver.SiteInfo', 
           self.context)
-        self.groupsInfo = createObject('groupserver.GroupsInfo', 
+        self.groupInfo = createObject('groupserver.GroupInfo', 
           self.context)
         self.userInfo = createObject('groupserver.LoggedInUser', 
           self.context)
