@@ -77,5 +77,14 @@
       name="invite-user-no-id"
       template="browser/templates/invite_user_no_id.pt" />
   </browser:pages>
+
+  <interface 
+    interface=".interfaces.IGSUserCanPostContentProvider"
+    type="zope.contentprovider.interfaces.ITALNamespaceData"/>
+  <!--adapter
+    factory=".usercanpostcontentprovider.IGSUserCanPostContentProvider"
+    provides="zope.contentprovider.interfaces.IContentProvider"
+    name="groupserver.UserCanPost"/-->
+
 </configure>
 

@@ -26,4 +26,18 @@ class IGSInviteSiteMembers(Interface):
       unique=True,
       required=True)
 
+class IGSUserCanPostContentProvider(IContentProvider):
+    """The content provider for the context menu"""
+    
+    statusNum = Int(title=u"Status Number",
+      description=u"The status number returned by the code that "\
+        u"determined if the user could post.",
+      required=False,
+      default=0)
+    
+    pageTemplateFileName = Text(title=u"Page Template File Name",
+      description=u'The name of the ZPT file that is used to render the '\
+        u'status message.',
+      required=False,
+      default=u"browser/templates/canpost.pt")
 

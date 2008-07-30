@@ -1,3 +1,4 @@
+import usercanpostcontentprovider
 from AccessControl import ModuleSecurityInfo
 from AccessControl import allow_class
 
