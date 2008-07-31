@@ -8,10 +8,19 @@
     <!--unclosed?-->
   </span>
   <span tal:condition="python:statusNum &amp; 2" class="not-logged-in">
-    You cannot post because you are not a logged in.
+    You cannot post because you are not logged in.
+    If you are a member,
     <a href="#"
-      tal:attributes="href view/loginUrl">Login</a> to post to this topic.
+      tal:attributes="href view/loginUrl">login</a> to post to this topic.
     <!-- public?-->
+    <span tal:condition="python:view.joinability == 'anyone'">
+      Otherwise 
+      <a href="#"
+        tal:define="u view/request/URL; g view/groupInfo/id"
+        tal:attributes="href string:/request_registration.html?form.came_from=${u}&amp;form.groupId=${g}"
+        title="Sign up and join this group">sign up,</a>
+      become a member of this group, and post to this topic.
+    </span>
   </span>
   <span tal:condition="python:statusNum &amp; 4" class="no-preferred-email">
     You cannot post because you have no default email address.

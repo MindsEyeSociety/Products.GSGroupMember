@@ -21,11 +21,7 @@ class GSGroupMemberPostingInfo(object):
           '%s is not a group' % group
         #assert ICustomUser.providedBy(user), '%s is not a user' % user
         
-        # --=mpj17=-- I shit you not\ldots
-        n = group
-        while not(hasattr(n, 'site_root')):
-            n = n.aq_parent
-        self.site_root = site_root = n
+        self.site_root = site_root = group.site_root()
 
         mailingListManager = self.mailingListManager = site_root.ListManager
         mailingList = self.mailingList =\
@@ -151,7 +147,6 @@ class GSGroupMemberPostingInfo(object):
         retval = user_member_of_group(self.user, self.group)
         if retval:
             self.__status = u'a member'
-            self.__statusNum = self.__statusNum + 0
         else:
             self.__status = u'not a member'
             self.__statusNum = 8
@@ -172,7 +167,6 @@ class GSGroupMemberPostingInfo(object):
             retval = True
         if retval:
             self.__status = u'posting member'
-            self.__statusNum = self.__statusNum + 0
         else:
             self.__status = u'not a posting member'
             self.__statusNum = 16

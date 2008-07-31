@@ -79,7 +79,11 @@ class GSUserCanPostContentProvider(object):
         retval = '/login.html?came_from=%s' % self.request.URL
         assert retval
         return retval
-
+        
+    @property
+    def joinability(self):
+        return GSGroupJoining(self.groupInfo.groupObj).joinability()
+        
 zope.component.provideAdapter(GSUserCanPostContentProvider,
     provides=zope.contentprovider.interfaces.IContentProvider,
     name="groupserver.UserCanPost")
