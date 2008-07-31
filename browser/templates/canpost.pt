@@ -13,10 +13,30 @@
     You cannot post because you have no default email address.
   </span>
   <span tal:condition="python:statusNum &amp; 8" class="not-a-member">
-    You cannot post because you are a member of this group.
+    You cannot post because you are not a member of this group.
+    <span tal:condition="view/canJoin">
+      <a href="#" tal:attributes="href string:/Scripts/set/subscribe_group?division_id=${view/siteInfo/id}&amp;group_id=${view/groupInfo/id}">Join 
+        <span class="group"
+          tal:content="view/groupInfo/name">this group</span></a>
+      to post.
+    </span>
+    <span tal:condition="view/canInvite">
+      <a href="#"
+        tal:attributes="href string:${view/ptnCoach/url}">Contact the 
+        participation coach</a>
+      to join
+      <span class="group"
+        tal:content="view/groupInfo/name">this group</span>.
+    </span>
   </span>
   <span tal:condition="python:statusNum &amp; 16" class="not-a-posting-member">
     You cannot post because you are not a posting member.
+    <a href="#"
+      tal:attributes="href string:${view/ptnCoach/url}">Contact the 
+      participation coach</a>
+    to discuss why you are not a posting member of 
+    <span class="group"
+      tal:content="view/groupInfo/name">this group</span>.
   </span>
   <span tal:condition="python:statusNum &amp; 32" class="exceeded-posting-rate">
     You cannot post because you have exceeded the posting rate for

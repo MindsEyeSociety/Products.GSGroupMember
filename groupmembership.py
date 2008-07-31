@@ -24,11 +24,10 @@ class JoinableGroupsForSite(object):
     implements(IVocabulary, IVocabularyTokenized)
     __used_for__ = IEnumerableMapping
 
-    def __init__(self, context):
-        self.context = context
+    def __init__(self, user, context):
+        self.context = user
         self.userInfo = createObject('groupserver.UserFromId', 
-                                     context, context.getId())
-        self.__userId = context.getId()
+                                     context, user.getId())
         self.__groupsInfo = createObject('groupserver.GroupsInfo', context)
         self.siteInfo = createObject('groupserver.SiteInfo', context)
         
@@ -101,8 +100,8 @@ class InvitationGroupsForSite(JoinableGroupsForSite):
       ("AccessControl.getSecurityManager().getUser()") has administrator
       rights to and the user (context) has not been invited to too much.
     '''
-    def __init__(self, context):
-        JoinableGroupsForSite.__init__(self, context)
+    def __init__(self, user, context):
+        JoinableGroupsForSite.__init__(self, user, context)
         self.__groups = None
         
         da = self.context.zsqlalchemy 

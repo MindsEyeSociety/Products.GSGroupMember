@@ -5,6 +5,7 @@ import zope.viewlet.interfaces, zope.contentprovider.interfaces
 from Products.XWFCore import XWFUtils, ODict
 from Products.CustomUserFolder.interfaces import IGSUserInfo
 from interfaces import *
+from groupmembership import JoinableGroupsForSite, InvitationGroupsForSite
 
 import logging
 log = logging.getLogger('GSUserCanPostContentProvider')
@@ -32,6 +33,8 @@ class GSUserCanPostContentProvider(object):
           self.context)
         self.groupInfo = createObject('groupserver.GroupInfo', 
           self.context)
+        self.groupsInfo = createObject('groupserver.GroupsInfo', 
+          self.context)
         self.userInfo = createObject('groupserver.LoggedInUser', 
           self.context)
 
@@ -52,6 +55,21 @@ class GSUserCanPostContentProvider(object):
         retval = createObject('groupserver.UserFromId',
           self.context, ptnCoachId)
         return retval 
+
+    @property
+    def canJoin(self):
+        joinableGroups = JoinableGroupsForSite(self.userInfo.user,
+                                               self.groupInfo.groupObj)
+        retval = self.groupInfo.id in joinableGroups
+        assert type(retval) == bool
+        return retval
+        
+    def canInvite(self):
+        invitationGroups = InvitationGroupsForSite(self.userInfo.user,
+                                               self.groupInfo.groupObj)
+        retval = self.groupInfo.id in invitationGroups
+        assert type(retval) == bool
+        return retval
 
 zope.component.provideAdapter(GSUserCanPostContentProvider,
     provides=zope.contentprovider.interfaces.IContentProvider,
