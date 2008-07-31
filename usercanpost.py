@@ -10,8 +10,8 @@ from Products.XWFChat.interfaces import IGSGroupFolder
 from Products.GSContent.interfaces import IGSGroupInfo
 from Products.GSGroupMember.groupmembership import user_member_of_group,\
   user_participation_coach_of_group, user_admin_of_group 
-from Products.XWFCore.XWFUtils import munge_date
-from Products.XWFMailingListManager.queries import MessageQuery
+from Products.XWFCore.XWFUtils import munge_date, timedelta_to_string
+from Products.GSSearch.queries import MessageQuery
 from Products.GSProfile import interfaces as profileinterfaces
 
 class GSGroupMemberPostingInfo(object):
@@ -204,21 +204,40 @@ class GSGroupMemberPostingInfo(object):
             uid = self.userInfo.id
             limit = self.mailingList.getValueFor('senderlimit')
             interval = self.mailingList.getValueFor('senderinterval')
-            earlyDate = datetime.now(pytz.utc) - timedelta(seconds=interval)
+            td = timedelta(seconds=interval)
+            now = datetime.now(pytz.utc)
+            earlyDate = now - td
             count = self.messageQuery.num_posts_after_date(sid, gid, uid, 
                                                            earlyDate)
             if count >= limit:
                 # The user has made over the allowed number of posts in
                 # the interval
                 retval = True
-                self.__status = u'the posting limit has been exceeded'
-                self.__statusNum = self.__statusNum + 32
+                d = self.old_message_post_date()
+                canPostDate = d + td
+                self.__status = u'post again at %s &#8212; in %s' %\
+                  (munge_date(self.groupInfo.groupObj, canPostDate), 
+                   timedelta_to_string(canPostDate - now))
+                self.__statusNum = 32
             else:
                 retval = False
                 self.__status = u'under the posting limit'
                 self.__statusNum = self.__statusNum + 0
         assert type(self.__status) == unicode
         assert type(retval) == bool
+        return retval
+
+    def old_message_post_date(self):
+        sid = self.groupInfo.siteInfo.id
+        gid = self.groupInfo.id
+        uid = self.userInfo.id
+        limit = self.mailingList.getValueFor('senderlimit')
+        tokens = createObject('groupserver.SearchTextTokens', '')
+        posts = self.messageQuery.post_search_keyword(tokens, sid, [gid], 
+          [uid], 1, limit)
+        assert len(posts) == 1
+        retval = posts[0]['date']
+        assert isinstance(retval, datetime)
         return retval
 
     def user_blocked_from_posting(self):

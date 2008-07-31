@@ -19,18 +19,30 @@
     You cannot post because you are not a posting member.
   </span>
   <span tal:condition="python:statusNum &amp; 32" class="exceeded-posting-rate">
-    You cannot post because you have exceeded the posting rate.
+    You cannot post because you have exceeded the posting rate for
+    <span class="group"
+      tal:content="view/groupInfo/name">this group</span>.
+    You can <span tal:replace="structure status"/>.
   </span>
-  <span tal:condition="python:statusNum &amp; 64" class="blocked-from-posting">
+  <span tal:condition="python:statusNum &amp; 64" 
+    class="blocked-from-posting">
     You cannot post because you have been blocked from posting.
+    <a href="#"
+      tal:attributes="href string:${view/ptnCoach/url}">Contact the 
+      participation coach</a>
+    to discuss why you are blocked from posting to
+    <span class="group"
+      tal:content="view/groupInfo/name">this group</span>.
   </span>
-  <span tal:condition="python:statusNum &amp; 128" class="profile-attributes">
-    You cannot post because the <span tal:replace="status"/> 
+  <span tal:condition="python:statusNum &amp; 128"
+    class="profile-attributes">
+    You cannot post because the <span tal:replace="structure status"/> 
     on your profile.
     To post, go to 
     <a href="#"
-      tal:attributes="href string:${view/userInfo/url}/edit.html"
-        title string:Change the profile of ${view/userInfo/name}>your 
-      change profile page</a> and set the required profile attributes.
+      tal:attributes="href string:${view/userInfo/url}/edit.html;
+        title string:Change the profile of ${view/userInfo/name}">your 
+      Change Profile page</a> and set the required profile attributes.
   </span>
 </span>
+

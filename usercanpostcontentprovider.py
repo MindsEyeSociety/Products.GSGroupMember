@@ -45,6 +45,13 @@ class GSUserCanPostContentProvider(object):
     #########################################
     # Non standard methods below this point #
     #########################################
+    
+    @property
+    def ptnCoach(self):
+        ptnCoachId = self.groupInfo.get_property('ptn_coach_id')
+        retval = createObject('groupserver.UserFromId',
+          self.context, ptnCoachId)
+        return retval 
 
 zope.component.provideAdapter(GSUserCanPostContentProvider,
     provides=zope.contentprovider.interfaces.IContentProvider,
