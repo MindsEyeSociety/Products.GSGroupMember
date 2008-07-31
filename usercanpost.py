@@ -105,7 +105,7 @@ class GSGroupMemberPostingInfo(object):
             self.__statusNum = self.__statusNum + 0
         else:
             self.__status = u'not a member'
-            self.__statusNum = self.__statusNum + 1
+            self.__statusNum = 1
 
         assert type(self.__status) == unicode
         assert type(retval) == bool
@@ -117,7 +117,7 @@ class GSGroupMemberPostingInfo(object):
         retval = self.userInfo.anonymous
         if retval:
             self.__status = u'not logged in'
-            self.__statusNum = self.__statusNum + 2
+            self.__statusNum = 2
         else:
             self.__status = u'logged in'
             self.__statusNum = 0
@@ -138,7 +138,7 @@ class GSGroupMemberPostingInfo(object):
             self.__status = u'preferred email addresses'
         else:
             self.__status = u'no preferred email addresses'
-            self.__statusNum = self.__statusNum + 4
+            self.__statusNum = 4
         assert type(self.__status) == unicode
         assert type(retval) == bool
         return retval
@@ -154,7 +154,7 @@ class GSGroupMemberPostingInfo(object):
             self.__statusNum = self.__statusNum + 0
         else:
             self.__status = u'not a member'
-            self.__statusNum = self.__statusNum + 8
+            self.__statusNum = 8
         assert type(self.__status) == unicode
         assert type(retval) == bool
         return retval
@@ -175,7 +175,7 @@ class GSGroupMemberPostingInfo(object):
             self.__statusNum = self.__statusNum + 0
         else:
             self.__status = u'not a posting member'
-            self.__statusNum = self.__statusNum + 16
+            self.__statusNum = 16
         assert type(self.__status) == unicode
         assert type(retval) == bool
         return retval

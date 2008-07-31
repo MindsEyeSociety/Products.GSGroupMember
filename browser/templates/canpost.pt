@@ -5,12 +5,21 @@
   <span tal:condition="python:statusNum == 0">You can post</span>
   <span tal:condition="python:statusNum &amp; 1" class="not-a-member">
     You cannot post because you are not a member of this group.
+    <!--unclosed?-->
   </span>
   <span tal:condition="python:statusNum &amp; 2" class="not-logged-in">
-    You cannot post because posting is restricted to group members only.
+    You cannot post because you are not a logged in.
+    <a href="#"
+      tal:attributes="href view/loginUrl">Login</a> to post to this topic.
+    <!-- public?-->
   </span>
   <span tal:condition="python:statusNum &amp; 4" class="no-preferred-email">
     You cannot post because you have no default email address.
+    Go to 
+    <a href="#"
+      tal:attributes="href string:${view/userInfo/url}/email.html">your
+        email settings page,</a>
+    and set a default email address.
   </span>
   <span tal:condition="python:statusNum &amp; 8" class="not-a-member">
     You cannot post because you are not a member of this group.

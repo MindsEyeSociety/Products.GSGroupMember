@@ -63,12 +63,21 @@ class GSUserCanPostContentProvider(object):
         retval = self.groupInfo.id in joinableGroups
         assert type(retval) == bool
         return retval
-        
+    
+    @property   
     def canInvite(self):
         invitationGroups = InvitationGroupsForSite(self.userInfo.user,
                                                self.groupInfo.groupObj)
         retval = self.groupInfo.id in invitationGroups
         assert type(retval) == bool
+        return retval
+
+    @property
+    def loginUrl(self):
+        assert self.request
+        assert self.request.URL
+        retval = '/login.html?came_from=%s' % self.request.URL
+        assert retval
         return retval
 
 zope.component.provideAdapter(GSUserCanPostContentProvider,
