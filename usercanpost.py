@@ -3,7 +3,7 @@ import time, pytz
 from datetime import datetime, timedelta
 
 from zope.app.apidoc import interface
-from zope.component import createObject
+from zope.component import createObject, adapts
 
 from Products.CustomUserFolder.interfaces import ICustomUser, IGSUserInfo
 from Products.XWFChat.interfaces import IGSGroupFolder
@@ -13,8 +13,11 @@ from Products.GSGroupMember.groupmembership import user_member_of_group,\
 from Products.XWFCore.XWFUtils import munge_date, timedelta_to_string
 from Products.GSSearch.queries import MessageQuery
 from Products.GSProfile import interfaces as profileinterfaces
+from interfaces import IGSPostingUser
 
 class GSGroupMemberPostingInfo(object):
+
+    adapts(IGSPostingUser)
 
     def __init__(self, group, user):
         assert IGSGroupFolder.providedBy(group),\
