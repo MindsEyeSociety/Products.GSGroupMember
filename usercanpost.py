@@ -18,7 +18,7 @@ from interfaces import IGSPostingUser
 
 class GSGroupMemberPostingInfo(object):
 
-    adapts(ICustomUser, IGSUserInfo)
+    adapts(ICustomUser,IGSGroupFolder)
     implements(IGSPostingUser)
 
     def __init__(self, group, user):
