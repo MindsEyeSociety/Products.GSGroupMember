@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 
 from zope.app.apidoc import interface
 from zope.component import createObject, adapts
+from zope.interface import implements
 
 from Products.CustomUserFolder.interfaces import ICustomUser, IGSUserInfo
 from Products.XWFChat.interfaces import IGSGroupFolder
@@ -17,7 +18,8 @@ from interfaces import IGSPostingUser
 
 class GSGroupMemberPostingInfo(object):
 
-    adapts(IGSPostingUser)
+    adapts(ICustomUser, IGSUserInfo)
+    implements(IGSPostingUser)
 
     def __init__(self, group, user):
         assert IGSGroupFolder.providedBy(group),\
