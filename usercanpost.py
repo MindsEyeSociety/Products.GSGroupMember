@@ -44,13 +44,6 @@ class GSGroupMemberPostingInfo(object):
         self.__profileInterfaces = None
     
     @property
-    def whoCanPost(self):
-        retval = u'no one can post messages.'
-        assert retval
-        assert type(retval) == unicode
-        return retval
-        
-    @property
     def status(self):
         if self.__status == None:
             justCall = self.canPost

@@ -26,6 +26,20 @@ class IGSInviteSiteMembers(Interface):
       unique=True,
       required=True)
 
+class IGSPostingUser(Interface):
+    canPost = Bool(title=u'Can Post',
+      description=u'Can the user post the the group?',
+      required=True)
+      
+    statusNum = Int(title=u'Status Number',
+      description=u'The reason the user cannot post to the group, as '\
+        u'a number. 0 if the user can post.',
+      required=True)
+      
+    status = Text(title=u'Status',
+      description=u'The reason the user cannot post to the group, as '\
+        u'a textual description.',)
+
 class IGSUserCanPostContentProvider(IContentProvider):
     """The content provider for the context menu"""
     

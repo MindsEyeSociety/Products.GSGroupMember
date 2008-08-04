@@ -79,12 +79,14 @@
   </browser:pages>
 
   <interface 
-    interface=".interfaces.IGSUserCanPostContentProvider"
-    type="zope.contentprovider.interfaces.ITALNamespaceData"/>
-  <!--adapter
-    factory=".usercanpostcontentprovider.IGSUserCanPostContentProvider"
-    provides="zope.contentprovider.interfaces.IContentProvider"
-    name="groupserver.UserCanPost"/-->
+    interface=".interfaces.IGSUserCanPostContentProvider"/>
+  <five:implements 
+    class=".usercanpost.GSGroupMemberPostingInfo"
+    interface=".interfaces.IGSPostingUser" />
+  <adapter
+    factory=".usercanpost.GSGroupMemberPostingInfo"
+    for="Products.XWFChat.interfaces.IGSGroupFolder Products.CustomUserFolder.interfaces.ICustomUser"
+    provides=".interfaces.IGSPostingUser" />
 
 </configure>
 
