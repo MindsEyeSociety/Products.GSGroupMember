@@ -207,7 +207,7 @@ class GSGroupMemberPostingInfo(object):
                 retval = True
                 d = self.old_message_post_date()
                 canPostDate = d + td
-                self.__status = u'post again at %s &#8212; in %s' %\
+                self.__status = u'post again at %s\n-- in %s' %\
                   (munge_date(self.groupInfo.groupObj, canPostDate), 
                    timedelta_to_string(canPostDate - now))
                 self.__statusNum = 32
