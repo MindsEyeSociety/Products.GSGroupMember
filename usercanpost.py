@@ -18,13 +18,14 @@ from interfaces import IGSPostingUser
 
 class GSGroupMemberPostingInfo(object):
 
-    adapts(ICustomUser,IGSGroupFolder)
+    adapts(IGSGroupFolder, IGSUserInfo)
     implements(IGSPostingUser)
 
-    def __init__(self, group, user):
+    def __init__(self, group, userInfo):
         assert IGSGroupFolder.providedBy(group),\
-          '%s is not a group' % group
-        #assert ICustomUser.providedBy(user), '%s is not a user' % user
+          u'%s is not a group folder' % group
+        assert IGSUserInfo.providedBy(userInfo),\
+          u'%s is not a user-info' % userInfo
         
         self.site_root = site_root = group.site_root()
 
@@ -32,12 +33,8 @@ class GSGroupMemberPostingInfo(object):
         mailingList = self.mailingList =\
           mailingListManager.get_list(group.getId())
 
-        self.userInfo = createObject('groupserver.UserFromId', 
-                                      site_root, user.getId())
-        self.user = self.userInfo.user
-        
+        self.userInfo = userInfo
         self.groupInfo = IGSGroupInfo(group)
-        self.group = group
         
         da = site_root.zsqlalchemy 
         assert da
@@ -142,7 +139,8 @@ class GSGroupMemberPostingInfo(object):
         role in the group context. While this may sound like I am stating
         the blindingly obvious, this was not always the case!
         '''
-        retval = user_member_of_group(self.user, self.group)
+        retval = user_member_of_group(self.userInfo.user, 
+                                      self.groupInfo.groupObj)
         if retval:
             self.__status = u'a member'
         else:

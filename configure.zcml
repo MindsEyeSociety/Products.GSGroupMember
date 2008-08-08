@@ -85,7 +85,7 @@
     interface=".interfaces.IGSPostingUser" />
   <adapter
     factory=".usercanpost.GSGroupMemberPostingInfo"
-    for="Products.XWFChat.interfaces.IGSGroupFolder Products.CustomUserFolder.interfaces.ICustomUser"
+    for="Products.XWFChat.interfaces.IGSGroupFolder Products.CustomUserFolder.interfaces.IGSUserInfo"
     provides=".interfaces.IGSPostingUser" />
 
 </configure>
