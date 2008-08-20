@@ -14,6 +14,7 @@ import AccessControl
 
 from Products.CustomUserFolder.interfaces import ICustomUser, IGSUserInfo
 from Products.GSProfile.edit_profile import multi_check_box_widget
+from Products.GSGroup.changebasicprivacy import radio_widget
 from interfaces import IGSInviteSiteMembers
 from groupmembership import invite_to_groups
 
@@ -36,6 +37,7 @@ class GSInviteSiteMembersForm(PageForm):
 
         self.form_fields['site_members'].custom_widget = \
           multi_check_box_widget
+        self.form_fields['delivery'].custom_widget = radio_widget
 
     # --=mpj17=--
     # The "form.action" decorator creates an action instance, with
@@ -45,17 +47,25 @@ class GSInviteSiteMembersForm(PageForm):
     #   necessary).
     @form.action(label=u'Invite', failure='handle_invite_action_failure')
     def handle_invite(self, action, data):
-        viewingUser = AccessControl.getSecurityManager().getUser()
-        viewingUserInfo = createObject('groupserver.UserFromId', 
-          self.context, viewingUser.getId())
+        adminInfo = createObject('groupserver.LoggedInUser', self.context)
+
         for userId in data['site_members']:
             userInfo = createObject('groupserver.UserFromId',
                                     self.context, userId)
 
-            invite_to_groups(userInfo, viewingUserInfo, self.groupInfo)
+            invite_to_groups(userInfo, adminInfo, self.groupInfo)
             msg = u'<li><a class="fn" href="%s">%s</a></li>' %\
               (userInfo.url, userInfo.name)
             self.status = '%s\n%s' % (self.status, msg)
+
+            if data['delivery'] == 'email':
+                # --=mpj17=-- The default is one email per post
+                pass
+            elif data['delivery'] == 'digest':
+                userInfo.user.set_enableDigestByKey(self.groupInfo.id)
+            elif data['delivery'] == 'web':
+                userInfo.user.set_disableDeliveryByKey(self.groupInfo.id)
+
         self.status = u'<p>Invited the following users to '\
           u'join <a class="fn" href="%s">%s</a></p><ul>%s</ul>' %\
             (self.groupInfo.url, self.groupInfo.name, self.status)
