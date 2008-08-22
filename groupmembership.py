@@ -432,28 +432,33 @@ def join_group(user, groupInfo):
       group belongs to.
     '''
     assert ICustomUser.providedBy(user), '%s is not a user' % user
+    userInfo = IGSUserInfo(user)
     assert IGSGroupInfo.providedBy(groupInfo), '%s is not a GroupInfo' %\
       groupInfo
     assert not(user_member_of_group(user, groupInfo.groupObj)), \
       'User %s (%s) already in %s (%s)' % \
-      (fn, uid, groupInfo.name, groupInfo.name, groupInfo.id)
+      (userInfo.name, userInfo.id, groupInfo.name, groupInfo.name)
     
     siteInfo = groupInfo.siteInfo
-    fn = user.getProperty('fn', '')
-    uid = user.getId()
 
     m = u'join_group: adding the user %s (%s) to the group %s (%s) '\
         u'on %s (%s)' % \
-        (fn,                   uid, 
-         groupInfo.get_name(), groupInfo.get_id(),
-         siteInfo.get_name(), siteInfo.get_id())
+        (userInfo.name,  userInfo.id,
+         groupInfo.name, groupInfo.id,
+         siteInfo.name,  siteInfo.id)
     log.info(m)
     user.add_groupWithNotification(member_id(groupInfo.id))
+
+    ptnCoachId = groupInfo.get_property('ptn_coach_id', '')
+    if ptnCoachId:
+        ptnCoachInfo = createObject('groupserver.UserFromId', 
+                                     groupInfo.groupObj, ptnCoachId)
+        inform_ptn_coach_of_join(ptnCoachInfo, userInfo, groupInfo)
 
     if not(user_member_of_site(user, siteInfo.siteObj)):
         m = u'join_group: the user %s (%s) is not a '\
             u' member of the site %s (%s)' % \
-              (fn, uid, siteInfo.get_name(), siteInfo.get_id())
+              (userInfo.name, userInfo.id, siteInfo.name, siteInfo.id)
         log.info(m)
         user.add_groupWithNotification(member_id(siteInfo.id))
 
