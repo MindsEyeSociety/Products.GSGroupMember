@@ -18,21 +18,26 @@
     interface=".invitedgroupmember.IGSInvitedGroupMember" />
 
   <!--Vocabularies-->
-  <vocabulary 
-    name="JoinableGroups"
-    factory=".groupmembership.JoinableGroupsForSite"/>
-
-  <vocabulary 
-    name="groupserver.InvitationGroups"
-    factory=".groupmembership.InvitationGroupsForSite"/>
-
-  <vocabulary 
-    name="groupserver.SiteMembersNonGroupMembers"
-    factory=".groupmembership.SiteMembersNonGroupMembers"/>
-
-  <vocabulary 
-    name="groupserver.InviteMembersNonGroupMembers"
-    factory=".groupmembership.InviteSiteMembersNonGroupMembers"/>
+  <utility
+      provides="zope.schema.interfaces.IVocabularyFactory"
+      component="Products.GSGroupMember.groupmembership.JoinableGroupsForSite"
+      name="JoinableGroups"
+      />
+  <utility
+      provides="zope.schema.interfaces.IVocabularyFactory"
+      component="Products.GSGroupMember.groupmembership.InvitationGroupsForSite"
+      name="groupserver.InvitationGroups"
+      />
+  <utility
+      provides="zope.schema.interfaces.IVocabularyFactory"
+      component="Products.GSGroupMember.groupmembership.SiteMembersNonGroupMembers"
+      name="groupserver.SiteMembersNonGroupMembers"
+      />
+  <utility
+      provides="zope.schema.interfaces.IVocabularyFactory"
+      component="Products.GSGroupMember.groupmembership.InviteSiteMembersNonGroupMembers"
+      name="groupserver.InviteMembersNonGroupMembers"
+      />
 
   <!--Pages-->
   <browser:page 
