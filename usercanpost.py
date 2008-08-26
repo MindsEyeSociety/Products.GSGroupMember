@@ -11,7 +11,8 @@ from Products.XWFChat.interfaces import IGSGroupFolder
 from Products.GSContent.interfaces import IGSGroupInfo
 from Products.GSGroupMember.groupmembership import user_member_of_group,\
   user_participation_coach_of_group, user_admin_of_group 
-from Products.XWFCore.XWFUtils import munge_date, timedelta_to_string
+from Products.XWFCore.XWFUtils import munge_date, timedelta_to_string, \
+  comma_comma_and
 from Products.GSSearch.queries import MessageQuery
 from Products.GSProfile import interfaces as profileinterfaces
 from interfaces import IGSPostingUser
@@ -260,16 +261,22 @@ class GSGroupMemberPostingInfo(object):
         requiredGroupProperties = self.get_required_group_properties()
         requiredProperties = requiredSiteProperties + requiredGroupProperties
         
-        retval = True
-        self.__status = u'required properties set'
-        for p in requiredProperties:
-            if not(self.userInfo.get_property(p, None)):
-              retval = False
-              field = [a for n, a in self.get_site_properties() if n == p][0]
-              self.__status = u'required attribute %s is not set' %\
-                field.title
-              self.__statusNum = self.__statusNum + 128
-              break
+        unsetRequiredProps = [p for p in requiredProperties
+                              if not(self.userInfo.get_property(p, None))]
+        if unsetRequiredProps:
+            retval = False
+            self.__status = u'required properties set'
+            fields = [a.title for n, a in self.get_site_properties() 
+                      if n in unsetRequiredProps]
+            f = comma_comma_and(fields)
+            attr = (len(fields) == 1 and u'attribute') or u'attributes'
+            isare = (len(fields) == 1 and u'is') or u'are'
+            self.__status = u'required %s %s %s not set' % (attr, f, isare)
+            self.__statusNum = self.__statusNum + 128
+        else:
+            retval = True
+            self.__status = u'required properties set'
+
         assert type(self.__status) == unicode
         assert type(retval) == bool
         return retval
