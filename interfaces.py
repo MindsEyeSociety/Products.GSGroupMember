@@ -1,11 +1,8 @@
 # coding=utf-8
 """Interfaces for the registration and password-reset pages."""
-import re, pytz
-from zope.interface.interface import Interface, Invalid, invariant
-from zope.schema import *
-from zope.schema.vocabulary import SimpleVocabulary
+from zope.interface.interface import Interface
 from zope.contentprovider.interfaces import IContentProvider
-from zope.component import createObject
+from zope.schema import *
 from Products.GSProfile.interfaceCoreProfile import deliveryVocab
 
 class IGSInvitationGroups(Interface):
@@ -28,7 +25,8 @@ class IGSInviteSiteMembers(Interface):
       required=True)
 
     delivery = Choice(title=u'Group Message Delivery Settings',
-      description=u'The message delivery settings for the new user',
+      description=u'The message delivery settings for the new group '\
+        u'members.',
       vocabulary=deliveryVocab,
       default='email')
 

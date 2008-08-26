@@ -18,21 +18,26 @@
     interface=".invitedgroupmember.IGSInvitedGroupMember" />
 
   <!--Vocabularies-->
-  <vocabulary 
-    name="JoinableGroups"
-    factory=".groupmembership.JoinableGroupsForSite"/>
-
-  <vocabulary 
-    name="groupserver.InvitationGroups"
-    factory=".groupmembership.InvitationGroupsForSite"/>
-
-  <vocabulary 
-    name="groupserver.SiteMembersNonGroupMembers"
-    factory=".groupmembership.SiteMembersNonGroupMembers"/>
-
-  <vocabulary 
-    name="groupserver.InviteMembersNonGroupMembers"
-    factory=".groupmembership.InviteSiteMembersNonGroupMembers"/>
+  <utility
+      provides="zope.schema.interfaces.IVocabularyFactory"
+      component="Products.GSGroupMember.groupmembership.JoinableGroupsForSite"
+      name="JoinableGroups"
+      />
+  <utility
+      provides="zope.schema.interfaces.IVocabularyFactory"
+      component="Products.GSGroupMember.groupmembership.InvitationGroupsForSite"
+      name="groupserver.InvitationGroups"
+      />
+  <utility
+      provides="zope.schema.interfaces.IVocabularyFactory"
+      component="Products.GSGroupMember.groupmembership.SiteMembersNonGroupMembers"
+      name="groupserver.SiteMembersNonGroupMembers"
+      />
+  <utility
+      provides="zope.schema.interfaces.IVocabularyFactory"
+      component="Products.GSGroupMember.groupmembership.InviteSiteMembersNonGroupMembers"
+      name="groupserver.InviteMembersNonGroupMembers"
+      />
 
   <!--Pages-->
   <browser:page 
@@ -77,5 +82,23 @@
       name="invite-user-no-id"
       template="browser/templates/invite_user_no_id.pt" />
   </browser:pages>
+
+  <interface 
+    interface=".interfaces.IGSUserCanPostContentProvider"
+    type="zope.contentprovider.interfaces.ITALNamespaceData"/>
+  <adapter
+    factory=".usercanpostcontentprovider.GSUserCanPostContentProvider"
+    provides="zope.contentprovider.interfaces.IContentProvider"
+    name="groupserver.UserCanPost"/>
+    
+
+  <five:implements 
+    class=".usercanpost.GSGroupMemberPostingInfo"
+    interface=".interfaces.IGSPostingUser" />
+  <adapter
+    factory=".usercanpost.GSGroupMemberPostingInfo"
+    for="Products.XWFChat.interfaces.IGSGroupFolder Products.CustomUserFolder.interfaces.IGSUserInfo"
+    provides=".interfaces.IGSPostingUser" />
+
 </configure>
 
