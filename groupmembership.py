@@ -24,12 +24,12 @@ class JoinableGroupsForSite(object):
     implements(IVocabulary, IVocabularyTokenized)
     __used_for__ = IEnumerableMapping
 
-    def __init__(self, user, context):
+    def __init__(self, user):
         self.context = user
         self.userInfo = createObject('groupserver.UserFromId', 
-                                     context, user.getId())
-        self.__groupsInfo = createObject('groupserver.GroupsInfo', context)
-        self.siteInfo = createObject('groupserver.SiteInfo', context)
+                                     user, user.getId())
+        self.__groupsInfo = createObject('groupserver.GroupsInfo', user)
+        self.siteInfo = createObject('groupserver.SiteInfo', user)
         
         self.__groups = None
        
