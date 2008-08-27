@@ -64,8 +64,7 @@ class GSUserCanPostContentProvider(object):
 
     @property
     def canJoin(self):
-        joinableGroups = JoinableGroupsForSite(self.userInfo.user,
-                                               self.groupInfo.groupObj)
+        joinableGroups = JoinableGroupsForSite(self.userInfo.user)
         retval = self.groupInfo.id in joinableGroups
         assert type(retval) == bool
         return retval

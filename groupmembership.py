@@ -101,7 +101,7 @@ class InvitationGroupsForSite(JoinableGroupsForSite):
       rights to and the user (context) has not been invited to too much.
     '''
     def __init__(self, user, context):
-        JoinableGroupsForSite.__init__(self, user, context)
+        JoinableGroupsForSite.__init__(self, user)
         self.__groups = None
         
         da = self.context.zsqlalchemy 
