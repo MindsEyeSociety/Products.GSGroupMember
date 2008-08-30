@@ -211,6 +211,7 @@ class GSGroupMemberPostingInfo(object):
                 # the interval
                 retval = True
                 d = self.old_message_post_date()
+                
                 canPostDate = d + td
                 self.__status = u'post again at %s\n-- in %s' %\
                   (munge_date(self.groupInfo.groupObj, canPostDate), 
@@ -229,12 +230,19 @@ class GSGroupMemberPostingInfo(object):
         gid = self.groupInfo.id
         uid = self.userInfo.id
         limit = self.mailingList.getValueFor('senderlimit')
+        offset = limit - 1
+        if offset < 0:
+            offset = 0
+            log.warning("senderlimit of %s was set to 0 or less" % gid)
+            
         tokens = createObject('groupserver.SearchTextTokens', '')
         posts = self.messageQuery.post_search_keyword(tokens, sid, [gid], 
-          [uid], 1, limit)
+          [uid], 1, offset)
+        
         assert len(posts) == 1
         retval = posts[0]['date']
         assert isinstance(retval, datetime)
+        
         return retval
 
     def user_blocked_from_posting(self):
