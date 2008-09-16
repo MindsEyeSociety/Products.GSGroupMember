@@ -151,6 +151,68 @@ class InvitationGroupsForSite(JoinableGroupsForSite):
 # Members #
 ###########
 
+class GroupMembers(object):
+    implements(IVocabulary, IVocabularyTokenized)
+    __used_for__ = IEnumerableMapping
+
+    def __init__(self, context):
+        self.context = context
+        self.groupInfo = createObject('groupserver.GroupInfo', context)
+        self.__members = None
+       
+    def __iter__(self):
+        """See zope.schema.interfaces.IIterableVocabulary"""
+        retval = [SimpleTerm(u.id, u.id, u.name)
+                  for u in self.members]
+        for term in retval:
+            assert term
+            assert ITitledTokenizedTerm in providedBy(term)
+            assert term.token == term.value
+        return iter(retval)
+
+    def __len__(self):
+        """See zope.schema.interfaces.IIterableVocabulary"""
+        return len(self.members)
+
+    def __contains__(self, value):
+        """See zope.schema.interfaces.IBaseVocabulary"""
+        retval = False
+        retval = value in [u.id for u in self.members]
+        assert type(retval) == bool
+        return retval
+
+    def getQuery(self):
+        """See zope.schema.interfaces.IBaseVocabulary"""
+        return None
+
+    def getTerm(self, value):
+        """See zope.schema.interfaces.IBaseVocabulary"""
+        return self.getTermByToken(value)
+        
+    def getTermByToken(self, token):
+        """See zope.schema.interfaces.IVocabularyTokenized"""
+        for u in self.members:
+            if u.id == token:
+                retval = SimpleTerm(u.id, u.id, u.name)
+                assert retval
+                assert ITitledTokenizedTerm in providedBy(retval)
+                assert retval.token == retval.value
+                return retval
+        raise LookupError, token
+
+    @property
+    def members(self):
+        assert self.context
+        
+        if self.__members == None:
+            # Get all members of the group
+            users = get_group_users(self.context, self.groupInfo.id)
+            self.__members = [createObject('groupserver.UserFromId',  
+                                            self.context, u.getId()) 
+                             for u in users]
+        assert type(self.__members) == list
+        return self.__members
+
 class SiteMembers(object):
     implements(IVocabulary, IVocabularyTokenized)
     __used_for__ = IEnumerableMapping
@@ -343,7 +405,9 @@ def get_groups_on_site(site):
     assert type(retval) == list
     return retval
 
-# Membership Checks
+#####################
+# Membership Checks #
+#####################
 
 def user_member_of_group(u, g):
     '''Is the user the member of the group
