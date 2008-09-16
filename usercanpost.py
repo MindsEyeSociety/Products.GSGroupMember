@@ -213,9 +213,11 @@ class GSGroupMemberPostingInfo(object):
                 d = self.old_message_post_date()
                 
                 canPostDate = d + td
+                prettyDate = munge_date(self.groupInfo.groupObj, 
+                    canPostDate, user=self.userInfo.user)
+                prettyDelta = timedelta_to_string(canPostDate - now)
                 self.__status = u'post again at %s\n-- in %s' %\
-                  (munge_date(self.groupInfo.groupObj, canPostDate), 
-                   timedelta_to_string(canPostDate - now))
+                  (prettyDate, prettyDelta)
                 self.__statusNum = 32
             else:
                 retval = False
