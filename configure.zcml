@@ -14,9 +14,6 @@
   <five:traversable 
     class="OFS.Folder.Folder" />
   
-  <interface 
-    interface=".invitedgroupmember.IGSInvitedGroupMember" />
-
   <!--Vocabularies-->
   <utility
       provides="zope.schema.interfaces.IVocabularyFactory"
