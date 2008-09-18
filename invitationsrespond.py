@@ -7,7 +7,7 @@ from queries import GroupMemberQuery
 from groupmembership import join_group
 
 import logging
-log = logging.getLogger('GSGroupMember')
+log = logging.getLogger('GSGroupMember') #@UndefinedVariable
 
 class GSInviationsRespond(BrowserView):
     def __init__(self, context, request):
@@ -138,7 +138,7 @@ class GSInviationsRespond(BrowserView):
                   u'<li>Declined the %s to join %s.</li</ul>' %\
                   (m, i, a)
             else:
-               m = u'<ul><li>%s</li>'\
+                m = u'<ul><li>%s</li>'\
                   u'<li>You did not decline any invitations.</li</ul>' % m
 
             result['message'] = m
@@ -224,7 +224,7 @@ class GSInviationsRespond(BrowserView):
         }
 
         seenAdmins = []
-        for invite in invites:
+        for _invite in invites:
             adminInfo = createObject('groupserver.UserFromId', 
                                      self.context, i['inviting_user_id'])
             if adminInfo.id not in seenAdmins:

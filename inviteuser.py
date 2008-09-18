@@ -1,18 +1,17 @@
 # coding=utf-8
-import time, md5
 from Products.Five.formlib.formbase import PageForm
 from Products.Five.browser.pagetemplatefile import ZopeTwoPageTemplateFile
 from zope.formlib import form
 from zope.component import createObject
 import AccessControl
-from Products.CustomUserFolder.interfaces import ICustomUser, IGSUserInfo
+from Products.CustomUserFolder.interfaces import IGSUserInfo
 from Products.GSProfile.edit_profile import multi_check_box_widget
 
 from interfaces import IGSInvitationGroups
 from groupmembership import invite_to_groups
 
 import logging
-log = logging.getLogger('GSInviteUserForm')
+log = logging.getLogger('GSInviteUserForm') #@UndefinedVariable
 
 class InviteUserForm(PageForm):
     label = u'Invite User'
@@ -45,10 +44,10 @@ class InviteUserForm(PageForm):
 
         gn = ['<a href="%s">%s</a>' %(g.url, g.name) for g in groups]
         if len(gn) > 1:
-              c = u', '.join(gn[:-1])
-              g = u' and '.join((c, gn[-1]))
+            c = u', '.join(gn[:-1])
+            g = u' and '.join((c, gn[-1]))
         else:
-              g = gn[0]
+            g = gn[0]
             
         self.status = u'<p>Invited <a class="fn" href="%s">%s</a> to '\
           u'join %s</p>' %\

@@ -1,17 +1,15 @@
 # coding=utf-8
-from zope.interface import implements, alsoProvides, providedBy
-from zope.component import getUtility, createObject
+from zope.interface import implements, providedBy
+from zope.component import createObject
 from zope.schema.vocabulary import SimpleTerm
-from zope.schema.interfaces import ITokenizedTerm, IVocabulary,\
+from zope.schema.interfaces import IVocabulary,\
   IVocabularyTokenized, ITitledTokenizedTerm
 from zope.interface.common.mapping import IEnumerableMapping 
-
-from Products.CustomUserFolder.interfaces import IGSUserInfo
 
 from sitemember import SiteMembers
 
 import logging
-log = logging.getLogger('SiteMemberNonGroupMembers')
+log = logging.getLogger('SiteMemberNonGroupMembers') #@UndefinedVariable
 
 class SiteMembersNonGroupMembers(object):
     implements(IVocabulary, IVocabularyTokenized)
@@ -43,7 +41,6 @@ class SiteMembersNonGroupMembers(object):
 
     def __contains__(self, value):
         """See zope.schema.interfaces.IBaseVocabulary"""
-        retval = False
         retval = value in [m.id for m in self.nonMembers]
         assert type(retval) == bool
         return retval

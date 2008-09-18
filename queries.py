@@ -1,10 +1,9 @@
 # coding=utf-8
-from sqlalchemy.exceptions import NoSuchTableError
 import sqlalchemy as sa
 import pytz, datetime
 
 import logging
-log = logging.getLogger("GroupMemberQuery")
+log = logging.getLogger("GroupMemberQuery") #@UndefinedVariable
 
 class GroupMemberQuery(object):
     def __init__(self, da):
@@ -63,7 +62,7 @@ class GroupMemberQuery(object):
         uit = self.userInvitationTable
         cols = [uit.c.site_id, uit.c.group_id, uit.c.user_id, 
                 uit.c.inviting_user_id, 
-                sa.func.max(uit.c.invitation_date).label('date')]
+                sa.func.max(uit.c.invitation_date).label('date')] #@UndefinedVariable
         s = sa.select(cols)
         s.append_whereclause(uit.c.site_id  == siteId)
         s.append_whereclause(uit.c.user_id  == userId)

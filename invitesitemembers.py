@@ -1,25 +1,16 @@
 # coding=utf-8
-import time, md5
 from Products.Five.formlib.formbase import PageForm
-from zope.component import createObject, adapts
-from zope.interface import implements, providedBy, implementedBy,\
-  directlyProvidedBy, alsoProvides
+from zope.component import createObject
 from zope.formlib import form
 from Products.Five.browser.pagetemplatefile import ZopeTwoPageTemplateFile
-from zope.app.form.browser import MultiCheckBoxWidget, SelectWidget,\
-  TextAreaWidget
-from zope.security.interfaces import Forbidden
-from zope.app.apidoc.interface import getFieldsInOrder
-import AccessControl
 
-from Products.CustomUserFolder.interfaces import ICustomUser, IGSUserInfo
 from Products.GSProfile.edit_profile import multi_check_box_widget
 from Products.GSGroup.changebasicprivacy import radio_widget
 from interfaces import IGSInviteSiteMembers
 from groupmembership import invite_to_groups
 
 import logging
-log = logging.getLogger('GSInviteSiteMembersForm')
+log = logging.getLogger('GSInviteSiteMembersForm') #@UndefinedVariable
 
 class GSInviteSiteMembersForm(PageForm):
     label = u'Invite Site Members'

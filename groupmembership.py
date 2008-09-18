@@ -1,22 +1,22 @@
 # coding=utf-8
-import time
-from zope.interface import implements, alsoProvides, providedBy
-from zope.component import getUtility, createObject
+from zope.interface import implements, providedBy
+from zope.component import createObject
 from zope.schema.vocabulary import SimpleTerm
-from zope.schema.interfaces import ITokenizedTerm, IVocabulary,\
+from zope.schema.interfaces import IVocabulary,\
   IVocabularyTokenized, ITitledTokenizedTerm
 from zope.interface.common.mapping import IEnumerableMapping 
+from Products.XWFCore.XWFUtils import getOption
+from Products.GSGroupMember.utils import inform_ptn_coach_of_join, invite_id
+import time
 import AccessControl
 
 from Products.CustomUserFolder.interfaces import IGSUserInfo, ICustomUser
 from Products.GSContent.interfaces import IGSGroupInfo
-from Products.XWFChat.interfaces import IGSGroupFolder
-from Products.XWFCore.XWFUtils import getOption, sort_by_name
+from Products.XWFCore.XWFUtils import sort_by_name
 from queries import GroupMemberQuery
-from utils import *
 
 import logging
-log = logging.getLogger('GSGroupMember GroupMembership')
+log = logging.getLogger('GSGroupMember GroupMembership') #@UndefinedVariable
 
 GROUP_FOLDER_TYPES = ('Folder', 'Folder (Ordered)')
 
@@ -51,7 +51,6 @@ class JoinableGroupsForSite(object):
 
     def __contains__(self, value):
         """See zope.schema.interfaces.IBaseVocabulary"""
-        retval = False
         retval = value in [g.get_id() for g in self.groups]
         assert type(retval) == bool
         return retval
@@ -81,7 +80,6 @@ class JoinableGroupsForSite(object):
         assert self.__groupsInfo
         
         if self.__groups == None:
-            userId = self.context.getId()
             gs = self.__groupsInfo.get_joinable_groups_for_user(self.context)
             self.__groups = [createObject('groupserver.GroupInfo', g)
                              for g in gs]
@@ -176,7 +174,6 @@ class GroupMembers(object):
 
     def __contains__(self, value):
         """See zope.schema.interfaces.IBaseVocabulary"""
-        retval = False
         retval = value in [u.id for u in self.members]
         assert type(retval) == bool
         return retval
@@ -239,7 +236,6 @@ class SiteMembers(object):
 
     def __contains__(self, value):
         """See zope.schema.interfaces.IBaseVocabulary"""
-        retval = False
         retval = value in [u.id for u in self.members]
         assert type(retval) == bool
         return retval
@@ -396,7 +392,6 @@ def userInfo_to_user(u):
     return user
 
 def get_groups_on_site(site):
-    retval = []
     assert hasattr(site, 'groups'), u'No groups on the site %s' % site.getId()
     groups = getattr(site, 'groups')
     retval = [g for g in \
@@ -593,10 +588,10 @@ def invite_to_groups(userInfo, invitingUserInfo, groups):
         groupNames.append(groupInfo.name)
 
         if len(groupNames) > 1:
-              c = u', '.join(groupNames[:-1])
-              g = u' and '.join((c, groupNames[-1]))
+            c = u', '.join(groupNames[:-1])
+            g = u' and '.join((c, groupNames[-1]))
         else:
-              g = groupNames[0]
+            g = groupNames[0]
     
     responseURL = '%s/r/group_invitation/%s' % (siteInfo.url, inviteId)
     n_dict={'userFn': userInfo.name,

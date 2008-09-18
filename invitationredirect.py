@@ -1,16 +1,11 @@
 # coding=utf-8
-import Globals
-from Products.Five import BrowserView
-from zope.interface import implements
-from zope.component import createObject
 from Products.CustomUserFolder.interfaces import IGSUserInfo
 from Products.GSRedirect.view import GSRedirectBase
 from queries import GroupMemberQuery
-from interfaces import *
 from Products.GSProfile.utils import login
 
 import logging
-log = logging.getLogger('GSGroupMember')
+log = logging.getLogger('GSGroupMember') #@UndefinedVariable
 
 class GSInvitationResponseRedirect(GSRedirectBase):
     def __call__(self):

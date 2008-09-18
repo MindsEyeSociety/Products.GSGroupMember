@@ -5,7 +5,7 @@ from Products.CustomUserFolder.userinfo import GSUserInfo
 from queries import GroupMemberQuery
 
 import logging
-log = logging.getLogger('GSGroupMember')
+log = logging.getLogger('GSGroupMember') #@UndefinedVariable
 
 class GSInviationsLog(BrowserView):
     def __init__(self, context, request):

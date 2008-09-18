@@ -1,12 +1,12 @@
 # coding=utf-8
-import time, pytz
+import pytz
 from datetime import datetime, timedelta
 
 from zope.app.apidoc import interface
 from zope.component import createObject, adapts
 from zope.interface import implements
 
-from Products.CustomUserFolder.interfaces import ICustomUser, IGSUserInfo
+from Products.CustomUserFolder.interfaces import IGSUserInfo
 from Products.XWFChat.interfaces import IGSGroupFolder
 from Products.GSContent.interfaces import IGSGroupInfo
 from Products.GSGroupMember.groupmembership import user_member_of_group,\
@@ -18,7 +18,7 @@ from Products.GSProfile import interfaces as profileinterfaces
 from interfaces import IGSPostingUser
 
 import logging
-log = logging.getLogger("GSGroupMember.usercanpost")
+log = logging.getLogger("GSGroupMember.usercanpost") #@UndefinedVariable
 
 class GSGroupMemberPostingInfo(object):
 
@@ -32,11 +32,7 @@ class GSGroupMemberPostingInfo(object):
           u'%s is not a user-info' % userInfo
         
         self.site_root = site_root = group.site_root()
-
-        mailingListManager = self.mailingListManager = site_root.ListManager
-        mailingList = self.mailingList =\
-          mailingListManager.get_list(group.getId())
-
+        
         self.userInfo = userInfo
         self.groupInfo = IGSGroupInfo(group)
         
@@ -52,7 +48,8 @@ class GSGroupMemberPostingInfo(object):
     @property
     def status(self):
         if self.__status == None:
-            justCall = self.canPost
+            # call self.canPost so that __status gets set as a side-effect.
+            _justCall = self.canPost
         retval = self.__status
         assert retval
         assert type(retval) == unicode
@@ -333,7 +330,7 @@ class GSGroupMemberPostingInfo(object):
         user-profile attribute filled.
         '''
         groupProps = self.mailingList.getProperty('required_properties', [])
-        siteProps = [n for n, a in self.get_site_properties()]
+        siteProps = [n for n, _a in self.get_site_properties()]
         retval = []
         for prop in groupProps:
             if prop in siteProps:

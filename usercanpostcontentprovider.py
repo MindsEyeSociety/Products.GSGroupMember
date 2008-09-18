@@ -1,27 +1,25 @@
 # coding=utf-8
-from zope.component import createObject, provideAdapter
+from zope.component import createObject, provideAdapter, adapts
 from zope.pagetemplate.pagetemplatefile import PageTemplateFile
 from zope.contentprovider.interfaces import IContentProvider, \
   UpdateNotCalled
-from zope.interface import Interface
+from zope.interface import Interface, implements
 from zope.publisher.interfaces.browser import IDefaultBrowserLayer
-import zope.viewlet.interfaces, zope.contentprovider.interfaces 
 
-from Products.CustomUserFolder.interfaces import IGSUserInfo
 from Products.GSGroup.joining import GSGroupJoining
 
 from interfaces import IGSUserCanPostContentProvider
 from groupmembership import JoinableGroupsForSite, InvitationGroupsForSite
 
 import logging
-log = logging.getLogger('GSUserCanPostContentProvider')
+log = logging.getLogger('GSUserCanPostContentProvider') #@UndefinedVariable
 
 class GSUserCanPostContentProvider(object):
     """GroupServer context-menu for the user profile area.
     """
 
-    zope.interface.implements( IGSUserCanPostContentProvider )
-    zope.component.adapts(Interface,
+    implements( IGSUserCanPostContentProvider )
+    adapts(Interface,
         IDefaultBrowserLayer,
         Interface)
 
@@ -90,7 +88,7 @@ class GSUserCanPostContentProvider(object):
     def joinability(self):
         return GSGroupJoining(self.groupInfo.groupObj).joinability
         
-zope.component.provideAdapter(GSUserCanPostContentProvider,
-    provides=IContentProvider,
-    name="groupserver.UserCanPost")
+provideAdapter(GSUserCanPostContentProvider,
+               provides=IContentProvider,
+               name="groupserver.UserCanPost")
 
