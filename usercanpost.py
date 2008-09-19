@@ -33,6 +33,9 @@ class GSGroupMemberPostingInfo(object):
         
         self.site_root = site_root = group.site_root()
         
+        self.mailingListManager = site_root.ListManager
+        self.mailingList = self.mailingListManager.get_list(group.getId())
+        
         self.userInfo = userInfo
         self.groupInfo = IGSGroupInfo(group)
         
