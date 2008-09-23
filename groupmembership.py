@@ -106,9 +106,8 @@ class InvitationGroupsForSite(JoinableGroupsForSite):
         assert da, 'No data-adaptor found'
         self.groupMemberQuery = GroupMemberQuery(da)
 
-        viewingUser = AccessControl.getSecurityManager().getUser()
-        self.viewingUserInfo = createObject('groupserver.UserFromId', 
-          context, viewingUser.getId())
+        self.viewingUserInfo = createObject('groupserver.LoggedInUser', 
+          context)
         
     @property
     def groups(self):
@@ -145,6 +144,10 @@ class InvitationGroupsForSite(JoinableGroupsForSite):
         assert type(retval) == list
         return retval
 
+class InvitationGroupsForSiteAndCurrentUser(InvitationGroupsForSite):
+    def __init__(self, context):
+        InvitationGroupsForSite.__init__(self, context, context)
+        
 ###########
 # Members #
 ###########

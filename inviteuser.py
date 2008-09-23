@@ -1,9 +1,9 @@
 # coding=utf-8
 from Products.Five.formlib.formbase import PageForm
-from Products.Five.browser.pagetemplatefile import ZopeTwoPageTemplateFile
-from zope.formlib import form
 from zope.component import createObject
-import AccessControl
+from zope.formlib import form
+from Products.Five.browser.pagetemplatefile import ZopeTwoPageTemplateFile
+
 from Products.CustomUserFolder.interfaces import IGSUserInfo
 from Products.GSProfile.edit_profile import multi_check_box_widget
 
@@ -31,9 +31,8 @@ class InviteUserForm(PageForm):
         
     @form.action(label=u'Invite', failure='handle_invite_action_failure')
     def handle_invite(self, action, data):
-        viewingUser = AccessControl.getSecurityManager().getUser()
-        viewingUserInfo = createObject('groupserver.UserFromId', 
-          self.context, viewingUser.getId())
+        viewingUserInfo = createObject('groupserver.LoggedInUser', 
+          self.context)
 
         self.status = u''
         

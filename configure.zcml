@@ -22,7 +22,7 @@
       />
   <utility
       provides="zope.schema.interfaces.IVocabularyFactory"
-      component="Products.GSGroupMember.groupmembership.InvitationGroupsForSite"
+      component="Products.GSGroupMember.groupmembership.InvitationGroupsForSiteAndCurrentUser"
       name="groupserver.InvitationGroups"
       />
   <utility
