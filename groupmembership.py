@@ -329,6 +329,11 @@ def get_group_users(context, groupId, excludeGroup = ''):
     Get the members of the user-group, identified by "groupId" who are
     not members of "excludeGroup"
     '''
+    # --mpj17=-- This is slightly wrong. I should get
+    #   * All users who have the GroupMember role
+    #     group.users_with_local_role('GroupMember')
+    #   * All users of all groups that have the GroupMember role
+    #     group.groups_with_local_role('GroupMember')
     assert context # What *is* the context?
     assert groupId
     assert type(groupId) == str
