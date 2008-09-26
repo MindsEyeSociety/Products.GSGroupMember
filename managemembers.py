@@ -13,5 +13,5 @@ class GSManageGroupMembers(BrowserView):
 
         self.siteInfo = createObject('groupserver.SiteInfo', context)
         self.groupInfo = createObject('groupserver.GroupInfo', context)
-        self.group_members = GroupMembers(context)
+        self.group_members = GroupMembers(context).members
 
