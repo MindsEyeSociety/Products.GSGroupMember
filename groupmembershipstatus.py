@@ -4,7 +4,7 @@ from zope.component import createObject, adapts
 from zope.interface import implements
 
 from Products.CustomUserFolder.interfaces import IGSUserInfo
-from Product.GSGroup.interfaces import IGSGroupInfo, IGSMailingListInfo
+from Products.GSGroup.interfaces import IGSGroupInfo, IGSMailingListInfo
 from groupmembership import user_division_admin_of_group,\
   user_group_admin_of_group, user_participation_coach_of_group,\
   user_moderator_of_group, user_moderated_member_of_group,\
@@ -25,8 +25,15 @@ class GSGroupMembershipStatus(object):
           u'%s is not a GSGroupInfo' % groupInfo
         
         self.userInfo = userInfo
-        self.groupInfo = IGSGroupInfo(group)
+        self.groupInfo = groupInfo
+        self.__status = None
                
+    @property
+    def status(self):
+        retval = ''
+        self.__status = retval
+        return retval
+
     @property
     def is_site_admin(self):
         retval = user_division_admin_of_group(self.userInfo, \

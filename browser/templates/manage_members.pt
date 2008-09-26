@@ -13,13 +13,24 @@
     
   </head>
   <body metal:fill-slot="body">
-    <h1>Manage Members</h1>
-      <p>
-        This is a list of group members.
-      </p>
-      <p tal:repeat="member view/group_members">
-        <span tal:replace="member/name"/>
-      </p>
+    <h1>
+      Manage the Members of 
+      <span tal:replace="view/groupInfo/name">this group</span>
+    </h1>
+    <p>
+      This is a list of group members.
+    </p>
+    <tal:block tal:repeat="status view/statuses">
+      <div tal:define="member status/userInfo">
+        <h3><span tal:replace="member/name" /></h3> 
+        <p tal:condition="status/is_group_admin">
+          Group Administrator
+        </p>
+        <p tal:condition="status/is_normal_member">
+          Normal Member
+        </p>
+      </div>
+    </tal:block>
   </body>
 </html>
 

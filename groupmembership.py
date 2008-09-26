@@ -12,7 +12,7 @@ import AccessControl
 
 from Products.CustomUserFolder.interfaces import IGSUserInfo, ICustomUser
 from Products.XWFCore.XWFUtils import sort_by_name
-from Products.GSGroup.interfaces import IGSGroupInfo
+from Products.GSGroup.interfaces import IGSGroupInfo, IGSMailingListInfo
 from queries import GroupMemberQuery
 
 import logging
@@ -207,10 +207,11 @@ class GroupMembers(object):
         if self.__members == None:
             # Get all members of the group
             users = get_group_users(self.context, self.groupInfo.id)
-            self.__members = [createObject('groupserver.UserFromId',  
-                                            self.context, u.getId()) 
-                             for u in users]
+            self.__members = [ createObject('groupserver.UserFromId', 
+                                  u, u.getId()) for u in users ]
         assert type(self.__members) == list
+        #assert reduce(lambda a, b: a and b, 
+        #    [IGSUserInfo.providedBy(u) for u in self.__members], True)
         return self.__members
 
 class SiteMembers(object):
