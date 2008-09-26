@@ -11,8 +11,8 @@ import time
 import AccessControl
 
 from Products.CustomUserFolder.interfaces import IGSUserInfo, ICustomUser
-from Products.GSContent.interfaces import IGSGroupInfo
 from Products.XWFCore.XWFUtils import sort_by_name
+from Products.GSGroup.interfaces import IGSGroupInfo
 from queries import GroupMemberQuery
 
 import logging
@@ -477,6 +477,54 @@ def user_participation_coach_of_group(userInfo, groupInfo):
     ptnCoachId = groupInfo.get_property('ptn_coach_id', '')
     retval = user_member_of_group(userInfo, groupInfo)\
       and (userInfo.id == ptnCoachId)
+    assert type(retval) == bool
+    return retval
+    
+def user_moderator_of_group(userInfo, groupInfo):
+    assert IGSUserInfo.providedBy(userInfo), \
+      '%s is not an IGSUserInfo' % userInfo
+    assert IGSGroupInfo.providedBy(groupInfo), \
+      '%s is not an IGSGroupInfo' % groupInfo
+    context = groupInfo.groupObj
+    mlistInfo = IGSMailingListInfo(context)
+    retval = user_member_of_group(userInfo, groupInfo) and \
+      (userInfo in mlistInfo.moderators)
+    assert type(retval) == bool
+    return retval
+    
+def user_moderated_member_of_group(userInfo, groupInfo):
+    assert IGSUserInfo.providedBy(userInfo), \
+      '%s is not an IGSUserInfo' % userInfo
+    assert IGSGroupInfo.providedBy(groupInfo), \
+      '%s is not an IGSGroupInfo' % groupInfo
+    context = groupInfo.groupObj
+    mlistInfo = IGSMailingListInfo(context)
+    retval = user_member_of_group(userInfo, groupInfo) and \
+      (userInfo in mlistInfo.moderatees)
+    assert type(retval) == bool
+    return retval
+    
+def user_blocked_member_of_group(userInfo, groupInfo):
+    assert IGSUserInfo.providedBy(userInfo), \
+      '%s is not an IGSUserInfo' % userInfo
+    assert IGSGroupInfo.providedBy(groupInfo), \
+      '%s is not an IGSGroupInfo' % groupInfo
+    context = groupInfo.groupObj
+    mlistInfo = IGSMailingListInfo(context)
+    retval = user_member_of_group(userInfo, groupInfo) and \
+      (userInfo in mlistInfo.blocked_members)
+    assert type(retval) == bool
+    return retval
+
+def user_posting_member_of_group(userInfo, groupInfo):
+    assert IGSUserInfo.providedBy(userInfo), \
+      '%s is not an IGSUserInfo' % userInfo
+    assert IGSGroupInfo.providedBy(groupInfo), \
+      '%s is not an IGSGroupInfo' % groupInfo
+    context = groupInfo.groupObj
+    mlistInfo = IGSMailingListInfo(context)
+    retval = user_member_of_group(userInfo, groupInfo) and \
+      (userInfo in mlistInfo.posting_members)
     assert type(retval) == bool
     return retval
 

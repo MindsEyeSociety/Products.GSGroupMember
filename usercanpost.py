@@ -8,7 +8,7 @@ from zope.interface import implements
 
 from Products.CustomUserFolder.interfaces import IGSUserInfo
 from Products.XWFChat.interfaces import IGSGroupFolder
-from Products.GSContent.interfaces import IGSGroupInfo
+from Products.GSGroup.interfaces import IGSGroupInfo
 from Products.GSGroupMember.groupmembership import user_member_of_group,\
   user_participation_coach_of_group, user_admin_of_group 
 from Products.XWFCore.XWFUtils import munge_date, timedelta_to_string, \

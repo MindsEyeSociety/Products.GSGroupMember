@@ -43,6 +43,13 @@
 
   <!--Pages-->
   <browser:page 
+    for="Products.XWFChat.interfaces.IGSGroupFolder"
+    name="manage_group_members.html"
+    class=".managemembers.GSManageGroupMembers"
+    template="browser/templates/manage_members.pt"
+    permission="zope2.ManageUsers"/>
+
+  <browser:page 
     for="Products.CustomUserFolder.interfaces.ICustomUser"
     name="invitations.html"
     class=".invitationslog.GSInviationsLog"
