@@ -489,7 +489,7 @@ def user_moderator_of_group(userInfo, groupInfo):
     context = groupInfo.groupObj
     mlistInfo = IGSMailingListInfo(context)
     retval = user_member_of_group(userInfo, groupInfo) and \
-      (userInfo in mlistInfo.moderators)
+      (userInfo.id in [ m.id for m in mlistInfo.moderators ])
     assert type(retval) == bool
     return retval
     
@@ -501,7 +501,7 @@ def user_moderated_member_of_group(userInfo, groupInfo):
     context = groupInfo.groupObj
     mlistInfo = IGSMailingListInfo(context)
     retval = user_member_of_group(userInfo, groupInfo) and \
-      (userInfo in mlistInfo.moderatees)
+      (userInfo.id in [ m.id for m in mlistInfo.moderatees ])
     assert type(retval) == bool
     return retval
     
@@ -511,9 +511,9 @@ def user_blocked_member_of_group(userInfo, groupInfo):
     assert IGSGroupInfo.providedBy(groupInfo), \
       '%s is not an IGSGroupInfo' % groupInfo
     context = groupInfo.groupObj
-    mlistInfo = IGSMailingListInfo(context)
+    mlistInfo = createObject('groupserver.MailingListInfo', context)
     retval = user_member_of_group(userInfo, groupInfo) and \
-      (userInfo in mlistInfo.blocked_members)
+      (userInfo.id in [ m.id for m in mlistInfo.blocked_members ])
     assert type(retval) == bool
     return retval
 
@@ -525,7 +525,7 @@ def user_posting_member_of_group(userInfo, groupInfo):
     context = groupInfo.groupObj
     mlistInfo = IGSMailingListInfo(context)
     retval = user_member_of_group(userInfo, groupInfo) and \
-      (userInfo in mlistInfo.posting_members)
+      (userInfo.id in [ m.id for m in mlistInfo.posting_members ])
     assert type(retval) == bool
     return retval
 

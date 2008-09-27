@@ -26,80 +26,131 @@ class GSGroupMembershipStatus(object):
         
         self.userInfo = userInfo
         self.groupInfo = groupInfo
-        self.__status = None
-               
-    @property
-    def status(self):
-        retval = ''
-        self.__status = retval
-        return retval
+
+        self.__status_label = None
+        self.__isSiteAdmin = None
+        self.__isGroupAdmin = None
+        self.__isPtnCoach = None
+        self.__isModerator = None
+        self.__isModerated = None
+        self.__isBlocked = None
+        self.__isPostingMember = None
+        self.__isUnverified = None
+        self.__isOddlyConfigured = None
+        self.__isNormalMember = None
 
     @property
-    def is_site_admin(self):
-        retval = user_division_admin_of_group(self.userInfo, \
-          self.groupInfo)
+    def isSiteAdmin(self):
+        if self.__isSiteAdmin == None:
+            self.__isSiteAdmin = \
+              user_division_admin_of_group(self.userInfo, \
+                self.groupInfo)
+        retval = self.__isSiteAdmin
         assert type(retval) == bool
         return retval
         
     @property
-    def is_group_admin(self):
-        retval = user_group_admin_of_group(self.userInfo, \
-          self.groupInfo)
+    def isGroupAdmin(self):
+        if self.__isGroupAdmin == None:
+            self.__isGroupAdmin = \
+              user_group_admin_of_group(self.userInfo, \
+                self.groupInfo)
+        retval = self.__isGroupAdmin
         assert type(retval) == bool
         return retval        
 
     @property
-    def is_ptn_coach(self):
-        retval = user_participation_coach_of_group(self.userInfo, \
-          self.groupInfo)
+    def isPtnCoach(self):
+        if self.__isPtnCoach == None:
+            self.__isPtnCoach = \
+              user_participation_coach_of_group(self.userInfo, \
+                self.groupInfo)
+        retval = self.__isPtnCoach
         assert type(retval) == bool
         return retval
 
     @property
-    def is_moderator(self):
-        retval = user_moderator_of_group(self.userInfo, \
-          self.groupInfo)
+    def isModerator(self):
+        if self.__isModerator == None:
+            self.__isModerator = \
+              user_moderator_of_group(self.userInfo, \
+                self.groupInfo)
+        retval = self.__isModerator
         assert type(retval) == bool
         return retval
 
     @property
-    def is_moderated(self):
-        retval = user_moderated_member_of_group(self.userInfo, \
-          self.groupInfo)
+    def isModerated(self):
+        if self.__isModerated == None:
+            self.__isModerated = \
+              user_moderated_member_of_group(self.userInfo, \
+                self.groupInfo)
+        retval = self.__isModerated
         assert type(retval) == bool
         return retval
 
     @property
-    def is_blocked(self):
-        retval = user_blocked_member_of_group(self.userInfo, \
-          self.groupInfo)
+    def isBlocked(self):
+        if self.__isBlocked == None:
+            self.__isBlocked = \
+              user_blocked_member_of_group(self.userInfo, \
+                self.groupInfo)
+        retval = self.__isBlocked
         assert type(retval) == bool
         return retval
 
     @property
-    def is_posting_member(self):
-        retval = user_posting_member_of_group(self.userInfo, \
-          self.groupInfo)
+    def isPostingMember(self):
+        if self.__isPostingMember == None:
+            self.__isPostingMember = \
+              user_posting_member_of_group(self.userInfo, \
+                self.groupInfo)
+        retval = self.__isPostingMember
         assert type(retval) == bool
         return retval
 
     @property
-    def is_unverified_member(self):
-        #retval = user_unverified_member_of_group(self.userInfo, \
-        #  self.groupInfo)
-        retval = False
+    def isUnverified(self):
+        if self.__isUnverified == None:
+            self.__isUnverified = False
+            #self.__isUnverified = \
+            #  user_unverified_member_of_group(self.userInfo, \
+            #    self.groupInfo)
+        retval = self.__isUnverified
         assert type(retval) == bool
         return retval
 
     @property
-    def is_normal_member(self):
-        retval = not(self.is_site_admin) and \
-          not(self.is_group_admin) and \
-          not(self.is_ptn_coach) and\
-          not(self.is_moderator) and\
-          not(self.is_moderated) and\
-          not(self.is_blocked) and\
-          not(self.is_unverified_member)
+    def isOddlyConfigured(self):
+        if self.__isOddlyConfigured == None:
+            self.__isOddlyConfigured = \
+              (self.isSiteAdmin or 
+               self.isGroupAdmin or \
+               self.isPtnCoach or \
+               self.isModerator or \
+               (self.isPostingMember and \
+                (self.groupInfo.group_type == 'announcement'))) and \
+              (self.isModerated or self.isBlocked) or \
+              (self.isModerated and self.isBlocked)
+        retval = self.__isOddlyConfigured
+        assert type(retval) == bool
+        return retval
+    
+    @property
+    def isNormalMember(self):
+        if self.__isNormalMember == None:
+            self.__isNormalMember = \
+              not(self.isSiteAdmin) and \
+                not(self.isGroupAdmin) and \
+                not(self.isPtnCoach) and \
+                not(self.isModerator) and \
+                not(self.isModerated) and \
+                not(self.isBlocked) and \
+                not(self.isUnverified) and \
+                not(self.isPostingMember and \
+                     (self.groupInfo.group_type == 'announcement')) and \
+                not(self.isOddlyConfigured)
+        retval = self.__isNormalMember
         assert type(retval) == bool
         return retval
     

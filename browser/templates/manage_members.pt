@@ -4,10 +4,10 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
   xmlns:tal="http://xml.zope.org/namespaces/tal"
   xmlns:metal="http://xml.zope.org/namespaces/metal"
-  metal:use-macro="context/@@groupserver_site_home_layout/page">
+  metal:use-macro="context/@@groupserver_layout/page">
   <head>
     <title metal:fill-slot="title">
-      Manage Members
+      Manage Members : <span tal:replace="view/groupInfo/name"/> :
       <span tal:replace="view/siteInfo/get_name">A Site</span>
     </title>
     
@@ -22,11 +22,38 @@
     </p>
     <tal:block tal:repeat="status view/statuses">
       <div tal:define="member status/userInfo">
-        <h3><span tal:replace="member/name" /></h3> 
-        <p tal:condition="status/is_group_admin">
+        <a tal:attributes="href member/url" 
+          tal:content="member/name">
+          A Member
+        </a>
+        <p tal:condition="status/isSiteAdmin">
+          Site Administrator
+        </p>
+        <p tal:condition="status/isGroupAdmin">
           Group Administrator
         </p>
-        <p tal:condition="status/is_normal_member">
+        <p tal:condition="status/isPtnCoach">
+          Participation Coach
+        </p>
+        <p tal:condition="status/isModerator">
+          Moderator
+        </p>
+        <p tal:condition="status/isModerated">
+          Moderated Member
+        </p>
+        <p tal:condition="status/isPostingMember">
+          Posting Member
+        </p>
+        <p tal:condition="status/isBlocked">
+          Blocked Member
+        </p>
+        <p tal:condition="status/isUnverified">
+          Unverified
+        </p>
+        <p tal:condition="status/isOddlyConfigured">
+          Oddly Configured
+        </p>
+        <p tal:condition="status/isNormalMember">
           Normal Member
         </p>
       </div>
