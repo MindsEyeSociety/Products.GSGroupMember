@@ -480,6 +480,19 @@ def user_participation_coach_of_group(userInfo, groupInfo):
       and (userInfo.id == ptnCoachId)
     assert type(retval) == bool
     return retval
+
+def user_unverified_member_of_group(userInfo, groupInfo):
+    assert IGSUserInfo.providedBy(userInfo), \
+      '%s is not a IGSUserInfo' % userInfo
+    assert IGSGroupInfo.providedBy(groupInfo), \
+      '%s is not an IGSGroupInfo' % groupInfo
+    context = groupInfo.groupObj
+    unverified_group_members = \
+      get_unverified_group_users(context, groupInfo.id)
+    retval = user_member_of_group(userInfo, groupInfo)\
+      and (userInfo.id in [m.getId() for m in unverified_group_members])
+    assert type(retval) == bool
+    return retval
     
 def user_moderator_of_group(userInfo, groupInfo):
     assert IGSUserInfo.providedBy(userInfo), \

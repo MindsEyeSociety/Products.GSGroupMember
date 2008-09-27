@@ -15,6 +15,7 @@ class GSManageGroupMembers(BrowserView):
 
         self.siteInfo = createObject('groupserver.SiteInfo', self.context)
         self.groupInfo = createObject('groupserver.GroupInfo', self.context)
+
         self.group_members = GroupMembers(self.context)
         self.member_count = len(self.group_members)
         self.statuses = [ GSGroupMembershipStatus(m, self.groupInfo) 

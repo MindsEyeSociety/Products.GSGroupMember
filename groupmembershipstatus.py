@@ -8,7 +8,8 @@ from Products.GSGroup.interfaces import IGSGroupInfo, IGSMailingListInfo
 from groupmembership import user_division_admin_of_group,\
   user_group_admin_of_group, user_participation_coach_of_group,\
   user_moderator_of_group, user_moderated_member_of_group,\
-  user_blocked_member_of_group, user_posting_member_of_group
+  user_blocked_member_of_group, user_posting_member_of_group,\
+  user_unverified_member_of_group
 from Products.XWFCore.XWFUtils import comma_comma_and
 
 import logging
@@ -112,10 +113,9 @@ class GSGroupMembershipStatus(object):
     @property
     def isUnverified(self):
         if self.__isUnverified == None:
-            self.__isUnverified = False
-            #self.__isUnverified = \
-            #  user_unverified_member_of_group(self.userInfo, \
-            #    self.groupInfo)
+            self.__isUnverified = \
+              user_unverified_member_of_group(self.userInfo, \
+                self.groupInfo)
         retval = self.__isUnverified
         assert type(retval) == bool
         return retval
