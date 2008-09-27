@@ -25,7 +25,13 @@
         <a tal:attributes="href member/url" 
           tal:content="member/name">
           A Member
-        </a>
+        </a> - <span tal:content="status/status_label"/>
+        <!--p tal:condition="status/isNormalMember">
+          Normal Member
+        </p>
+        <p tal:condition="status/isOddlyConfigured">
+          Oddly Configured
+        </p>
         <p tal:condition="status/isSiteAdmin">
           Site Administrator
         </p>
@@ -49,13 +55,7 @@
         </p>
         <p tal:condition="status/isUnverified">
           Unverified
-        </p>
-        <p tal:condition="status/isOddlyConfigured">
-          Oddly Configured
-        </p>
-        <p tal:condition="status/isNormalMember">
-          Normal Member
-        </p>
+        </p-->
       </div>
     </tal:block>
   </body>
