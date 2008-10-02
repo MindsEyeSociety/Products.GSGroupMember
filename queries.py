@@ -7,17 +7,8 @@ log = logging.getLogger("GroupMemberQuery") #@UndefinedVariable
 
 class GroupMemberQuery(object):
     def __init__(self, da):
-
-        engine = da.engine
-        metadata = sa.BoundMetaData(engine)
-        self.userInvitationTable = sa.Table(
-          'user_group_member_invitation', 
-          metadata, 
-          autoload=True)
-        self.userEmailTable = sa.Table(
-          'user_email', 
-          metadata, 
-          autoload=True)
+        self.userInvitationTable = da.createTable('user_group_member_invitation')
+        self.userEmailTable = da.createTable('user_email')
 
     def add_invitation(self, invitiationId, siteId, groupId, userId, invtUsrId):
         assert invitiationId, 'invitiationId is %s' % invitiationId
