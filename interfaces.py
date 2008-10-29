@@ -3,7 +3,7 @@
 from zope.interface.interface import Interface
 from zope.contentprovider.interfaces import IContentProvider
 from zope.schema import Choice, List, Int, Text, Bool
-from Products.GSProfile.interfaceCoreProfile import deliveryVocab
+from Products.GSProfile.interfaces import deliveryVocab
 
 class IGSInvitationGroups(Interface):
     invitation_groups = List(title=u'Invitation Groups',
