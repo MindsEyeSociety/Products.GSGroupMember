@@ -17,9 +17,6 @@ from Products.GSSearch.queries import MessageQuery
 from Products.GSProfile import interfaces as profileinterfaces
 from interfaces import IGSPostingUser
 
-import logging
-log = logging.getLogger("GSGroupMember.usercanpost") #@UndefinedVariable
-
 class GSGroupMemberPostingInfo(object):
 
     adapts(IGSGroupFolder, IGSUserInfo)
@@ -186,12 +183,10 @@ class GSGroupMemberPostingInfo(object):
             retval = False
             self.__status = u'participation coach'
             self.__statusNum = self.__statusNum + 0
-            log.info("User is participation coach")
         elif user_admin_of_group(self.userInfo, self.groupInfo):
             retval = False
             self.__status = u'administrator of'
             self.__statusNum = self.__statusNum + 0
-            log.info("User is administrator")
         else:
             # The user is not the participation coach or the administrator
             # of the group
@@ -200,7 +195,6 @@ class GSGroupMemberPostingInfo(object):
             uid = self.userInfo.id
             limit = self.mailingList.getValueFor('senderlimit')
             interval = self.mailingList.getValueFor('senderinterval')
-            log.info("Group limit set to %s messages in %s seconds" % (limit, interval))
             td = timedelta(seconds=interval)
             now = datetime.now(pytz.utc)
             earlyDate = now - td
