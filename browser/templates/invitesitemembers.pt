@@ -1,6 +1,3 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" 
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml"
   xmlns:tal="http://xml.zope.org/namespaces/tal"
   xmlns:metal="http://xml.zope.org/namespaces/metal"
@@ -59,18 +56,16 @@
       <script type="text/javascript"
         src="/++resource++check_required-20071214.js">&#160;</script>
       <script type="text/javascript"
-        src="/++resource++popup_help-20071218.js">&#160;</script>
+        tal:define="widgets view/widgets; 
+          button string:#form\\.actions\\.invite"
+        tal:content="provider:groupserver.RequiredWidgetsJavaScript">
+        alert("I have not been replaced.");
+      </script>
       <script type="text/javascript"
-        tal:define="rws python:[w for w in view.widgets if w.required];
-          rwIds python:['\'#%s\''%w.name.replace('.','\\\\.') for w in rws];
-          arr python:'%s' % ', '.join(rwIds);">
+        src="/++resource++popup_help-20071218.js">&#160;</script>
+      <script type="text/javascript">
         jQuery.noConflict()
         jQuery(document).ready( function () {
-            var gsRequiredWidgets = new Array(<span tal:replace="arr" />);
-            GSCheckRequired.init(
-              gsRequiredWidgets, 
-              '#form\\.actions\\.invite');
-              
             GSPopupFormHelp.init('#invite-site-members');
         });
       </script>
