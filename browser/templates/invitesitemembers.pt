@@ -1,10 +1,7 @@
-<html xmlns="http://www.w3.org/1999/xhtml"
-  xmlns:tal="http://xml.zope.org/namespaces/tal"
-  xmlns:metal="http://xml.zope.org/namespaces/metal"
-  metal:use-macro="context/@@groupserver_layout/page">
+<html metal:use-macro="context/@@groupserver_layout/page">
   <head>
     <title metal:fill-slot="title">
-      <span tal:replace="string:${view/label}: ${view/groupInfo/get_name}: ${view/siteInfo/get_name}">
+      <span tal:replace="string:${view/label}: ${view/groupInfo/name}: ${view/siteInfo/name}">
         Add Site Members
       </span>
     </title>
