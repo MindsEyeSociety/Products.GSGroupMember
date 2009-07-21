@@ -23,36 +23,6 @@
           tal:content="member/name">
           A Member
         </a> - <span tal:content="status/status_label"/>
-        <!--p tal:condition="status/isNormalMember">
-          Normal Member
-        </p>
-        <p tal:condition="status/isOddlyConfigured">
-          Oddly Configured
-        </p>
-        <p tal:condition="status/isSiteAdmin">
-          Site Administrator
-        </p>
-        <p tal:condition="status/isGroupAdmin">
-          Group Administrator
-        </p>
-        <p tal:condition="status/isPtnCoach">
-          Participation Coach
-        </p>
-        <p tal:condition="status/isModerator">
-          Moderator
-        </p>
-        <p tal:condition="status/isModerated">
-          Moderated Member
-        </p>
-        <p tal:condition="status/isPostingMember">
-          Posting Member
-        </p>
-        <p tal:condition="status/isBlocked">
-          Blocked Member
-        </p>
-        <p tal:condition="status/isUnverified">
-          Unverified
-        </p-->
       </div>
     </tal:block>
   </body>

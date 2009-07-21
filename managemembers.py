@@ -2,8 +2,9 @@
 from Products.Five import BrowserView
 from zope.component import createObject
 from Products.CustomUserFolder.interfaces import IGSUserInfo
-from Products.GSGroupMember.groupmembership import GroupMembers
-from Products.GSGroupMember.groupmembershipstatus import GSGroupMembershipStatus
+
+from groupmembershipstatus import GSGroupMembershipStatus
+from groupmembership import GroupMembers
 
 import logging
 log = logging.getLogger('GSGroupMember')
@@ -16,8 +17,28 @@ class GSManageGroupMembers(BrowserView):
         self.siteInfo = createObject('groupserver.SiteInfo', self.context)
         self.groupInfo = createObject('groupserver.GroupInfo', self.context)
 
-        self.group_members = GroupMembers(self.context)
-        self.member_count = len(self.group_members)
-        self.statuses = [ GSGroupMembershipStatus(m, self.groupInfo) 
-                            for m in self.group_members.members ]
+        self.__groupMembers = None
+        self.__memberCount = None
+        self.__statuses = None 
 
+    @property
+    def groupMembers(self):
+        if self.__groupMembers == None:
+            self.__groupMembers = GroupMembers(self.context)
+        return self.__groupMembers
+    
+    @property
+    def memberCount(self):
+        if self.__memberCount == None:
+            self.__memberCount = len(self.groupMembers)
+        return self.__memberCount
+    
+    @property
+    def statuses(self):
+        if self.__statuses == None:
+            self.__statuses = \
+                [ GSGroupMembershipStatus(m, self.groupInfo) 
+                  for m in self.groupMembers.members ]
+        return self.__statuses
+    
+    
