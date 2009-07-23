@@ -15,7 +15,12 @@
       <span tal:replace="view/groupInfo/name">this group</span>
     </h1>
     <p>
-      This is a list of group members.
+      There 
+      <span tal:replace="python:view.verifiedMemberCount==1 and 'is 1 member' or 'are %d members' % view.verifiedMemberCount"/> 
+      &#8212; and
+      <span tal:replace="python:view.invitedMemberCount==1 and '1 invited member' or '%d invited members' % view.invitedMemberCount"/>
+      &#8212; 
+      in <span tal:replace="view/groupInfo/name">this group</span>.
     </p>
     <tal:block tal:repeat="status view/statuses">
       <div tal:define="member status/userInfo">

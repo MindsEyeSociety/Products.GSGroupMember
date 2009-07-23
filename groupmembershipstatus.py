@@ -39,6 +39,7 @@ class GSGroupMembershipStatus(object):
         self.__isModerated = None
         self.__isBlocked = None
         self.__isUnverified = None
+        self.isInvited = False
 
     @property
     def status_label(self):
@@ -64,8 +65,8 @@ class GSGroupMembershipStatus(object):
                     statuses.append('Moderated Member')
                 if self.isBlocked:
                     statuses.append('Blocked Member')
-                if self.isUnverified:
-                    statuses.append('Unverified Member')
+                if self.isUnverified or self.isInvited:
+                    statuses.append('Invited Member')
                 self.__status_label = comma_comma_and(statuses)
         retval = self.__status_label
         assert retval
@@ -84,6 +85,7 @@ class GSGroupMembershipStatus(object):
                 not(self.isModerated) and \
                 not(self.isBlocked) and \
                 not(self.isUnverified) and \
+                not(self.isInvited) and \
                 not(self.isOddlyConfigured)
         retval = self.__isNormalMember
         assert type(retval) == bool
@@ -184,4 +186,3 @@ class GSGroupMembershipStatus(object):
         retval = self.__isUnverified
         assert type(retval) == bool
         return retval
-
