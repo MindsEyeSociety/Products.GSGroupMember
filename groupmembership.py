@@ -152,6 +152,68 @@ class InvitationGroupsForSiteAndCurrentUser(InvitationGroupsForSite):
 # Members #
 ###########
 
+class InvitedGroupMembers(object):
+    implements(IVocabulary, IVocabularyTokenized)
+    __used_for__ = IEnumerableMapping
+
+    def __init__(self, context, siteInfo):
+        self.context = context
+        self.siteInfo = siteInfo
+        self.groupInfo = createObject('groupserver.GroupInfo', context)
+        self.__members = None
+       
+    def __iter__(self):
+        """See zope.schema.interfaces.IIterableVocabulary"""
+        retval = [SimpleTerm(u.id, u.id, u.name)
+                  for u in self.members]
+        for term in retval:
+            assert term
+            assert ITitledTokenizedTerm in providedBy(term)
+            assert term.token == term.value
+        return iter(retval)
+
+    def __len__(self):
+        """See zope.schema.interfaces.IIterableVocabulary"""
+        return len(self.members)
+
+    def __contains__(self, value):
+        """See zope.schema.interfaces.IBaseVocabulary"""
+        retval = value in [u.id for u in self.members]
+        assert type(retval) == bool
+        return retval
+
+    def getQuery(self):
+        """See zope.schema.interfaces.IBaseVocabulary"""
+        return None
+
+    def getTerm(self, value):
+        """See zope.schema.interfaces.IBaseVocabulary"""
+        return self.getTermByToken(value)
+        
+    def getTermByToken(self, token):
+        """See zope.schema.interfaces.IVocabularyTokenized"""
+        for u in self.members:
+            if u.id == token:
+                retval = SimpleTerm(u.id, u.id, u.name)
+                assert retval
+                assert ITitledTokenizedTerm in providedBy(retval)
+                assert retval.token == retval.value
+                return retval
+        raise LookupError, token
+
+    @property
+    def members(self):
+        assert self.context
+        if self.__members == None:
+            userIds = get_invited_members(self.context, 
+              self.siteInfo.id, self.groupInfo.id)
+            self.__members = [ createObject('groupserver.UserFromId', 
+                               self.context, uId) for uId in userIds ]
+        assert type(self.__members) == list
+        #assert reduce(lambda a, b: a and b, 
+        #    [IGSUserInfo.providedBy(u) for u in self.__members], True)
+        return self.__members
+
 class GroupMembers(object):
     implements(IVocabulary, IVocabularyTokenized)
     __used_for__ = IEnumerableMapping
@@ -363,14 +425,25 @@ def get_group_users(context, groupId, excludeGroup = ''):
     #              [ICustomUser.providedBy(u) for u in retval], True)
     return retval
 
+def get_invited_members(context, siteId, groupId):
+    da = context.zsqlalchemy 
+    assert da, 'No data-adaptor found'
+    groupMemberQuery = GroupMemberQuery(da)
+    return groupMemberQuery.get_invited_members(siteId, groupId)
+
 def get_unverified_group_users(context, groupId, excludeGroup = ''):
     da = context.zsqlalchemy 
     assert da, 'No data-adaptor found'
     groupMemberQuery = GroupMemberQuery(da)
 
+    unverifiedUsers = []
     group_users = get_group_users(context, groupId, excludeGroup)
-
-    return groupMemberQuery.get_unverified_members(group_users)
+    for u in group_users:
+        if not u.get_verifiedEmailAddresses():
+            unverifiedUsers.append(u)
+    retval = unverifiedUsers
+    assert type(retval)==list
+    return retval
 
 
 #############

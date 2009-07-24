@@ -2,10 +2,9 @@
 from Products.Five import BrowserView
 from zope.component import createObject
 from Products.CustomUserFolder.interfaces import IGSUserInfo
-from Products.GSGroup.queries import GroupQuery
 
 from groupmembershipstatus import GSGroupMembershipStatus
-from groupmembership import GroupMembers
+from groupmembership import GroupMembers, InvitedGroupMembers
 
 import logging
 log = logging.getLogger('GSGroupMember')
@@ -18,9 +17,6 @@ class GSManageGroupMembers(BrowserView):
         self.siteInfo = createObject('groupserver.SiteInfo', context)
         self.groupInfo = createObject('groupserver.GroupInfo', context)
 
-        self.gq = GroupQuery(context, context.zsqlalchemy)
-        assert self.gq
-
         self.__verifiedGroupMembers = None
         self.__verifiedGroupMembersStatuses = None
         self.__verifiedMemberCount = None
@@ -30,7 +26,6 @@ class GSManageGroupMembers(BrowserView):
         self.__statuses = None 
         self.__memberCount = None
         
-
     @property
     def verifiedGroupMembers(self):
         if self.__verifiedGroupMembers == None:
@@ -54,13 +49,8 @@ class GSManageGroupMembers(BrowserView):
     @property
     def invitedMembers(self):
         if self.__invitedMembers == None:
-            invitations = \
-              self.gq.get_current_invitations_for_group(self.siteInfo.id, 
-                                                        self.groupInfo.id)
             self.__invitedMembers = \
-              [ createObject('groupserver.UserFromId', 
-                  self.context, i['user_id']) 
-                for i in invitations ]
+              InvitedGroupMembers(self.context, self.siteInfo).members
         return self.__invitedMembers
     
     @property

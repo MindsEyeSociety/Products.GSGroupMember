@@ -187,3 +187,20 @@ class GroupMemberQuery(object):
             
         return retval
 
+    def get_invited_members(self, siteId, groupId):
+        assert siteId
+        assert groupId
+        uit = self.userInvitationTable
+        s = sa.select([uit.c.user_id.distinct()])
+        s.append_whereclause(uit.c.site_id == siteId)
+        s.append_whereclause(uit.c.group_id == groupId)
+        s.append_whereclause(uit.c.response_date == None)
+        
+        r = s.execute()
+        retval = []
+        if r.rowcount:
+            retval = [ x['user_id'] for x in r ]
+        assert type(retval) == list
+        return retval
+    
+
