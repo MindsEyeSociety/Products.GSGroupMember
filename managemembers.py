@@ -36,7 +36,7 @@ class GSManageGroupMembers(BrowserView):
     def verifiedGroupMembersStatuses(self):
         if self.__verifiedGroupMembersStatuses == None:
             self.__verifiedGroupMembersStatuses =\
-              [ GSGroupMembershipStatus(m, self.groupInfo)
+              [ GSGroupMembershipStatus(m, self.groupInfo, self.siteInfo)
                 for m in self.verifiedGroupMembers ]
         return self.__verifiedGroupMembersStatuses
     
@@ -56,12 +56,9 @@ class GSManageGroupMembers(BrowserView):
     @property
     def invitedMembersStatuses(self):
         if self.__invitedMembersStatuses == None:
-            statuses = []
-            for m in self.invitedMembers:
-                status = GSGroupMembershipStatus(m, self.groupInfo)
-                status.isInvited = True
-                statuses.append(status)
-            self.__invitedMembersStatuses = statuses
+            self.__invitedMembersStatuses = \
+              [ GSGroupMembershipStatus(m, self.groupInfo, self.siteInfo)
+                for m in self.invitedMembers ]
         return self.__invitedMembersStatuses
     
     @property

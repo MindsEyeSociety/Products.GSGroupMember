@@ -27,7 +27,7 @@
         <a tal:attributes="href member/url" 
           tal:content="member/name">
           A Member
-        </a> - <span tal:content="status/status_label"/>
+        </a> &#8212; <span tal:content="status/status_label"/>
       </div>
     </tal:block>
   </body>

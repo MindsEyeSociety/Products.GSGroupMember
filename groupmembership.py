@@ -566,6 +566,18 @@ def user_unverified_member_of_group(userInfo, groupInfo):
       and (userInfo.id in [m.getId() for m in unverified_group_members])
     assert type(retval) == bool
     return retval
+
+def user_invited_member_of_group(userInfo, groupInfo, siteInfo):
+    assert IGSUserInfo.providedBy(userInfo), \
+      '%s is not a IGSUserInfo' % userInfo
+    assert IGSGroupInfo.providedBy(groupInfo), \
+      '%s is not an IGSGroupInfo' % groupInfo
+    context = groupInfo.groupObj
+    invited_group_members = \
+      InvitedGroupMembers(context, siteInfo).members
+    retval = userInfo.id in [ m.id for m in invited_group_members ]
+    assert type(retval) == bool
+    return retval
     
 def user_moderator_of_group(userInfo, groupInfo):
     assert IGSUserInfo.providedBy(userInfo), \

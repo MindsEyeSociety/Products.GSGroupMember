@@ -40,6 +40,11 @@
       component="Products.GSGroupMember.groupmembership.GroupMembers"
       name="groupserver.GroupMembers"
       />
+  <utility
+      provides="zope.schema.interfaces.IVocabularyFactory"
+      component="Products.GSGroupMember.groupmembership.InvitedGroupMembers"
+      name="groupserver.InvitedGroupMembers"
+      />
 
   <!--Pages-->
   <browser:page 
