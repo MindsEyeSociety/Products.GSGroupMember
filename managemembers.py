@@ -2,6 +2,7 @@
 from Products.Five import BrowserView
 from zope.component import createObject
 from Products.CustomUserFolder.interfaces import IGSUserInfo
+from Products.XWFCore.XWFUtils import sort_by_name
 
 from groupmembershipstatus import GSGroupMembershipStatus
 from groupmembership import GroupMembers, InvitedGroupMembers
@@ -17,34 +18,26 @@ class GSManageGroupMembers(BrowserView):
         self.siteInfo = createObject('groupserver.SiteInfo', context)
         self.groupInfo = createObject('groupserver.GroupInfo', context)
 
-        self.__verifiedGroupMembers = None
-        self.__verifiedGroupMembersStatuses = None
-        self.__verifiedMemberCount = None
+        self.__members = None
+        self.__fullMembers = None
+        self.__fullMemberCount = None
         self.__invitedMembers = None
-        self.__invitedMembersStatuses = None
         self.__invitedMemberCount = None
         self.__statuses = None 
-        self.__memberCount = None
         
     @property
-    def verifiedGroupMembers(self):
-        if self.__verifiedGroupMembers == None:
-            self.__verifiedGroupMembers = GroupMembers(self.context).members
-        return self.__verifiedGroupMembers
+    def fullMembers(self):
+        if self.__fullMembers == None:
+            self.__fullMembers = \
+              GroupMembers(self.context).members
+        return self.__fullMembers
     
     @property
-    def verifiedGroupMembersStatuses(self):
-        if self.__verifiedGroupMembersStatuses == None:
-            self.__verifiedGroupMembersStatuses =\
-              [ GSGroupMembershipStatus(m, self.groupInfo, self.siteInfo)
-                for m in self.verifiedGroupMembers ]
-        return self.__verifiedGroupMembersStatuses
-    
-    @property
-    def verifiedMemberCount(self):
-        if self.__verifiedMemberCount == None:
-            self.__verifiedMemberCount = len(self.verifiedGroupMembersStatuses)
-        return self.__verifiedMemberCount
+    def fullMemberCount(self):
+        if self.__fullMemberCount == None:
+            self.__fullMemberCount = \
+              len(self.fullMembers)
+        return self.__fullMemberCount
     
     @property
     def invitedMembers(self):
@@ -54,25 +47,25 @@ class GSManageGroupMembers(BrowserView):
         return self.__invitedMembers
     
     @property
-    def invitedMembersStatuses(self):
-        if self.__invitedMembersStatuses == None:
-            self.__invitedMembersStatuses = \
-              [ GSGroupMembershipStatus(m, self.groupInfo, self.siteInfo)
-                for m in self.invitedMembers ]
-        return self.__invitedMembersStatuses
-    
-    @property
     def invitedMemberCount(self):
         if self.__invitedMemberCount == None:
             self.__invitedMemberCount = \
-              len(self.invitedMembersStatuses)
+              len(self.invitedMembers)
         return self.__invitedMemberCount
+    
+    @property
+    def members(self):
+        if self.__members == None:
+            members = \
+              self.fullMembers + self.invitedMembers
+            members.sort(sort_by_name)
+            self.__members = members
+        return self.__members
     
     @property
     def statuses(self):
         if self.__statuses == None:
             self.__statuses = \
-              self.verifiedGroupMembersStatuses \
-              + \
-              self.invitedMembersStatuses
+              [ GSGroupMembershipStatus(m, self.groupInfo, self.siteInfo)
+                for m in self.members ]
         return self.__statuses
