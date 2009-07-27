@@ -168,25 +168,6 @@ class GroupMemberQuery(object):
         assert retval >= 0
         return retval
 
-    def get_unverified_members(self, group_users):
-        uet = self.userEmailTable
-        
-        uid_dict = {}
-        for user in group_users:
-            uid_dict[user.getId()] = user
-        
-        s = sa.select([uet.c.user_id])
-        inStatement = uet.c.user_id.in_(*uid_dict.keys())
-        s.append_whereclause(inStatement)
-        s.append_whereclause(uet.c.verified_date == None)
-
-        r = s.execute()
-        retval = []
-        for row in r:
-            retval.append(uid_dict[row['user_id']])
-            
-        return retval
-
     def get_invited_members(self, siteId, groupId):
         assert siteId
         assert groupId
@@ -202,5 +183,3 @@ class GroupMemberQuery(object):
             retval = [ x['user_id'] for x in r ]
         assert type(retval) == list
         return retval
-    
-
