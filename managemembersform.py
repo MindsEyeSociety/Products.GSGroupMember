@@ -12,12 +12,9 @@ class GSManageGroupMembersForm(PageForm):
     template = ZopeTwoPageTemplateFile(pageTemplateFileName)
         
     def __init__(self, context, request):
-        print 'Up to here!'
         PageForm.__init__(self, context, request)
-        print 'Up to here!'
         self.context = context
         self.request = request
-        print 'Up to here!'
 
         self.siteInfo = createObject('groupserver.SiteInfo', context)
         self.groupInfo = createObject('groupserver.GroupInfo', context)

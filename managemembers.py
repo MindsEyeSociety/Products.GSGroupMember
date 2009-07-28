@@ -26,12 +26,12 @@ class GSManageGroupMembers(object):
         self.__invitedMemberCount = None
         self.__statuses = None
         self.form_fields = form.Fields(
-                  form.Fields(TextLine(__name__='foo',
-                    title=u'Foo',
-                    description=u'A placeholder widget',
-                    required=False)
-                  )
-                )
+          form.Fields(TextLine(__name__='foo',
+            title=u'Foo',
+            description=u'A placeholder widget',
+            required=False)
+          )
+        )
         
     @property
     def fullMembers(self):
