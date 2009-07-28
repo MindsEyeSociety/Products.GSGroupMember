@@ -9,7 +9,7 @@ from groupmembership import user_division_admin_of_group,\
   user_group_admin_of_group, user_participation_coach_of_group,\
   user_moderator_of_group, user_moderated_member_of_group,\
   user_blocked_member_of_group, user_posting_member_of_group,\
-  user_unverified_member_of_group, user_invited_member_of_group
+  user_invited_member_of_group
 from Products.XWFCore.XWFUtils import comma_comma_and
 
 from interfaces import IGSGroupMembershipStatus
@@ -44,32 +44,35 @@ class GSGroupMembershipStatus(object):
     @property
     def status_label(self):
         if self.__status_label == None:
-            if self.isNormalMember:
-                self.__status_label = 'Normal Member'
-            elif self.isOddlyConfigured:
-                self.__status_label = 'Oddly Configured Member'
-            elif self.isInvited:
-                self.__status_label = 'Invited Member'
-            else:
-                postingIsSpecial = (self.groupInfo.group_type == 'announcement')
-                statuses = []
-                if self.isSiteAdmin:
-                    statuses.append('Site Administrator')
-                if self.isGroupAdmin:
-                    statuses.append('Group Administrator')
-                if self.isPtnCoach:
-                    statuses.append('Participation Coach')
-                if self.isPostingMember and postingIsSpecial:
-                    statuses.append('Posting Member')
-                if self.isModerator:
-                    statuses.append('Moderator')
-                if self.isModerated:
-                    statuses.append('Moderated Member')
-                if self.isBlocked:
-                    statuses.append('Blocked Member')
-                if self.isUnverified:
-                    statuses.append('Invited Member')
-                self.__status_label = comma_comma_and(statuses)
+            label = ''            
+            statuses = []
+            if self.isSiteAdmin:
+                statuses.append('Site Administrator')
+            if self.isGroupAdmin:
+                statuses.append('Group Administrator')
+            if self.isPtnCoach:
+                statuses.append('Participation Coach')
+            postingIsSpecial = (self.groupInfo.group_type == 'announcement')
+            if postingIsSpecial and self.isPostingMember:
+                statuses.append('Posting Member')
+            if self.isModerator:
+                statuses.append('Moderator')
+            if self.isModerated:
+                statuses.append('Moderated Member')
+            if self.isBlocked:
+                statuses.append('Blocked Member')
+            if self.isInvited:
+                statuses.append('Invited Member')
+            label = comma_comma_and(statuses)
+
+            if not label:
+                assert self.isNormalMember
+                label = 'Normal Member'
+            if self.isOddlyConfigured:
+                label = 'Oddly Configured Member: %s' % label
+            if self.isUnverified:
+                label = '%s with no verified email addresses.' % label
+            self.__status_label = label
         retval = self.__status_label
         assert retval
         return retval
@@ -92,7 +95,6 @@ class GSGroupMembershipStatus(object):
                 not(self.isModerator) and \
                 not(self.isModerated) and \
                 not(self.isBlocked) and \
-                not(self.isUnverified) and \
                 not(self.isInvited) and \
                 not(self.isOddlyConfigured)
         retval = self.__isNormalMember
@@ -116,8 +118,7 @@ class GSGroupMembershipStatus(object):
                 (self.isPostingMember and \
                   (self.groupInfo.group_type == 'announcement')) or\
                 self.isModerator) and \
-               (self.isModerated or self.isBlocked or \
-                self.isUnverified or self.isInvited)) or \
+               (self.isModerated or self.isBlocked or self.isInvited)) or \
               (self.isModerated and (self.isBlocked or self.isInvited)) or \
               (self.isBlocked and self.isInvited)
         retval = self.__isOddlyConfigured
@@ -195,16 +196,6 @@ class GSGroupMembershipStatus(object):
         return retval
 
     @property
-    def isUnverified(self):
-        if self.__isUnverified == None:
-            self.__isUnverified = \
-              user_unverified_member_of_group(self.userInfo, \
-                self.groupInfo)
-        retval = self.__isUnverified
-        assert type(retval) == bool
-        return retval
-
-    @property
     def isInvited(self):
         if self.__isInvited == None:
             self.__isInvited = \
@@ -213,3 +204,19 @@ class GSGroupMembershipStatus(object):
         retval = self.__isInvited
         assert type(retval) == bool
         return retval
+
+    @property
+    def isUnverified(self):
+        # AM: This is not actually a membership status, but
+        #  it is useful for admins to know whether a 
+        #  member has any verified email addresses.
+        if self.__isUnverified == None:
+            if self.userInfo.user.get_verifiedEmailAddresses():
+                self.__isUnverified = False
+            else:
+                self.__isUnverified = True
+        retval = self.__isUnverified
+        assert type(retval) == bool
+        return retval
+    
+    

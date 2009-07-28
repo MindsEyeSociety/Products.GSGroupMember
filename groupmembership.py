@@ -432,6 +432,8 @@ def get_invited_members(context, siteId, groupId):
     return groupMemberQuery.get_invited_members(siteId, groupId)
 
 def get_unverified_group_users(context, groupId, excludeGroup = ''):
+    # AM: To be removed when the new Manage Members code is deployed
+    #  and the old admin pages removed.   
     da = context.zsqlalchemy 
     assert da, 'No data-adaptor found'
     groupMemberQuery = GroupMemberQuery(da)
