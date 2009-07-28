@@ -12,12 +12,11 @@ from groupmembership import user_division_admin_of_group,\
   user_unverified_member_of_group, user_invited_member_of_group
 from Products.XWFCore.XWFUtils import comma_comma_and
 
-import logging
-log = logging.getLogger("GSGroupMember.groupmembershipstatus")
+from interfaces import IGSGroupMembershipStatus
 
 class GSGroupMembershipStatus(object):
-
     adapts(IGSUserInfo, IGSGroupInfo)
+    implements(IGSGroupMembershipStatus)
 
     def __init__(self, userInfo, groupInfo, siteInfo):
         assert IGSUserInfo.providedBy(userInfo),\

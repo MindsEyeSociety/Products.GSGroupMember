@@ -1,34 +1,66 @@
-<html xmlns="http://www.w3.org/1999/xhtml"
-  xmlns:tal="http://xml.zope.org/namespaces/tal"
-  xmlns:metal="http://xml.zope.org/namespaces/metal"
-  metal:use-macro="context/@@groupserver_layout/page">
+<html metal:use-macro="context/@@groupserver_layout/page">
   <head>
     <title metal:fill-slot="title">
-      Manage Members : <span tal:replace="view/groupInfo/name"/> :
+      <span tal:replace="view/label"/> :
       <span tal:replace="view/siteInfo/get_name">A Site</span>
     </title>
     
   </head>
-  <body metal:fill-slot="body">
-    <h1>
-      Manage the Members of 
-      <span tal:replace="view/groupInfo/name">this group</span>
-    </h1>
-    <p>
-      There 
-      <span tal:replace="python:view.fullMemberCount==1 and 'is 1 member' or 'are %d members' % view.fullMemberCount"/> 
-      &#8212; and
-      <span tal:replace="python:view.invitedMemberCount==1 and '1 invited member' or '%d invited members' % view.invitedMemberCount"/>
-      &#8212; 
-      in <span tal:replace="view/groupInfo/name">this group</span>.
-    </p>
-    <tal:block tal:repeat="status view/statuses">
-      <div tal:define="member status/userInfo">
-        <a tal:attributes="href member/url" 
-          tal:content="member/name">
-          A Member
-        </a> &#8212; <span tal:content="status/status_label"/>
-      </div>
+  <body>
+    <div metal:fill-slot="messages" tal:condition="view/status" 
+      class="message-error"
+      tal:define="e view/errors"
+      tal:attributes="class python:e and 'message-error' or 'message-result'">
+      <p class="form-status" tal:content="structure view/status"/>
+      <dl tal:condition="view/errors">
+        <tal:block repeat="widget view/widgets">
+          <tal:block tal:condition="widget/error">
+            <dt tal:content="widget/label">Widget Name</dt>
+            <dd class="error" 
+              tal:content="structure widget/error">Error message</dd>
+          </tal:block>
+        </tal:block>
+      </dl>
+    </div>
+    <tal:block metal:fill-slot="body"
+      define="memberManager view/memberManager">
+      <h1 tal:content="view/label">
+        Manage the Members of 
+        <span tal:replace="view/groupInfo/name">this group</span>
+      </h1>
+      <form enctype="multipart/form-data"  method="post" action="."
+        tal:define="allWidgets view/widgets"
+        tal:attributes="action request/URL" id="manage-members">
+        <p
+          tal:define="fullMemberCount memberManager/fullMemberCount;
+            invitedMemberCount memberManager/invitedMemberCount">
+          There 
+          <span tal:replace="python:fullMemberCount==1 and 'is 1 member' or 'are %d members' % fullMemberCount"/> 
+          &#8212; and
+          <span tal:replace="python:invitedMemberCount==1 and '1 invited member' or '%d invited members' % invitedMemberCount"/>
+          &#8212; 
+          in <span tal:replace="view/groupInfo/name">this group</span>.
+        </p>
+        <tal:block repeat="status memberManager/statuses">
+          <div tal:define="member status/userInfo">
+            <a href="#"
+              tal:attributes="href member/url" 
+              tal:content="member/name">
+              A Member
+            </a> &#8212; <span tal:replace="status/status_label"/>
+          </div>
+        </tal:block>
+        <tal:block define="widgets allWidgets">
+          <tal:block replace="structure provider:groupserver.FormWidgets"/>
+        </tal:block>
+        <div class="buttons" tal:condition="view/availableActions">
+          <tal:block repeat="action view/actions">
+            <div class="formelementbutton">
+              <span tal:replace="structure action/render">Button</span>
+            </div>
+          </tal:block>
+        </div>
+      </form>
     </tal:block>
   </body>
 </html>

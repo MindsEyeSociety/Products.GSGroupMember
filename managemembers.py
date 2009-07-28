@@ -1,29 +1,37 @@
 # coding=utf-8
-from Products.Five import BrowserView
 from zope.component import createObject
+from zope.interface import implements
+from zope.formlib import form
+from zope.schema import TextLine
 from Products.CustomUserFolder.interfaces import IGSUserInfo
 from Products.XWFCore.XWFUtils import sort_by_name
 
 from groupmembershipstatus import GSGroupMembershipStatus
 from groupmembership import GroupMembers, InvitedGroupMembers
+from interfaces import IGSManageGroupMembers
 
-import logging
-log = logging.getLogger('GSGroupMember')
+class GSManageGroupMembers(object):
+    implements(IGSManageGroupMembers)
+    
+    def __init__(self, group):
+        self.context = group
 
-class GSManageGroupMembers(BrowserView):
-    def __init__(self, context, request):
-        self.context = context
-        self.request = request
-
-        self.siteInfo = createObject('groupserver.SiteInfo', context)
-        self.groupInfo = createObject('groupserver.GroupInfo', context)
+        self.siteInfo = createObject('groupserver.SiteInfo', group)
+        self.groupInfo = createObject('groupserver.GroupInfo', group)
 
         self.__members = None
         self.__fullMembers = None
         self.__fullMemberCount = None
         self.__invitedMembers = None
         self.__invitedMemberCount = None
-        self.__statuses = None 
+        self.__statuses = None
+        self.form_fields = form.Fields(
+                  form.Fields(TextLine(__name__='foo',
+                    title=u'Foo',
+                    description=u'A placeholder widget',
+                    required=False)
+                  )
+                )
         
     @property
     def fullMembers(self):
