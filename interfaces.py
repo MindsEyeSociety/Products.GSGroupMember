@@ -147,6 +147,12 @@ class IGSGroupMembershipStatus(Interface):
         u'not yet accepted or declined the invitation?',
       required=True)
     
+class IGSStatusFormFields(Interface):
+    """ An adapter to take a member's status within a group, and
+        give us the appropriate form_fields to alter the status.
+    """
+    status = Attribute("""A GSGroupMembershipStatus instance""")
+    
 class IGSMemberStatusActionsContentProvider(IContentProvider):
     """The content provider for the actions available to change """\
     """a group member's status within the group"""

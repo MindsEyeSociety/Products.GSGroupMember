@@ -54,9 +54,14 @@ class GSGroupMemberManager(object):
         ARGUMENTS
             A dict. The keys must match the IDs of the attributes in
             the manage members form (which should not be too hard, as 
-            this is done automatically by Formlib).  
+            this is done automatically by Formlib).
+        
+        SIDE EFFECTS
+            Resets the self.__form_fields cache.
         '''
         assert type(newData) == dict        
         oldData = self.get_data()
         # Change stuff.
+        # Reset the self.__form_fields cache, as 
+        # the data keys will have changed.
     data = property(get_data, set_data)
