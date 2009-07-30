@@ -65,6 +65,43 @@ class IGSUserCanPostContentProvider(IContentProvider):
       required=False,
       default=u"browser/templates/canpost.pt")
 
+class IGSManageGroupMembersForm(Interface):
+    groupInfo = Attribute("""A groupInfo instance""")
+    siteInfo = Attribute("""A siteInfo instance""")
+    memberManager = Attribute("""A GSGroupMemberManager instance""")
+    # Form fields will be taken from memberManager.form_fields
+    form_fields = Attribute("""The fields to be displayed in a form""")
+    
+class IGSGroupMemberManager(Interface):
+    groupInfo = Attribute("""A groupInfo instance""")
+    siteInfo = Attribute("""A siteInfo instance""")
+    membersInfo = Attribute("""A GSGroupMembersInfo instance""")
+    memberStatusActions = Attribute("""A list of GSMemberStatusActions instances""")
+    # Form fields will be gathered user-by-user, from memberStatusActions 
+    form_fields = Attribute("""The fields to be displayed in a form""") 
+    
+class IGSGroupMembersInfo(Interface):
+    groupInfo = Attribute("""A groupInfo instance""")
+    siteInfo = Attribute("""A siteInfo instance""")
+    members = Attribute("""All the members of the group, including invited members """\
+                        """and those with no verified email addresses""")
+    fullMembers = Attribute("""The members, excluding those who have been sent an """\
+                            """invitation but neither declined nor accepted""")
+    fullMemberCount = Attribute("""The number of members, excluding those who have """\
+                                """been sent an invitation but neither declined nor accepted""")
+    invitedMembers = Attribute("""The members who have been invited to the group, """\
+                               """but neither declined nor accepted""")
+    invitedMemberCount = Attribute("""The number of members who have been invited to """\
+                                   """the group, but neither declined nor accepted""")
+    
+class IGSMemberStatusActions(Interface):
+    userInfo = Attribute("""A userInfo instance""")
+    groupInfo = Attribute("""A groupInfo instance""")
+    siteInfo = Attribute("""A siteInfo instance""")
+    status = Attribute("""A GSGroupMembershipStatus instance""")
+    form_fields = Attribute("""The fields to be displayed in a form to change """\
+                            """the membership status of this user""")
+
 class IGSGroupMembershipStatus(Interface):
     userInfo = Attribute("""A userInfo instance""")
     groupInfo = Attribute("""A groupInfo instance""")
@@ -110,23 +147,16 @@ class IGSGroupMembershipStatus(Interface):
         u'not yet accepted or declined the invitation?',
       required=True)
     
-class IGSManageGroupMembers(Interface):
-    groupInfo = Attribute("""A groupInfo instance""")
-    siteInfo = Attribute("""A siteInfo instance""")
-    members = Attribute("""All the members of the group, including invited members """\
-                        """and those with no verified email addresses""")
-    fullMembers = Attribute("""The members, excluding those who have been sent an """\
-                            """invitation but neither declined nor accepted""")
-    fullMemberCount = Attribute("""The number of members, excluding those who have """\
-                                """been sent an invitation but neither declined nor accepted""")
-    invitedMembers = Attribute("""The members who have been invited to the group, """\
-                               """but neither declined nor accepted""")
-    invitedMemberCount = Attribute("""The number of members who have been invited to """\
-                                   """the group, but neither declined nor accepted""")
-    # Form fields will be gathered user-by-user, from an adapter 
-    form_fields = Attribute("""The fields to be displayed in a form""")
-
-class IGSManageGroupMembersForm(Interface):
-    groupInfo = Attribute("""A groupInfo instance""")
+class IGSMemberStatusActionsContentProvider(IContentProvider):
+    """The content provider for the actions available to change """\
+    """a group member's status within the group"""
+    
+    statusActions = Attribute("""A GSMemberStatusActions instance""")
+    pageTemplateFileName = Text(title=u"Page Template File Name",
+      description=u'The name of the ZPT file that is used to render the '\
+        u'group member\'s status and the appropriate form widgets.',
+      required=False,
+      default=u"browser/templates/statusActionsContentProvider.pt")
+    
     
     

@@ -4,7 +4,7 @@ from zope.component import createObject
 from zope.formlib import form
 from Products.Five.browser.pagetemplatefile import ZopeTwoPageTemplateFile
 
-from managemembers import GSManageGroupMembers
+from groupmembermanager import GSGroupMemberManager
 from interfaces import IGSManageGroupMembersForm
 
 class GSManageGroupMembersForm(PageForm):
@@ -21,19 +21,19 @@ class GSManageGroupMembersForm(PageForm):
         self.groupName = self.groupInfo.name
         self.label = 'Manage the Members of %s' % self.groupName
 
-        self.memberManager = GSManageGroupMembers(self.groupInfo.groupObj)
+        self.memberManager = GSGroupMemberManager(self.groupInfo.groupObj)
         self.form_fields = self.memberManager.form_fields
     
-    #def setUpWidgets(self, ignore_request=False, data=None):
-    #    self.adapters = {}
-    #    if not data:
-#            data = self.memberManager.data
-#        self.widgets = form.setUpWidgets(
-#            self.form_fields, self.prefix, self.context,
-#            self.request, form=self, data=data,
-#            ignore_request=ignore_request)
-#        assert self.widgets
-#        
+    def setUpWidgets(self, ignore_request=False, data=None):
+        self.adapters = {}
+        if not data:
+            data = self.memberManager.data
+        self.widgets = form.setUpWidgets(
+            self.form_fields, self.prefix, self.context,
+            self.request, form=self, data=data,
+            ignore_request=ignore_request)
+        assert self.widgets
+        
     @form.action(label=u'Change', failure='handle_change_action_failure')
     def handle_change(self, action, data):
         self.status = u'Something changed!'

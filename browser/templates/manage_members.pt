@@ -32,8 +32,9 @@
         tal:define="allWidgets view/widgets"
         tal:attributes="action request/URL" id="manage-members">
         <p
-          tal:define="fullMemberCount memberManager/fullMemberCount;
-            invitedMemberCount memberManager/invitedMemberCount">
+          tal:define="membersInfo memberManager/membersInfo;
+            fullMemberCount membersInfo/fullMemberCount;
+            invitedMemberCount membersInfo/invitedMemberCount">
           There 
           <span tal:replace="python:fullMemberCount==1 and 'is 1 member' or 'are %d members' % fullMemberCount"/> 
           &#8212; and
@@ -41,6 +42,9 @@
           &#8212; 
           in <span tal:replace="view/groupInfo/name">this group</span>.
         </p>
+        <!--tal:block repeat="member memberManager/members">
+          <div tal:replace="structure provider:groupserver.MemberStatusActions">
+        </tal:block>
         <tal:block repeat="status memberManager/statuses">
           <div tal:define="member status/userInfo">
             <a href="#"
@@ -49,10 +53,7 @@
               A Member
             </a> &#8212; <span tal:replace="status/status_label"/>
           </div>
-        </tal:block>
-        <tal:block define="widgets allWidgets">
-          <tal:block replace="structure provider:groupserver.FormWidgets"/>
-        </tal:block>
+        </tal:block-->
         <div class="buttons" tal:condition="view/availableActions">
           <tal:block repeat="action view/actions">
             <div class="formelementbutton">

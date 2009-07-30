@@ -6,12 +6,11 @@ from zope.schema import TextLine
 from Products.CustomUserFolder.interfaces import IGSUserInfo
 from Products.XWFCore.XWFUtils import sort_by_name
 
-from groupmembershipstatus import GSGroupMembershipStatus
 from groupmembership import GroupMembers, InvitedGroupMembers
-from interfaces import IGSManageGroupMembers
+from interfaces import IGSGroupMembersInfo
 
-class GSManageGroupMembers(object):
-    implements(IGSManageGroupMembers)
+class GSGroupMembersInfo(object):
+    implements(IGSGroupMembersInfo)
     
     def __init__(self, group):
         self.context = group
@@ -24,14 +23,6 @@ class GSManageGroupMembers(object):
         self.__fullMemberCount = None
         self.__invitedMembers = None
         self.__invitedMemberCount = None
-        self.__statuses = None
-        self.form_fields = form.Fields(
-          form.Fields(TextLine(__name__='foo',
-            title=u'Foo',
-            description=u'A placeholder widget',
-            required=False)
-          )
-        )
         
     @property
     def fullMembers(self):
@@ -69,11 +60,4 @@ class GSManageGroupMembers(object):
             members.sort(sort_by_name)
             self.__members = members
         return self.__members
-    
-    @property
-    def statuses(self):
-        if self.__statuses == None:
-            self.__statuses = \
-              [ GSGroupMembershipStatus(m, self.groupInfo, self.siteInfo)
-                for m in self.members ]
-        return self.__statuses
+
