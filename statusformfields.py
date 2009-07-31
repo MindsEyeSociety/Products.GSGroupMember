@@ -93,8 +93,9 @@ class GSStatusFormFields(object):
     def groupAdmin(self):
         if self.__groupAdmin == None:
             self.__groupAdmin = False
-            if self.status.isNormalMember or self.status.isPtnCoach \
-              or self.status.isModerator:
+            if (self.status.isNormalMember or \
+                self.status.isPtnCoach or \
+                self.status.isModerator) and not self.status.isOddlyConfigured:
                 self.__groupAdmin = \
                   Bool(__name__=u'%s_groupAdmin' % self.userInfo.id,
                     title=u'Make %s a Group Administrator' % self.userInfo.name,
@@ -117,7 +118,8 @@ class GSStatusFormFields(object):
             if self.status.groupIsModerated and not \
               (self.status.isModerator or \
                self.status.isModerated or \
-               self.status.isUnverified):
+               self.status.isUnverified or \
+               self.status.isOddlyConfigured):
                 self.__moderator =\
                   Bool(__name__=u'%s_moderator' % self.userInfo.id,
                     title=u'Make %s a Moderator for this group' %\
@@ -163,7 +165,9 @@ class GSStatusFormFields(object):
             self.__postingMember = False
             if self.status.postingIsSpecial and \
               (self.status.numPostingMembers < MAX_POSTING_MEMBERS) and \
-              not (self.status.isPostingMember or self.status.isUnverified): 
+              not (self.status.isPostingMember or \
+                   self.status.isUnverified or \
+                   self.status.isOddlyConfigured): 
                 self.__postingMember =\
                   Bool(__name__=u'%s_postingMember' % self.userInfo.id,
                     title=u'Make %s a posting member' %\

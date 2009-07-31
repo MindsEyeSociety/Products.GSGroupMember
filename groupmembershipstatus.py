@@ -54,6 +54,8 @@ class GSGroupMembershipStatus(object):
           self.mailingListInfo.is_moderated
         self.postingIsSpecial = \
           self.groupInfo.group_type == 'announcement'
+        self.numPostingMembers = \
+          self.mailingListInfo.posting_members
 
     @property
     def status_label(self):
@@ -220,9 +222,6 @@ class GSGroupMembershipStatus(object):
 
     @property
     def isUnverified(self):
-        # AM: This is not actually a membership status, but
-        #  it is useful for admins to know whether a 
-        #  member has any verified email addresses.
         if self.__isUnverified == None:
             if self.userInfo.user.get_verifiedEmailAddresses():
                 self.__isUnverified = False
