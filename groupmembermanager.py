@@ -1,33 +1,52 @@
 # coding=utf-8
+from zope.interface.interface import Interface
 from zope.component import createObject
-from zope.interface import implements
+from zope.interface import implements, Attribute
 from zope.formlib import form
-from zope.schema import TextLine
 from Products.CustomUserFolder.interfaces import IGSUserInfo
 from Products.XWFCore.XWFUtils import sort_by_name
 
 from groupMembersInfo import GSGroupMembersInfo
-from interfaces import IGSGroupMemberManager
+from groupmemberactions import GSMemberStatusActions
+from interfaces import IGSGroupMemberManager, IGSMemberActionsSchema
 
 class GSGroupMemberManager(object):
     implements(IGSGroupMemberManager)
     
     def __init__(self, group):
         self.context = group
-
+        
         self.siteInfo = createObject('groupserver.SiteInfo', group)
         self.groupInfo = createObject('groupserver.GroupInfo', group)
         self.membersInfo = GSGroupMembersInfo(group)
-
+        
         self.__memberStatusActions = None
-        #self.__form_fields = None
-        self.form_fields = form.Fields(
-          form.Fields(TextLine(__name__='foo',
-            title=u'Foo',
-            description=u'A placeholder widget',
-            required=False)
-          )
-        )
+        self.__form_fields = None
+    
+    @property
+    def memberStatusActions(self):
+        if self.__memberStatusActions == None:
+            self.__memberStatusActions = \
+              [ GSMemberStatusActions(m, 
+                  self.groupInfo, self.siteInfo)
+                for m in self.membersInfo.members ]
+        return self.__memberStatusActions
+    
+    @property
+    def form_fields(self):
+        if self.__form_fields == None:
+            fields = \
+              form.Fields(IGSMemberActionsSchema)
+            for m in self.memberStatusActions:
+                f = m.form_fields
+                fields = \
+                  form.Fields(
+                    fields
+                    +
+                    form.Fields(f)
+                  )
+            self.__form_fields = fields.omit('dummy')
+        return self.__form_fields
     
     def get_data(self):
         '''Get the membership data.

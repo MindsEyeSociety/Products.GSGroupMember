@@ -4,6 +4,7 @@ from zope.component import createObject, adapts
 from zope.interface import implements
 
 from Products.CustomUserFolder.interfaces import IGSUserInfo
+from Products.GSContent.interfaces import IGSSiteInfo
 from Products.GSGroup.interfaces import IGSGroupInfo, IGSMailingListInfo
 from groupmembership import user_division_admin_of_group,\
   user_group_admin_of_group, user_participation_coach_of_group,\
@@ -23,10 +24,15 @@ class GSGroupMembershipStatus(object):
           u'%s is not a GSUserInfo' % userInfo
         assert IGSGroupInfo.providedBy(groupInfo),\
           u'%s is not a GSGroupInfo' % groupInfo
+        assert IGSSiteInfo.providedBy(siteInfo),\
+          u'%s is not a GSSiteInfo' % siteInfo
         
         self.userInfo = userInfo
         self.groupInfo = groupInfo
         self.siteInfo = siteInfo
+        self.mailingListInfo = \
+          createObject('groupserver.MailingListInfo', 
+                       groupInfo.groupObj)
         
         self.__status_label = None
         self.__isNormalMember = None
@@ -38,8 +44,16 @@ class GSGroupMembershipStatus(object):
         self.__isModerator = None
         self.__isModerated = None
         self.__isBlocked = None
-        self.__isUnverified = None
         self.__isInvited = None
+        
+        # User Status
+        self.__isUnverified = None
+        
+        # Group Status
+        self.groupIsModerated = \
+          self.mailingListInfo.is_moderated
+        self.postingIsSpecial = \
+          self.groupInfo.group_type == 'announcement'
 
     @property
     def status_label(self):
@@ -52,8 +66,7 @@ class GSGroupMembershipStatus(object):
                 statuses.append('Group Administrator')
             if self.isPtnCoach:
                 statuses.append('Participation Coach')
-            postingIsSpecial = (self.groupInfo.group_type == 'announcement')
-            if postingIsSpecial and self.isPostingMember:
+            if self.postingIsSpecial and self.isPostingMember:
                 statuses.append('Posting Member')
             if self.isModerator:
                 statuses.append('Moderator')

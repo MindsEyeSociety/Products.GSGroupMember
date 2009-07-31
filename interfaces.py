@@ -139,19 +139,54 @@ class IGSGroupMembershipStatus(Interface):
     isBlocked = Bool(title=u'Is Blocked',
       description=u'Is the member blocked from posting to the group?',
       required=True)
-    isUnverified = Bool(title=u'Is Unverified',
-      description=u'Does the member have no verified email addresses?',
-      required=True)
     isInvited = Bool(title=u'Is Invited',
       description=u'Has the member been invited to the group, but '\
         u'not yet accepted or declined the invitation?',
       required=True)
+    isUnverified = Bool(title=u'Is Unverified',
+      description=u'Does the member have no verified email addresses?',
+      required=True)
+    groupIsModerated = Bool(title=u'Group is Moderated',
+      description=u'Is the group moderated?',
+      required=True)
+    postingIsSpecial = Bool(title=u'Posting is Special',
+      description=u'Is posting privileged in this group?',
+      required=True)
+    numPostingMembers = Int(title=u'Number of Posting Members',
+      description=u'The number of posting members in this group',
+      required=False)
     
 class IGSStatusFormFields(Interface):
     """ An adapter to take a member's status within a group, and
-        give us the appropriate form_fields to alter the status.
+        give us the appropriate form_fields to alter the status,
+        also depending on the status of the logged-in administrator.
     """
     status = Attribute("""A GSGroupMembershipStatus instance""")
+    userInfo = Attribute("""A userInfo instance""")
+    groupInfo = Attribute("""A groupInfo instance""")
+    siteInfo = Attribute("""A siteInfo instance""")
+    
+    adminUserInfo = Attribute("""A userInfo instance for the logged-in administrator""")
+    adminUserStatus = Attribute("""A GSGroupMembershipStatus instance for the logged-in administrator""")
+    
+    form_fields = Attribute("""The fields to be displayed in a form to change """\
+                            """the membership status of this user""")
+
+    groupAdmin = Bool(title=u'Make fn a Group Administrator (or Unmake)',
+      description=u'Make fn a Group Administrator (or Unmake)',
+      required=False)
+    moderator = Bool(title=u'Make fn a Moderator (or Unmake)',
+      description=u'Make fn a Moderator (or Unmake)',
+      required=False)
+    moderate = Bool(title=u'Moderate fn (or Unmoderate)',
+      description=u'Moderate fn (or Unmoderate)',
+      required=False)
+    postingMember = Bool(title=u'Make fn a Posting Member (or Unmake)',
+      description=u'Make fn a Posting Member (or Unmake)',
+      required=False)
+    remove = Bool(title=u'Remove fn from the Group',
+      description=u'Remove fn from the Group',
+      required=False)
     
 class IGSMemberStatusActionsContentProvider(IContentProvider):
     """The content provider for the actions available to change """\
@@ -162,7 +197,12 @@ class IGSMemberStatusActionsContentProvider(IContentProvider):
       description=u'The name of the ZPT file that is used to render the '\
         u'group member\'s status and the appropriate form widgets.',
       required=False,
-      default=u"browser/templates/statusActionsContentProvider.pt")
+      default=u"browser/templates/statusActionsContentProvider.pt") 
     
-    
-    
+class IGSMemberActionsSchema(Interface):
+    """ Dummy interface to get the schema started.
+    """
+    dummy = Bool(title=u'Dummy',
+      description=u'Is this a dummy value?',
+      required=False)
+        

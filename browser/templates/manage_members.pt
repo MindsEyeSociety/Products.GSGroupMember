@@ -29,7 +29,6 @@
         <span tal:replace="view/groupInfo/name">this group</span>
       </h1>
       <form enctype="multipart/form-data"  method="post" action="."
-        tal:define="allWidgets view/widgets"
         tal:attributes="action request/URL" id="manage-members">
         <p
           tal:define="membersInfo memberManager/membersInfo;
@@ -42,6 +41,9 @@
           &#8212; 
           in <span tal:replace="view/groupInfo/name">this group</span>.
         </p>
+        <tal:block define="widgets view/widgets">
+          <tal:block replace="structure provider:groupserver.FormWidgets"/>
+        </tal:block>
         <!--tal:block repeat="member memberManager/members">
           <div tal:replace="structure provider:groupserver.MemberStatusActions">
         </tal:block>
