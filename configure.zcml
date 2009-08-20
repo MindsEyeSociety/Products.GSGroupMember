@@ -14,6 +14,10 @@
   <five:traversable 
     class="OFS.Folder.Folder" />
   
+  <!--=mpj17=- Alice, we seem to be  missing invitedgroupmember.-->
+  <!--interface 
+    interface=".invitedgroupmember.IGSInvitedGroupMember" /-->
+
   <!--Vocabularies-->
   <utility
       provides="zope.schema.interfaces.IVocabularyFactory"
