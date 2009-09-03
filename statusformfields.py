@@ -43,8 +43,9 @@ class GSStatusFormFields(object):
     @property
     def adminUserInfo(self):
         if self.__adminUserInfo == None:
-            user = AccessControl.getSecurityManager().getUser()
-            self.__adminUserInfo = IGSUserInfo(user)
+            self.__adminUserInfo = \
+              createObject('groupserver.LoggedInUser', 
+                           self.groupInfo.groupObj)
         return self.__adminUserInfo
     
     @property
