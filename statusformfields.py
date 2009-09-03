@@ -119,6 +119,7 @@ class GSStatusFormFields(object):
             if self.status.groupIsModerated and not \
               (self.status.isModerator or \
                self.status.isModerated or \
+               self.status.isInvited or \
                self.status.isUnverified or \
                self.status.isOddlyConfigured):
                 self.__moderator =\
