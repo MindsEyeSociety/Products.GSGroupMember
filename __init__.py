@@ -1,4 +1,5 @@
 import usercanpostcontentprovider
+import memberStatusActionsContentProvider
 from AccessControl import ModuleSecurityInfo
 from AccessControl import allow_class
 

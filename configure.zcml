@@ -113,5 +113,9 @@
     for="Products.XWFChat.interfaces.IGSGroupFolder Products.CustomUserFolder.interfaces.IGSUserInfo"
     provides=".interfaces.IGSPostingUser" />
 
+  <interface 
+    interface=".interfaces.IGSMemberStatusActionsContentProvider"
+    type="zope.contentprovider.interfaces.ITALNamespaceData"/>
+
 </configure>
 

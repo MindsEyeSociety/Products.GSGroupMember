@@ -41,21 +41,12 @@
           &#8212; 
           in <span tal:replace="view/groupInfo/name">this group</span>.
         </p>
-        <tal:block define="widgets view/widgets">
+        <!--tal:block define="widgets view/widgets">
           <tal:block replace="structure provider:groupserver.FormWidgets"/>
-        </tal:block>
-        <!--tal:block repeat="member memberManager/members">
-          <div tal:replace="structure provider:groupserver.MemberStatusActions">
-        </tal:block>
-        <tal:block repeat="status memberManager/statuses">
-          <div tal:define="member status/userInfo">
-            <a href="#"
-              tal:attributes="href member/url" 
-              tal:content="member/name">
-              A Member
-            </a> &#8212; <span tal:replace="status/status_label"/>
-          </div>
         </tal:block-->
+        <tal:block define="statusActions memberManager/memberStatusActions">
+          <div tal:replace="structure provider:groupserver.MemberStatusActions"/>
+        </tal:block>
         <div class="buttons" tal:condition="view/availableActions">
           <tal:block repeat="action view/actions">
             <div class="formelementbutton">

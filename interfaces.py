@@ -188,11 +188,15 @@ class IGSStatusFormFields(Interface):
       description=u'Remove fn from the Group',
       required=False)
     
-class IGSMemberStatusActionsContentProvider(IContentProvider):
+class IGSMemberStatusActionsContentProvider(Interface):
     """The content provider for the actions available to change """\
     """a group member's status within the group"""
     
-    statusActions = Attribute("""A GSMemberStatusActions instance""")
+    #statusActions = Attribute("""A GSMemberStatusActions instance""")
+    statusActions = List(title=u'Widgets',
+      description=u'GSMemberStatusActions instances',
+      required=True)
+    
     pageTemplateFileName = Text(title=u"Page Template File Name",
       description=u'The name of the ZPT file that is used to render the '\
         u'group member\'s status and the appropriate form widgets.',
