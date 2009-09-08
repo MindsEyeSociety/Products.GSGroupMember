@@ -41,10 +41,8 @@
           &#8212; 
           in <span tal:replace="view/groupInfo/name">this group</span>.
         </p>
-        <!--tal:block define="widgets view/widgets">
-          <tal:block replace="structure provider:groupserver.FormWidgets"/>
-        </tal:block-->
-        <tal:block define="statusActions memberManager/memberStatusActions">
+        <tal:block define="statusActions memberManager/memberStatusActions;
+          widgets view/widgets">
           <div tal:replace="structure provider:groupserver.MemberStatusActions"/>
         </tal:block>
         <div class="buttons" tal:condition="view/availableActions">

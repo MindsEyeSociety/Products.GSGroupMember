@@ -1,0 +1,20 @@
+<tal:block repeat="memberStatusActions options/view/statusActions">
+  <div id="#" class="statusActions"
+    tal:define="view options/view;
+      userInfo memberStatusActions/userInfo;
+      status memberStatusActions/status;
+      fields memberStatusActions/form_fields"
+    tal:attributes="id string:${userInfo/id}-actions">
+    <a href="#"
+      tal:attributes="href userInfo/url" 
+      tal:content="userInfo/name">
+      A Member
+    </a> &#8212; <span tal:replace="status/status_label"/>
+    <tal:block 
+      define="fieldIds python:[ f.__name__ for f in fields];
+        allWidgets options/view/widgets;
+        widgets python:[ allWidgets[wId] for wId in fieldIds ]">
+      <tal:block replace="structure provider:groupserver.FormWidgets"/>
+    </tal:block>
+  </div>
+</tal:block>

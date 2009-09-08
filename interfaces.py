@@ -193,8 +193,12 @@ class IGSMemberStatusActionsContentProvider(Interface):
     """a group member's status within the group"""
     
     #statusActions = Attribute("""A GSMemberStatusActions instance""")
-    statusActions = List(title=u'Widgets',
+    statusActions = List(title=u'Instances',
       description=u'GSMemberStatusActions instances',
+      required=True)
+    
+    widgets = List(title=u'Widgets',
+      description=u'Form Widgets',
       required=True)
     
     pageTemplateFileName = Text(title=u"Page Template File Name",
