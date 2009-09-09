@@ -75,6 +75,12 @@
 
   <browser:page 
     for="Products.XWFChat.interfaces.IGSGroupFolder"
+    name="join.html"
+    class=".join.JoinForm"
+    permission="zope2.View"/>
+
+  <browser:page 
+    for="Products.XWFChat.interfaces.IGSGroupFolder"
     name="admin_invite_site_members.html"
     class=".invitesitemembers.GSInviteSiteMembersForm"
     permission="zope2.ManageUsers"/>

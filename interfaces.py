@@ -31,6 +31,13 @@ class IGSInviteSiteMembers(Interface):
       vocabulary=deliveryVocab,
       default='email')
 
+class IGSJoinGroup(Interface):
+    delivery = Choice(title=u'Group Message Delivery Settings',
+      description=u'The message delivery settings for the new group '\
+        u'members.',
+      vocabulary=deliveryVocab,
+      default='email')
+
 class IGSPostingUser(Interface):
     canPost = Bool(title=u'Can Post',
       description=u'Can the user post the the group?',
