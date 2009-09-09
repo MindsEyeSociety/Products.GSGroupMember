@@ -5,7 +5,7 @@ from zope.formlib import form
 from Products.Five.browser.pagetemplatefile import ZopeTwoPageTemplateFile
 from Products.GSGroup.changebasicprivacy import radio_widget
 from interfaces import IGSJoinGroup
-from groupmembership import join_group
+from groupmembership import join_group, user_member_of_group
 
 class JoinForm(PageForm):
     label = u'Join'
@@ -29,10 +29,21 @@ class JoinForm(PageForm):
             self.__userInfo = createObject('groupserver.LoggedInUser',
               self.context)
         return self.__userInfo
+    
+    @property
+    def canJoin(self):
+        mlist = createObject('groupserver.MailingListInfo',self.context)
+        retval = not(self.isMember) and mlist.get_property('subscribe', False)
+        return retval
+
+    @property
+    def isMember(self):
+        return user_member_of_group(self.userInfo, self.groupInfo)
         
     @form.action(label=u'Join', failure='handle_join_action_failure')
     def handle_invite(self, action, data):
-
+        assert self.canJoin
+        
         join_group(self.userInfo.user, self.groupInfo)
 
         if data['delivery'] == 'email':
