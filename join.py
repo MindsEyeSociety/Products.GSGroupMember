@@ -22,6 +22,7 @@ class JoinForm(PageForm):
         self.form_fields['delivery'].custom_widget = radio_widget
         
         self.__userInfo = None
+        self.__mailingListInfo = None
         
     @property
     def userInfo(self):
@@ -29,13 +30,26 @@ class JoinForm(PageForm):
             self.__userInfo = createObject('groupserver.LoggedInUser',
               self.context)
         return self.__userInfo
-    
+
+    @property
+    def mailingListInfo(self):
+        if self.__mailingListInfo == None:
+            self.__mailingListInfo = createObject(
+                        'groupserver.MailingListInfo', self.context)
+        return self.__mailingListInfo
+        
     @property
     def canJoin(self):
-        mlist = createObject('groupserver.MailingListInfo',self.context)
-        retval = not(self.isMember) and mlist.get_property('subscribe', False)
+        retval = not(self.isMember) \
+          and self.mailingListInfo.get_property('subscribe', False)
         return retval
-
+    
+    @property
+    def willPost(self):
+        postingMembers = self.mailingListInfo.get_property('posting_members', [])
+        retval = not(bool(postingMembers))
+        return retval
+        
     @property
     def isMember(self):
         return user_member_of_group(self.userInfo, self.groupInfo)

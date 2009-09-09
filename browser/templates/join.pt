@@ -34,8 +34,16 @@
       <form tal:condition="view/canJoin"
         enctype="multipart/form-data"  method="post" action="."
         tal:attributes="action request/URL" id="join">
-        <p>
-          Why join?
+        <p id="introduction">
+          Joining 
+          <span class="group" tal:content="view/groupInfo/name"/>
+          will allow you to <strong>receive email</strong> 
+          from the group<tal:block condition="view/willPost">, and
+          <strong>post</strong> to the group</tal:block>.
+          To join 
+          <span class="group" tal:content="view/groupInfo/name"/>,
+          set how frequently you want to receive messages below, and
+          click <samp class="button">Join</samp>.
         </p>
         <tal:block define="widgets view/widgets">
           <tal:block replace="structure provider:groupserver.FormWidgets"/>

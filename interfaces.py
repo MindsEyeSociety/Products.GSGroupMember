@@ -32,9 +32,8 @@ class IGSInviteSiteMembers(Interface):
       default='email')
 
 class IGSJoinGroup(Interface):
-    delivery = Choice(title=u'Group Message Delivery Settings',
-      description=u'The message delivery settings for the new group '\
-        u'members.',
+    delivery = Choice(title=u'Message Delivery Settings',
+      description=u'Your message delivery settings.',
       vocabulary=deliveryVocab,
       default='email')
 
