@@ -40,7 +40,8 @@
     <strong>You cannot post</strong> because you are not a member of
     <span class="group" tal:content="view/groupInfo/name">this group</span>.
     <span tal:condition="view/canJoin">
-      <a href="#" tal:attributes="href string:/Scripts/set/subscribe_group?division_id=${view/siteInfo/id}&amp;group_id=${view/groupInfo/id}">Join 
+      <a href="#" 
+        tal:attributes="href string:${view/groupInfo/url}/join.html">Join 
         <span class="group"
           tal:content="view/groupInfo/name">this group</span></a>
       to post.

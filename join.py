@@ -62,7 +62,8 @@ class JoinForm(PageForm):
 
         if data['delivery'] == 'email':
             # --=mpj17=-- The default is one email per post
-            m = u'You will receive one email message per post.'
+            m = u'You will receive an email message every time '\
+              u'someone posts to %s.' % self.groupInfo.name
         elif data['delivery'] == 'digest':
             self.userInfo.user.set_enableDigestByKey(self.groupInfo.id)
             m = u'You will receive a daily digest of topics.'
