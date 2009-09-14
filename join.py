@@ -6,6 +6,7 @@ from Products.Five.browser.pagetemplatefile import ZopeTwoPageTemplateFile
 from Products.GSGroup.changebasicprivacy import radio_widget
 from interfaces import IGSJoinGroup
 from groupmembership import join_group, user_member_of_group
+from joinaudit import JOIN, JoinAuditor
 
 class JoinForm(PageForm):
     label = u'Join'
@@ -70,6 +71,9 @@ class JoinForm(PageForm):
         elif data['delivery'] == 'web':
             self.userInfo.user.set_disableDeliveryByKey(self.groupInfo.id)
             m = 'You will not receive any email from this group.'
+
+        auditor = JoinAuditor(self.context)
+        auditor.info(JOIN, data['delivery'])
 
         self.status = u'You have joined <a class="group" href="%s">%s</a>. %s' %\
           (self.groupInfo.url, self.groupInfo.name, m)
