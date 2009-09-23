@@ -226,10 +226,11 @@ class GSInviationsRespond(BrowserView):
         seenAdmins = []
         for _invite in invites:
             adminInfo = createObject('groupserver.UserFromId', 
-                                     self.context, i['inviting_user_id'])
+                                     self.context, 
+                                     _invite['inviting_user_id'])
             if adminInfo.id not in seenAdmins:
                 seenAdmins.append(adminInfo.id)
-                n_dict['adminFn'] =   adminInfo.name
+                n_dict['adminFn'] = adminInfo.name
                 adminInfo.user.send_notification(notificationId, 
                                                   'default', 
                                                   n_dict=n_dict)
