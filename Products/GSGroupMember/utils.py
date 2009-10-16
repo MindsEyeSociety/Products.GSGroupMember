@@ -15,6 +15,7 @@ def inform_ptn_coach_of_join(ptnCoachInfo, newUserInfo, groupInfo):
     assert newUserInfo
     assert groupInfo
     siteInfo = groupInfo.siteInfo
+    newUserEmail = newUserInfo.user.get_defaultDeliveryEmailAddresses()[0]
     n_dict = {
         'groupId'      : groupInfo.id,
         'groupName'    : groupInfo.name,
@@ -25,6 +26,7 @@ def inform_ptn_coach_of_join(ptnCoachInfo, newUserInfo, groupInfo):
         'memberId'     : newUserInfo.id,
         'memberName'   : newUserInfo.name,
         'memberUrl'    : newUserInfo.url,
+        'memberEmail'  : newUserEmail,
         'joining_user' : newUserInfo.user,
         'joining_group': groupInfo.groupObj,
     }
