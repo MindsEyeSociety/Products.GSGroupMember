@@ -38,33 +38,16 @@ class GSGroupMemberManager(object):
             fields = \
               form.Fields(IGSMemberActionsSchema)
             for m in self.memberStatusActions:
-                f = m.form_fields
                 fields = \
                   form.Fields(
                     fields
                     +
-                    form.Fields(f)
+                    form.Fields(m.form_fields)
                   )
             self.__form_fields = fields.omit('dummy')
         return self.__form_fields
-    
-    def get_data(self):
-        '''Get the membership data.
-        
-        DESCRIPTION
-            Get the membership data to be displayed as form widgets
-            for updating the status of members within the group.
-        
-        RETURNS
-            A dict. The keys match the IDs of the attributes in the
-            manage members form, so it can be used for setting the 
-            values in the form.
-        '''
-        retval = {}
-        assert type(retval) == dict
-        return retval
 
-    def set_data(self, newData):
+    def make_changes(self, data):
         '''Set the membership data
         
         DESCRIPTION
@@ -78,9 +61,7 @@ class GSGroupMemberManager(object):
         SIDE EFFECTS
             Resets the self.__form_fields cache.
         '''
-        assert type(newData) == dict        
-        oldData = self.get_data()
-        # Change stuff.
+        # Change stuff:
         # Reset the self.__form_fields cache, as 
-        # the data keys will have changed.
-    data = property(get_data, set_data)
+        # the data keys will have changed:
+        self.__form_fields = None

@@ -181,6 +181,9 @@ class IGSStatusFormFields(Interface):
     groupAdmin = Bool(title=u'Make fn a Group Administrator (or Unmake)',
       description=u'Make fn a Group Administrator (or Unmake)',
       required=False)
+    ptnCoach = Bool(title=u'Make fn the Participation Coach (or Unmake)',
+      description=u'Make fn the Participation Coach (or Unmake)',
+      required=False)
     moderator = Bool(title=u'Make fn a Moderator (or Unmake)',
       description=u'Make fn a Moderator (or Unmake)',
       required=False)

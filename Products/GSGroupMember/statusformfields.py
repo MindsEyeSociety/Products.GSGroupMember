@@ -24,17 +24,14 @@ class GSStatusFormFields(object):
         self.groupInfo = status.groupInfo
         self.siteInfo = status.siteInfo
         
-        self.__adminUserInfo = None
-        self.__adminUserStatus = None
+        self.__adminUserInfo = self.__adminUserStatus = None
         
-        self.__groupAdmin = None
-        self.__moderator = None
-        self.__moderate = None
-        self.__postingMember = None
+        self.__groupAdmin = None 
+        self.__ptnCoach = self.__postingMember = None
+        self.__moderator = self.__moderate = None
         self.__remove = None
         
-        self.__allFields = None
-        self.__validFields = None
+        self.__allFields = self.__validFields = None
         self.__form_fields = None
 
     # AM: We're unable to get the logged-in user
@@ -66,9 +63,10 @@ class GSStatusFormFields(object):
         if self.__allFields == None:
             self.__allFields = [
               self.groupAdmin,
+              self.ptnCoach,
+              self.postingMember,
               self.moderator,
               self.moderate,
-              self.postingMember,
               self.remove
             ]
         return self.__allFields
@@ -121,6 +119,29 @@ class GSStatusFormFields(object):
                     required=False)
         return self.__groupAdmin
               
+    @property
+    def ptnCoach(self):
+        if self.__ptnCoach == None:
+            self.__ptnCoach = False
+            if (self.status.isNormalMember or \
+                self.status.isGroupAdmin or \
+                self.status.isModerator) and not \
+                (self.status.isPtnCoach or self.status.isOddlyConfigured):
+                self.__ptnCoach = \
+                  Bool(__name__=u'%s_ptnCoach' % self.userInfo.id,
+                    title=u'Make %s the Participation Coach' % self.userInfo.name,
+                    description=u'Make %s the Participation Coach' % self.userInfo.name,
+                    required=False)
+            elif self.status.isPtnCoach:
+                self.__ptnCoach = \
+                  Bool(__name__=u'%s_ptnCoach' % self.userInfo.id,
+                    title=u'Remove the Participation Coach status '\
+                      u'from %s' % self.userInfo.name,
+                    description=u'Remove the Participation Coach status '\
+                      u'from %s' % self.userInfo.name,
+                    required=False)
+        return self.__ptnCoach
+    
     @property
     def moderator(self):
         if self.__moderator == None:

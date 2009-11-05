@@ -24,10 +24,8 @@ class GSManageGroupMembersForm(PageForm):
         self.memberManager = GSGroupMemberManager(self.groupInfo.groupObj)
         self.form_fields = self.memberManager.form_fields
     
-    def setUpWidgets(self, ignore_request=False, data=None):
+    def setUpWidgets(self, ignore_request=False, data={}):
         self.adapters = {}
-        if not data:
-            data = self.memberManager.data
         self.widgets = form.setUpWidgets(
             self.form_fields, self.prefix, self.context,
             self.request, form=self, data=data,
@@ -36,10 +34,8 @@ class GSManageGroupMembersForm(PageForm):
         
     @form.action(label=u'Change', failure='handle_change_action_failure')
     def handle_change(self, action, data):
+        self.memberManager.make_changes(data)
         self.status = u'Something changed!'
-        #assert data
-#        assert self.memberManager
-#        self.memberManager.data = data
 
     def handle_change_action_failure(self, action, data, errors):
         if len(errors) == 1:
