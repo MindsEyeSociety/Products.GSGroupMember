@@ -30,6 +30,8 @@ class GSManageGroupMembersForm(PageForm):
             self.form_fields, self.prefix, self.context,
             self.request, form=self, data=data,
             ignore_request=ignore_request)
+        for widget in self.widgets:
+            widget._displayItemForMissingValue = False
         assert self.widgets
         
     @form.action(label=u'Change', failure='handle_change_action_failure')

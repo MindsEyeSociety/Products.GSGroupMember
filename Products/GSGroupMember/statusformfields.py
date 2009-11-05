@@ -3,7 +3,10 @@ from zope.app.apidoc import interface
 from zope.component import createObject, adapts
 from zope.interface import implements
 from zope.formlib import form
-from zope.schema import *
+from zope.schema import Bool, Choice
+from zope.schema.vocabulary import SimpleTerm, SimpleVocabulary
+
+from Products.GSGroup.changebasicprivacy import radio_widget
 
 from groupmembershipstatus import GSGroupMembershipStatus
 from interfaces import IGSStatusFormFields, IGSGroupMembershipStatus,\
@@ -106,9 +109,9 @@ class GSStatusFormFields(object):
                     title=u'Make %s a Group Administrator' % self.userInfo.name,
                     description=u'Make %s a Group Administrator' % self.userInfo.name,
                     required=False)
-# AM: Admins shouldn't be able to revoke the group-admin
-#   status of other admins of the same or higher rank.
-#            elif self.status.isGroupAdmin and self.adminUserStatus.isSiteAdmin:
+            # AM: Admins shouldn't be able to revoke the group-admin
+            #   status of other admins of the same or higher rank.
+            #elif self.status.isGroupAdmin and self.adminUserStatus.isSiteAdmin:
             elif self.status.isGroupAdmin:
                 self.__groupAdmin = \
                   Bool(__name__=u'%s_groupAdmin' % self.userInfo.id,
@@ -127,11 +130,13 @@ class GSStatusFormFields(object):
                 self.status.isGroupAdmin or \
                 self.status.isModerator) and not \
                 (self.status.isPtnCoach or self.status.isOddlyConfigured):
+                ptnCoachTerm = SimpleTerm(True, True,
+                  u'Make %s the Participation Coach' % self.userInfo.name)
+                ptnCoachVocab = SimpleVocabulary([ptnCoachTerm])
                 self.__ptnCoach = \
-                  Bool(__name__=u'%s_ptnCoach' % self.userInfo.id,
-                    title=u'Make %s the Participation Coach' % self.userInfo.name,
-                    description=u'Make %s the Participation Coach' % self.userInfo.name,
-                    required=False)
+                  form.Fields(Choice(__name__=u'%s_ptnCoach' % self.userInfo.id,
+                    vocabulary=ptnCoachVocab,
+                    required=False), custom_widget=radio_widget)
             elif self.status.isPtnCoach:
                 self.__ptnCoach = \
                   Bool(__name__=u'%s_ptnCoach' % self.userInfo.id,
@@ -221,11 +226,11 @@ class GSStatusFormFields(object):
     def remove(self):
         if self.__remove == None:
             self.__remove = False
-# AM: Admins shouldn't be able to remove other
-#   admins of the same or higher rank.            
-#            if not self.status.isSiteAdmin and \
-#              not(self.status.isGroupAdmin and \
-#                  self.adminUserStatus.isGroupAdmin):
+            # AM: Admins shouldn't be able to remove other
+            #   admins of the same or higher rank. 
+            #if not self.status.isSiteAdmin and \
+            #  not(self.status.isGroupAdmin and \
+            #      self.adminUserStatus.isGroupAdmin):
             if (not self.status.isSiteAdmin) and (not self.status.isGroupAdmin):
                 self.__remove =\
                   Bool(__name__=u'%s_remove' % self.userInfo.id,
