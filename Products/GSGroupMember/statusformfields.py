@@ -96,7 +96,8 @@ class GSStatusFormFields(object):
             self.__groupAdmin = False
             if (self.status.isNormalMember or \
                 self.status.isPtnCoach or \
-                self.status.isModerator) and not self.status.isOddlyConfigured:
+                self.status.isModerator) and not \
+                (self.status.isGroupAdmin or self.status.isOddlyConfigured):
                 self.__groupAdmin = \
                   Bool(__name__=u'%s_groupAdmin' % self.userInfo.id,
                     title=u'Make %s a Group Administrator' % self.userInfo.name,
