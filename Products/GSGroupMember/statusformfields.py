@@ -1,12 +1,9 @@
 # coding=utf-8
-import AccessControl
 from zope.app.apidoc import interface
 from zope.component import createObject, adapts
 from zope.interface import implements
 from zope.formlib import form
 from zope.schema import *
-
-from Products.CustomUserFolder.interfaces import IGSUserInfo
 
 from groupmembershipstatus import GSGroupMembershipStatus
 from interfaces import IGSStatusFormFields, IGSGroupMembershipStatus,\
@@ -39,7 +36,15 @@ class GSStatusFormFields(object):
         self.__allFields = None
         self.__validFields = None
         self.__form_fields = None
-    
+
+    # AM: We're unable to get the logged-in user
+    #   in this context. Ideally we would grab
+    #   the logged-in user and use their status 
+    #   to determine whether some actions can be
+    #   taken, but that's not currently possible.
+    #   These properties can stay here as testament
+    #   to our good intentions, and hopefully can
+    #   be modified in the future.
     @property
     def adminUserInfo(self):
         if self.__adminUserInfo == None:
@@ -103,7 +108,10 @@ class GSStatusFormFields(object):
                     title=u'Make %s a Group Administrator' % self.userInfo.name,
                     description=u'Make %s a Group Administrator' % self.userInfo.name,
                     required=False)
-            elif self.status.isGroupAdmin and self.adminUserStatus.isSiteAdmin:
+# AM: Admins shouldn't be able to revoke the group-admin
+#   status of other admins of the same or higher rank.
+#            elif self.status.isGroupAdmin and self.adminUserStatus.isSiteAdmin:
+            elif self.status.isGroupAdmin:
                 self.__groupAdmin = \
                   Bool(__name__=u'%s_groupAdmin' % self.userInfo.id,
                     title=u'Revoke the Group Administrator privileges '\
@@ -192,9 +200,12 @@ class GSStatusFormFields(object):
     def remove(self):
         if self.__remove == None:
             self.__remove = False
-            if not self.status.isSiteAdmin and \
-              not(self.status.isGroupAdmin and \
-                  self.adminUserStatus.isGroupAdmin):
+# AM: Admins shouldn't be able to remove other
+#   admins of the same or higher rank.            
+#            if not self.status.isSiteAdmin and \
+#              not(self.status.isGroupAdmin and \
+#                  self.adminUserStatus.isGroupAdmin):
+            if (not self.status.isSiteAdmin) and (not self.status.isGroupAdmin):
                 self.__remove =\
                   Bool(__name__=u'%s_remove' % self.userInfo.id,
                     title=u'Remove %s from the group' %\
