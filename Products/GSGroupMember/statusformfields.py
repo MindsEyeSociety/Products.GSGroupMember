@@ -102,7 +102,7 @@ class GSStatusFormFields(object):
                 self.status.isModerator) and not \
                 (self.status.isGroupAdmin or self.status.isOddlyConfigured):
                 self.__groupAdmin = \
-                  Bool(__name__=u'%s-groupAdmin' % self.userInfo.id,
+                  Bool(__name__=u'%s-groupAdminAdd' % self.userInfo.id,
                     title=u'Make %s a Group Administrator' % self.userInfo.name,
                     description=u'Make %s a Group Administrator' % self.userInfo.name,
                     required=False)
@@ -111,7 +111,7 @@ class GSStatusFormFields(object):
             #elif self.status.isGroupAdmin and self.adminUserStatus.isSiteAdmin:
             elif self.status.isGroupAdmin:
                 self.__groupAdmin = \
-                  Bool(__name__=u'%s-groupAdmin' % self.userInfo.id,
+                  Bool(__name__=u'%s-groupAdminRemove' % self.userInfo.id,
                     title=u'Revoke the Group Administrator privileges '\
                       u'from %s' % self.userInfo.name,
                     description=u'Revoke the Group Administrator privileges '\
@@ -153,7 +153,7 @@ class GSStatusFormFields(object):
                self.status.isUnverified or \
                self.status.isOddlyConfigured):
                 self.__moderator =\
-                  Bool(__name__=u'%s-moderator' % self.userInfo.id,
+                  Bool(__name__=u'%s-moderatorAdd' % self.userInfo.id,
                     title=u'Make %s a Moderator for this group' %\
                       self.userInfo.name,
                     description=u'Make %s a Moderator for this group' %\
@@ -161,7 +161,7 @@ class GSStatusFormFields(object):
                     required=False)
             elif self.status.groupIsModerated and self.status.isModerator:
                 self.__moderator =\
-                  Bool(__name__=u'%s-moderator' % self.userInfo.id,
+                  Bool(__name__=u'%s-moderatorRemove' % self.userInfo.id,
                     title=u'Revoke moderator status from %s' %\
                       self.userInfo.name,
                     description=u'Revoke moderator status from %s' %\
@@ -175,7 +175,7 @@ class GSStatusFormFields(object):
             self.__moderate = False
             if self.status.groupIsModerated and self.status.isNormalMember:
                 self.__moderate =\
-                  Bool(__name__=u'%s-moderate' % self.userInfo.id,
+                  Bool(__name__=u'%s-moderateAdd' % self.userInfo.id,
                     title=u'Start moderating messages from %s' %\
                       self.userInfo.name,
                     description=u'Start moderating messages from %s' %\
@@ -183,7 +183,7 @@ class GSStatusFormFields(object):
                     required=False)
             elif self.status.groupIsModerated and self.status.isModerated:
                 self.__moderate =\
-                  Bool(__name__=u'%s-moderate' % self.userInfo.id,
+                  Bool(__name__=u'%s-moderateRemove' % self.userInfo.id,
                     title=u'Stop moderating messages from %s' %\
                       self.userInfo.name,
                     description=u'Stop moderating messages from %s' %\
@@ -201,7 +201,7 @@ class GSStatusFormFields(object):
                    self.status.isUnverified or \
                    self.status.isOddlyConfigured): 
                 self.__postingMember =\
-                  Bool(__name__=u'%s-postingMember' % self.userInfo.id,
+                  Bool(__name__=u'%s-postingMemberAdd' % self.userInfo.id,
                     title=u'Make %s a posting member' %\
                       self.userInfo.name,
                     description=u'Make %s a posting member' %\
@@ -209,7 +209,7 @@ class GSStatusFormFields(object):
                     required=False)
             elif self.status.postingIsSpecial and self.status.isPostingMember:
                 self.__postingMember =\
-                  Bool(__name__=u'%s-postingMember' % self.userInfo.id,
+                  Bool(__name__=u'%s-postingMemberRemove' % self.userInfo.id,
                     title=u'Revoke the ability to post from %s' %\
                       self.userInfo.name,
                     description=u'Revoke the ability to post from %s' %\
