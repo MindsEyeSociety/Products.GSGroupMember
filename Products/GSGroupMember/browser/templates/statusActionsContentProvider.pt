@@ -11,10 +11,15 @@
       A Member
     </a> &#8212; <span tal:replace="status/status_label"/>
     <tal:block 
-      define="fieldIds python:[ f.__name__ for f in fields];
-        allWidgets options/view/widgets;
-        widgets python:[ allWidgets[wId] for wId in fieldIds ]">
-      <tal:block replace="structure provider:groupserver.FormWidgets"/>
+      define="allWidgets view/widgets;
+        fieldIds python:[ f.__name__ for f in fields ]"
+      repeat="wId fieldIds">
+      <div 
+        tal:define="widgets python:[allWidgets[wId]];
+          role python:wId.split('-')[1]"
+        tal:attributes="class role">
+        <tal:block replace="structure provider:groupserver.FormWidgets"/>
+      </div>
     </tal:block>
   </div>
 </tal:block>

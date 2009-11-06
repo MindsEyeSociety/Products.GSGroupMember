@@ -64,4 +64,10 @@ class GSGroupMemberManager(object):
         # Change stuff:
         # Reset the self.__form_fields cache, as 
         # the data keys will have changed:
+        toChange = filter(lambda k:data.get(k), data.keys())
+        print toChange
         self.__form_fields = None
+        retval = u'Something changed!'
+        return retval
+    
+        

@@ -54,6 +54,16 @@
         </div>
       </form>
     </tal:block>
+    <tal:block metal:fill-slot="javascript">
+      <script type="text/javascript"
+        src="/++resource++managemembers-20091106.js">&#160;</script>
+      <script type="text/javascript">
+        jQuery.noConflict();
+        jQuery(document).ready( function () {
+          ABELManageMembers.init();
+        });
+      </script>
+    </tal:block>
   </body>
 </html>
 

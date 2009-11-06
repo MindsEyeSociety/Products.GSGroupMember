@@ -19,7 +19,7 @@ class GSManageGroupMembersForm(PageForm):
         self.siteInfo = createObject('groupserver.SiteInfo', context)
         self.groupInfo = createObject('groupserver.GroupInfo', context)
         self.groupName = self.groupInfo.name
-        self.label = 'Manage the Members of %s' % self.groupName
+        self.label = u'Manage the Members of %s' % self.groupName
 
         self.memberManager = GSGroupMemberManager(self.groupInfo.groupObj)
         self.form_fields = self.memberManager.form_fields
@@ -36,8 +36,8 @@ class GSManageGroupMembersForm(PageForm):
         
     @form.action(label=u'Change', failure='handle_change_action_failure')
     def handle_change(self, action, data):
-        self.memberManager.make_changes(data)
-        self.status = u'Something changed!'
+        status = self.memberManager.make_changes(data)
+        self.status = status
 
     def handle_change_action_failure(self, action, data, errors):
         if len(errors) == 1:

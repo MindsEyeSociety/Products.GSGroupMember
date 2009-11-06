@@ -14,6 +14,10 @@
   <five:traversable 
     class="OFS.Folder.Folder" />
   
+  <browser:resource name="managemembers-20091106.js"
+    file="browser/javascript/managemembers.js"
+    permission="zope.Public" />
+  
   <!--Vocabularies-->
   <utility
       provides="zope.schema.interfaces.IVocabularyFactory"
