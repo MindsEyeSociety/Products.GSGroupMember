@@ -3,7 +3,10 @@ from zope.app.apidoc import interface
 from zope.component import createObject, adapts
 from zope.interface import implements
 from zope.formlib import form
-from zope.schema import Bool
+from zope.schema import Bool, Choice
+
+from zope.schema.vocabulary import SimpleTerm, SimpleVocabulary
+from Products.GSGroup.changebasicprivacy import radio_widget
 
 from groupmembershipstatus import GSGroupMembershipStatus
 from interfaces import IGSStatusFormFields, IGSGroupMembershipStatus,\
@@ -127,11 +130,13 @@ class GSStatusFormFields(object):
                 self.status.isGroupAdmin or \
                 self.status.isModerator) and not \
                 (self.status.isPtnCoach or self.status.isOddlyConfigured):
+                ptnCoachTerm = SimpleTerm(True, True,
+                  u'Make %s the Participation Coach' % self.userInfo.name)
+                ptnCoachVocab = SimpleVocabulary([ptnCoachTerm])
                 self.__ptnCoach = \
-                  Bool(__name__=u'%s-ptnCoachAdd' % self.userInfo.id,
-                    title=u'Make %s the Participation Coach' % self.userInfo.name,
-                    description=u'Make %s the Participation Coach' % self.userInfo.name,
-                    required=False)
+                  form.Fields(Choice(__name__=u'%s-ptnCoachAdd' % self.userInfo.id,
+                    vocabulary=ptnCoachVocab,
+                    required=False), custom_widget=radio_widget)
             elif self.status.isPtnCoach:
                 self.__ptnCoach = \
                   Bool(__name__=u'%s-ptnCoachRemove' % self.userInfo.id,
