@@ -2,6 +2,7 @@
 """Interfaces for the registration and password-reset pages."""
 from zope.interface.interface import Interface
 from zope.interface import Attribute
+from zope.schema.vocabulary import SimpleTerm, SimpleVocabulary
 from zope.schema import *
 from zope.contentprovider.interfaces import IContentProvider
 from Products.GSProfile.interfaces import deliveryVocab
@@ -77,7 +78,7 @@ class IGSManageGroupMembersForm(Interface):
     memberManager = Attribute("""A GSGroupMemberManager instance""")
     # Form fields will be taken from memberManager.form_fields
     form_fields = Attribute("""The fields to be displayed in a form""")
-    
+
 class IGSGroupMemberManager(Interface):
     groupInfo = Attribute("""A groupInfo instance""")
     siteInfo = Attribute("""A siteInfo instance""")
@@ -223,3 +224,10 @@ class IGSMemberActionsSchema(Interface):
       description=u'Is this a dummy value?',
       required=False)
         
+class IGSManageMembersForm(Interface):
+    """ One user-independent field.
+    """
+    ptnCoach = Choice(vocabulary=SimpleVocabulary([SimpleTerm(True, \
+        True, u'No participation coach')]),
+      required=False)
+    

@@ -134,17 +134,9 @@ class GSStatusFormFields(object):
                   u'Make %s the Participation Coach' % self.userInfo.name)
                 ptnCoachVocab = SimpleVocabulary([ptnCoachTerm])
                 self.__ptnCoach = \
-                  form.Fields(Choice(__name__=u'%s-ptnCoachAdd' % self.userInfo.id,
+                  form.Fields(Choice(__name__=u'%s-ptnCoach' % self.userInfo.id,
                     vocabulary=ptnCoachVocab,
                     required=False), custom_widget=radio_widget)
-            elif self.status.isPtnCoach:
-                self.__ptnCoach = \
-                  Bool(__name__=u'%s-ptnCoachRemove' % self.userInfo.id,
-                    title=u'Remove the Participation Coach status '\
-                      u'from %s' % self.userInfo.name,
-                    description=u'Remove the Participation Coach status '\
-                      u'from %s' % self.userInfo.name,
-                    required=False)
         return self.__ptnCoach
     
     @property

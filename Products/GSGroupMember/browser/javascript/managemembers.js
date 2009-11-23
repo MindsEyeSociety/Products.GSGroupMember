@@ -4,7 +4,7 @@ ABELManageMembers = function () {
     // Private methods
     var ptnCoachChange = function () {
         var updatedWidget = jQuery(this);
-        var allRelatedWidgets = jQuery(".ptnCoachAdd :radio");
+        var allRelatedWidgets = jQuery(".ptnCoach :radio");
         var checkedValue = updatedWidget.attr("checked");
 
         if (checkedValue == true) {
@@ -20,7 +20,7 @@ ABELManageMembers = function () {
     // Public methods and properties
     return {
         init: function () {
-            jQuery(".ptnCoachAdd :radio").change(ptnCoachChange);
+            jQuery(".ptnCoach :radio").change(ptnCoachChange);
         }
     };
 }(); // ABELManageMembers

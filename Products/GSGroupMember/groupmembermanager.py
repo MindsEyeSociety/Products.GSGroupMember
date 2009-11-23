@@ -2,11 +2,13 @@
 from zope.component import createObject
 from zope.interface import implements
 from zope.formlib import form
+
 from Products.XWFCore.XWFUtils import comma_comma_and
+from Products.GSGroup.changebasicprivacy import radio_widget
 
 from groupMembersInfo import GSGroupMembersInfo
 from groupmemberactions import GSMemberStatusActions
-from interfaces import IGSGroupMemberManager, IGSMemberActionsSchema
+from interfaces import IGSGroupMemberManager, IGSMemberActionsSchema, IGSManageMembersForm
 
 class GSGroupMemberManager(object):
     implements(IGSGroupMemberManager)
@@ -34,7 +36,7 @@ class GSGroupMemberManager(object):
     def form_fields(self):
         if self.__form_fields == None:
             fields = \
-              form.Fields(IGSMemberActionsSchema)
+              form.Fields(IGSManageMembersForm)
             for m in self.memberStatusActions:
                 fields = \
                   form.Fields(
@@ -42,7 +44,8 @@ class GSGroupMemberManager(object):
                     +
                     form.Fields(m.form_fields)
                   )
-            self.__form_fields = fields.omit('dummy')
+            fields['ptnCoach'].custom_widget = radio_widget
+            self.__form_fields = fields
         return self.__form_fields
 
     def make_changes(self, data):
