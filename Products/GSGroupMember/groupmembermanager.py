@@ -4,6 +4,7 @@ from zope.interface import implements
 from zope.formlib import form
 
 from Products.XWFCore.XWFUtils import comma_comma_and
+from Products.GSGroup.mailinglistinfo import GSMailingListInfo
 from Products.GSGroup.changebasicprivacy import radio_widget
 
 from groupMembersInfo import GSGroupMembersInfo
@@ -18,10 +19,16 @@ class GSGroupMemberManager(object):
         
         self.siteInfo = createObject('groupserver.SiteInfo', group)
         self.groupInfo = createObject('groupserver.GroupInfo', group)
-        self.membersInfo = GSGroupMembersInfo(group)
+        self.listInfo = GSMailingListInfo(group)
         
-        self.__memberStatusActions = None
+        self.__membersInfo = self.__memberStatusActions = None
         self.__form_fields = None
+    
+    @property
+    def membersInfo(self):
+        if self.__membersInfo == None:
+            self.__membersInfo = GSGroupMembersInfo(self.group)
+        return self.__membersInfo
     
     @property
     def memberStatusActions(self):
@@ -44,7 +51,7 @@ class GSGroupMemberManager(object):
                     +
                     form.Fields(m.form_fields)
                   )
-            fields['ptnCoach'].custom_widget = radio_widget
+            fields['ptnCoachRemove'].custom_widget = radio_widget
             self.__form_fields = fields
         return self.__form_fields
 
@@ -63,8 +70,12 @@ class GSGroupMemberManager(object):
             Resets the self.__form_fields cache.
         '''
         retval = ''''''
-        toChange = filter(lambda k:data.get(k), data.keys())
 
+        ptnCoachToRemove = data.pop('ptnCoachRemove')
+        if ptnCoachToRemove:
+            retval += self.removePtnCoach()
+        toChange = filter(lambda k:data.get(k), data.keys())
+        
         adminsToAdd = \
           [ k.split('-')[0] for k in toChange 
             if k.split('-')[1] == 'groupAdminAdd' ]
@@ -76,12 +87,8 @@ class GSGroupMemberManager(object):
 
         ptnCoachToAdd = \
           [ k.split('-')[0] for k in toChange 
-            if k.split('-')[1] == 'ptnCoachAdd' ]
-        self.addPtnCoach(ptnCoachToAdd)
-        ptnCoachToRemove = \
-          [ k.split('-')[0] for k in toChange 
-            if k.split('-')[1] == 'ptnCoachRemove' ]
-        self.removePtnCoach(ptnCoachToRemove)
+            if k.split('-')[1] == 'ptnCoach' ]
+        retval += self.addPtnCoach(ptnCoachToAdd)
 
         moderatorsToAdd = \
           [ k.split('-')[0] for k in toChange 
@@ -114,11 +121,12 @@ class GSGroupMemberManager(object):
           [ k.split('-')[0] for k in toChange 
             if k.split('-')[1] == 'remove' ]
         self.removeMembers(membersToRemove)
-        
-        # Reset the self.__form_fields cache, as 
-        # the data keys will have changed:        
+
+        # Reset the caches so that we get the member
+        # data afresh when the form reloads.
+        self.__membersInfo = None
+        self.__memberStatusActions = None
         self.__form_fields = None
-        #retval = u'Something changed!'
         return retval
     
     def addAdmins(self, userIds):
@@ -158,17 +166,38 @@ class GSGroupMemberManager(object):
         return retval
     
     def addPtnCoach(self, userIds):
+        retval = ''
         if userIds:
             assert len(userIds)==1, 'More than one user '\
               'specified to be the participation coach: %s' % userIds
             ptnCoachToAdd = userIds[0]
-            return ptnCoachToAdd 
+            retval = self.removePtnCoach()
+            if self.group.hasProperty('ptn_coach_id'):
+                self.group.manage_changeProperties(ptn_coach_id=ptnCoachToAdd)
+            else:
+                self.group.manage_addProperty('ptn_coach_id', ptnCoachToAdd, 'string')
     
-    def removePtnCoach(self, userIds):
-        if userIds:
-            assert len(userIds)==1, 'More than one user '\
-              'specified to remove as the participation coach: %s' % userIds
-            ptnCoachToRemove = userIds[0]
+            if self.listInfo.mlist.hasProperty('ptn_coach_id'):
+                self.listInfo.mlist.manage_changeProperties(ptn_coach_id=ptnCoachToAdd)
+            else:
+                self.listInfo.mlist.manage_addProperty('ptn_coach_id', ptnCoachToAdd, 'string')
+            newPtnCoach = createObject('groupserver.UserFromId', self.group, 
+                                          ptnCoachToAdd)
+            retval += '<p><a href="%s">%s</a> is now the Participation Coach.</p>' %\
+             (newPtnCoach.url, newPtnCoach.name)
+        return retval 
+    
+    def removePtnCoach(self):
+        retval = ''
+        oldPtnCoach = self.groupInfo.ptn_coach
+        if self.group.hasProperty('ptn_coach_id'):
+            self.group.manage_changeProperties(ptn_coach_id='')
+        if self.listInfo.mlist.hasProperty('ptn_coach_id'):
+            self.listInfo.mlist.manage_changeProperties(ptn_coach_id='')
+        if oldPtnCoach:
+            retval = '<p><a href="%s">%s</a> is no longer the Participation Coach.</p>' % \
+              (oldPtnCoach.url, oldPtnCoach.name)
+        return retval
     
     def addModerators(self, userIds):
         if userIds:

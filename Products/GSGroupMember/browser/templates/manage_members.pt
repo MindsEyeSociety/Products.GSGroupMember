@@ -42,7 +42,7 @@
           in <span tal:replace="view/groupInfo/name">this group</span>.
         </p>
         <div class="ptnCoach" 
-          tal:define="widgets python:[view.widgets['ptnCoach']]">
+          tal:define="widgets python:[view.widgets['ptnCoachRemove']]">
           <div tal:replace="structure provider:groupserver.FormWidgets"/>
         </div>
         <tal:block define="statusActions memberManager/memberStatusActions;

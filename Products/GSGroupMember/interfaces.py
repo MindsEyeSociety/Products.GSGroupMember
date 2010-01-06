@@ -227,7 +227,7 @@ class IGSMemberActionsSchema(Interface):
 class IGSManageMembersForm(Interface):
     """ One user-independent field.
     """
-    ptnCoach = Choice(vocabulary=SimpleVocabulary([SimpleTerm(True, \
+    ptnCoachRemove = Choice(vocabulary=SimpleVocabulary([SimpleTerm(True, \
         True, u'No participation coach')]),
       required=False)
     

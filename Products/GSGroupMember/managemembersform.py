@@ -22,7 +22,13 @@ class GSManageGroupMembersForm(PageForm):
         self.label = u'Manage the Members of %s' % self.groupName
 
         self.memberManager = GSGroupMemberManager(self.groupInfo.groupObj)
-        self.form_fields = self.memberManager.form_fields
+        self.__form_fields = None
+    
+    @property
+    def form_fields(self):
+        if self.__form_fields == None:
+            self.__form_fields = self.memberManager.form_fields
+        return self.__form_fields
     
     def setUpWidgets(self, ignore_request=False, data={}):
         self.adapters = {}
@@ -38,6 +44,9 @@ class GSManageGroupMembersForm(PageForm):
     def handle_change(self, action, data):
         status = self.memberManager.make_changes(data)
         self.status = status
+        # Reset the form_fields cache so that the
+        # page reloads with the updated widgets
+        self.__form_fields = None
 
     def handle_change_action_failure(self, action, data, errors):
         if len(errors) == 1:
