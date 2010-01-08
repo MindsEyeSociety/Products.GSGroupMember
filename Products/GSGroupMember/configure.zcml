@@ -17,6 +17,11 @@
   <browser:resource name="managemembers-20091106.js"
     file="browser/javascript/managemembers.js"
     permission="zope.Public" />
+
+  <utility 
+    factory=".memberstatusaudit.StatusAuditEventFactory"
+    name="groupserver.GSGroupMemberStatus"
+    permission="zope.Public" />
   
   <!--Vocabularies-->
   <utility

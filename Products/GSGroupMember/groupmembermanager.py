@@ -3,13 +3,15 @@ from zope.component import createObject
 from zope.interface import implements
 from zope.formlib import form
 
+from Products.XWFCore.odict import ODict
 from Products.XWFCore.XWFUtils import comma_comma_and
 from Products.GSGroup.mailinglistinfo import GSMailingListInfo
 from Products.GSGroup.changebasicprivacy import radio_widget
 
-from groupMembersInfo import GSGroupMembersInfo
-from groupmemberactions import GSMemberStatusActions
-from interfaces import IGSGroupMemberManager, IGSMemberActionsSchema, IGSManageMembersForm
+from Products.GSGroupMember.memberstatusaudit import StatusAuditor, GAIN, LOSE
+from Products.GSGroupMember.groupMembersInfo import GSGroupMembersInfo
+from Products.GSGroupMember.groupmemberactions import GSMemberStatusActions
+from Products.GSGroupMember.interfaces import IGSGroupMemberManager, IGSMemberActionsSchema, IGSManageMembersForm
 
 class GSGroupMemberManager(object):
     implements(IGSGroupMemberManager)
@@ -69,124 +71,72 @@ class GSGroupMemberManager(object):
         SIDE EFFECTS
             Resets the self.__form_fields cache.
         '''
-        retval = ''''''
-
         ptnCoachToRemove = data.pop('ptnCoachRemove')
-        if ptnCoachToRemove:
-            retval += self.removePtnCoach()
         toChange = filter(lambda k:data.get(k), data.keys())
         
-        adminsToAdd = \
-          [ k.split('-')[0] for k in toChange 
-            if k.split('-')[1] == 'groupAdminAdd' ]
-        retval += self.addAdmins(adminsToAdd)
-        adminsToRemove = \
-          [ k.split('-')[0] for k in toChange 
-            if k.split('-')[1] == 'groupAdminRemove' ]
-        retval += self.removeAdmins(adminsToRemove)
-
+        # Sanity check before doing things on a per-user basis.
         ptnCoachToAdd = \
           [ k.split('-')[0] for k in toChange 
             if k.split('-')[1] == 'ptnCoach' ]
-        retval += self.addPtnCoach(ptnCoachToAdd)
-
-        moderatorsToAdd = \
-          [ k.split('-')[0] for k in toChange 
-            if k.split('-')[1] == 'moderatorAdd' ]
-        self.addModerators(moderatorsToAdd)
-        moderatorsToRemove = \
-          [ k.split('-')[0] for k in toChange 
-            if k.split('-')[1] == 'moderatorRemove' ]
-        self.removeModerators(moderatorsToRemove)
+        if ptnCoachToAdd:
+            assert len(ptnCoachToAdd)==1, \
+              'More than one user specified as the '\
+              'Participation Coach for %s: %s' %\
+              (self.groupInfo.id, ptnCoachToAdd)
         
-        moderatedToAdd = \
-          [ k.split('-')[0] for k in toChange 
-            if k.split('-')[1] == 'moderatedAdd' ]
-        self.addModerated(moderatedToAdd)
-        moderatedToRemove = \
-          [ k.split('-')[0] for k in toChange 
-            if k.split('-')[1] == 'moderatedRemove' ]
-        self.removeModerated(moderatedToRemove)
+        # Aggregate actions to take by user.
+        actions = ODict()
+        for k in toChange:
+            memberId = k.split('-')[0]
+            if not actions.has_key(memberId):
+                actions[memberId] = k.split('-')[1]
+            else:
+                actions[memberId] =\
+                  actions[memberId].append(k.split('-')[1])
+        retval = self.set_data(ptnCoachToRemove, actions)
         
-        postingToAdd = \
-          [ k.split('-')[0] for k in toChange 
-            if k.split('-')[1] == 'postingMemberAdd' ]
-        self.addPostingMembers(postingToAdd)
-        postingToRemove = \
-          [ k.split('-')[0] for k in toChange 
-            if k.split('-')[1] == 'postingMemberRemove' ]
-        self.removePostingMembers(postingToRemove)
-        
-        membersToRemove = \
-          [ k.split('-')[0] for k in toChange 
-            if k.split('-')[1] == 'remove' ]
-        self.removeMembers(membersToRemove)
-
         # Reset the caches so that we get the member
         # data afresh when the form reloads.
         self.__membersInfo = None
         self.__memberStatusActions = None
         self.__form_fields = None
         return retval
-    
-    def addAdmins(self, userIds):
-        retval = u''
-        #for userId in userIds:
-        #    self.group.manage_addLocalRoles(userId, ['GroupAdmin'])
-        if userIds:
-            userNames = \
-              comma_comma_and([ createObject('groupserver.UserFromId', 
-                                  self.group, userId).name 
-                                for userId in userIds])
-            m = (len(userIds) == 1) and ('member you selected (%s) has' % userNames) \
-              or ('%d members you selected (%s) have' % (len(userIds), userNames))
-            retval = '<p>The %s been given Group Administrator status.</p>' % m
-        return retval
-
-    def removeAdmins(self, userIds):
-        retval = u''
-        #for userId in userIds:
-        #    roles = list(self.group.get_local_roles_for_userid(userId))
-        #    try:
-        #        roles.remove('GroupAdmin')
-        #    except:
-        #        pass
-        #    if roles:
-        #        self.group.manage_setLocalRoles(userId, roles)
-        #    else:
-        #        self.group.manage_delLocalRoles([userId])
-        if userIds:
-            userNames = \
-              comma_comma_and([ createObject('groupserver.UserFromId', 
-                                  self.group, userId).name 
-                                for userId in userIds])
-            m = (len(userIds) == 1) and ('member you selected (%s) has' % userNames) \
-              or ('%d members you selected (%s) have' % (len(userIds), userNames))
-            retval = '<p>The %s had Group Administrator status revoked.</p>' % m
-        return retval
-    
-    def addPtnCoach(self, userIds):
-        retval = ''
-        if userIds:
-            assert len(userIds)==1, 'More than one user '\
-              'specified to be the participation coach: %s' % userIds
-            ptnCoachToAdd = userIds[0]
+                
+    def set_data(self, ptnCoachToRemove, changes):
+        retval = ''''''
+        
+        if ptnCoachToRemove:
             retval = self.removePtnCoach()
-            if self.group.hasProperty('ptn_coach_id'):
-                self.group.manage_changeProperties(ptn_coach_id=ptnCoachToAdd)
-            else:
-                self.group.manage_addProperty('ptn_coach_id', ptnCoachToAdd, 'string')
-    
-            if self.listInfo.mlist.hasProperty('ptn_coach_id'):
-                self.listInfo.mlist.manage_changeProperties(ptn_coach_id=ptnCoachToAdd)
-            else:
-                self.listInfo.mlist.manage_addProperty('ptn_coach_id', ptnCoachToAdd, 'string')
-            newPtnCoach = createObject('groupserver.UserFromId', self.group, 
-                                          ptnCoachToAdd)
-            retval += '<p><a href="%s">%s</a> is now the Participation Coach.</p>' %\
-             (newPtnCoach.url, newPtnCoach.name)
-        return retval 
-    
+        
+        for memberId in changes.keys():
+            userInfo = \
+                    createObject('groupserver.UserFromId', 
+                      self.group, memberId)
+            auditor = StatusAuditor(self.group, userInfo)
+            actions = changes[memberId]
+            if 'remove' in actions:
+                retval += self.removeMember(memberId)
+                continue
+            if 'ptnCoach' in actions:
+                retval += self.addPtnCoach(memberId, auditor)
+            if 'groupAdminAdd' in actions:
+                retval += self.addAdmin(memberId, auditor)
+            if 'groupAdminRemove' in actions:
+                retval += self.removeAdmin(memberId, auditor)
+            if 'moderatorAdd' in actions:
+                retval += self.addModerator(memberId, auditor)
+            if 'moderatorRemove' in actions:
+                retval += self.removeModerator(memberId, auditor)
+            if 'moderatedAdd' in actions:
+                retval += self.moderate(memberId, auditor) 
+            if 'moderatedRemove' in actions:
+                retval += self.unmoderate(memberId, auditor)
+            if 'postingMemberAdd' in actions:
+                retval += self.addPostingMember(memberId, auditor)
+            if 'postingMemberRemove' in actions:
+                retval += self.removePostingMember(memberId, auditor)
+        return retval
+        
     def removePtnCoach(self):
         retval = ''
         oldPtnCoach = self.groupInfo.ptn_coach
@@ -195,35 +145,75 @@ class GSGroupMemberManager(object):
         if self.listInfo.mlist.hasProperty('ptn_coach_id'):
             self.listInfo.mlist.manage_changeProperties(ptn_coach_id='')
         if oldPtnCoach:
+            auditor = StatusAuditor(self.group, oldPtnCoach)
+            auditor.info(LOSE, 'Participation Coach')
             retval = '<p><a href="%s">%s</a> is no longer the Participation Coach.</p>' % \
               (oldPtnCoach.url, oldPtnCoach.name)
         return retval
+        
+    def addPtnCoach(self, ptnCoachToAdd, auditor):
+        retval = self.removePtnCoach()
+        if self.group.hasProperty('ptn_coach_id'):
+            self.group.manage_changeProperties(ptn_coach_id=ptnCoachToAdd)
+        else:
+            self.group.manage_addProperty('ptn_coach_id', ptnCoachToAdd, 'string')
+
+        if self.listInfo.mlist.hasProperty('ptn_coach_id'):
+            self.listInfo.mlist.manage_changeProperties(ptn_coach_id=ptnCoachToAdd)
+        else:
+            self.listInfo.mlist.manage_addProperty('ptn_coach_id', ptnCoachToAdd, 'string')
+        newPtnCoach = createObject('groupserver.UserFromId', self.group, 
+                                      ptnCoachToAdd)
+        auditor.info(GAIN, 'Participation Coach')
+        retval += '<p><a href="%s">%s</a> is now the Participation Coach.</p>' %\
+         (newPtnCoach.url, newPtnCoach.name)
+        return retval
     
-    def addModerators(self, userIds):
-        if userIds:
-            return userIds
+    def addAdmin(self, userId, auditor):
+        retval = ''
+        #self.group.manage_addLocalRoles(userId, ['GroupAdmin'])
+        return retval
+
+    def removeAdmin(self, userId, auditor):
+        retval = ''
+#===============================================================================
+#        roles = list(self.group.get_local_roles_for_userid(userId))
+#        try:
+#            roles.remove('GroupAdmin')
+#        except:
+#            pass
+#        if roles:
+#            self.group.manage_setLocalRoles(userId, roles)
+#        else:
+#            self.group.manage_delLocalRoles([userId])
+#===============================================================================
+        return retval
+    
+    def addModerator(self, userId, auditor):
+        retval = ''
+        return retval
         
-    def removeModerators(self, userIds):
-        if userIds:
-            return userIds
+    def removeModerator(self, userId, auditor):
+        retval = ''
+        return retval
         
-    def addModerated(self, userIds):
-        if userIds:
-            return userIds
+    def moderate(self, userId, auditor):
+        retval = ''
+        return retval
         
-    def removeModerated(self, userIds):
-        if userIds:
-            return userIds
+    def unmoderate(self, userId, auditor):
+        retval = ''
+        return retval
         
-    def addPostingMembers(self, userIds):
-        if userIds:
-            return userIds
+    def addPostingMember(self, userId, auditor):
+        retval = ''
+        return retval
         
-    def removePostingMembers(self, userIds):
-        if userIds:
-            return userIds
+    def removePostingMember(self, userId, auditor):
+        retval = ''
+        return retval
         
-    def removeMembers(self, userIds):
-        if userIds:
-            return userIds
+    def removeMember(self, userId):
+        retval = ''
+        return retval
         
