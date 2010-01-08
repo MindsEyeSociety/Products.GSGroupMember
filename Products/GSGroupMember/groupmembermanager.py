@@ -170,23 +170,27 @@ class GSGroupMemberManager(object):
         return retval
     
     def addAdmin(self, userId, auditor):
-        retval = ''
-        #self.group.manage_addLocalRoles(userId, ['GroupAdmin'])
+        self.group.manage_addLocalRoles(userId, ['GroupAdmin'])
+        auditor.info(GAIN, 'Group Administrator')
+        admin = createObject('groupserver.UserFromId', self.group, userId)
+        retval = '<p><a href="%s">%s</a> is now a Group Administrator.</p>' %\
+         (admin.url, admin.name)
         return retval
 
     def removeAdmin(self, userId, auditor):
-        retval = ''
-#===============================================================================
-#        roles = list(self.group.get_local_roles_for_userid(userId))
-#        try:
-#            roles.remove('GroupAdmin')
-#        except:
-#            pass
-#        if roles:
-#            self.group.manage_setLocalRoles(userId, roles)
-#        else:
-#            self.group.manage_delLocalRoles([userId])
-#===============================================================================
+        roles = list(self.group.get_local_roles_for_userid(userId))
+        try:
+            roles.remove('GroupAdmin')
+        except:
+            pass
+        if roles:
+            self.group.manage_setLocalRoles(userId, roles)
+        else:
+            self.group.manage_delLocalRoles([userId])
+        auditor.info(LOSE, 'Group Administrator')
+        admin = createObject('groupserver.UserFromId', self.group, userId)
+        retval = '<p><a href="%s">%s</a> is no longer a Group Administrator.</p>' %\
+         (admin.url, admin.name)
         return retval
     
     def addModerator(self, userId, auditor):
