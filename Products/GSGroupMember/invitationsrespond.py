@@ -3,9 +3,10 @@ from Products.Five import BrowserView
 from zope.component import createObject
 from Products.CustomUserFolder.userinfo import GSUserInfo
 from utils import inform_ptn_coach_of_join
-from queries import GroupMemberQuery
+from gs.profile.invite.queries import InviationQuery
 from groupmembership import join_group
 
+# TODO: Replace with an audit trail
 import logging
 log = logging.getLogger('GSGroupMember') #@UndefinedVariable
 
@@ -16,12 +17,15 @@ class GSInviationsRespond(BrowserView):
         self.siteInfo = createObject('groupserver.SiteInfo', context)
         self.groupsInfo = createObject('groupserver.GroupsInfo', context)
         self.userInfo = GSUserInfo(context)
+        self.__currentInvitations = self.__invitationQuery = None
         
-        da = self.context.zsqlalchemy
-        assert da, 'No data-adaptor found'
-        self.groupMemberQuery = GroupMemberQuery(da)
-        
-        self.__currentInvitations = None
+    @property
+    def invitationQuery(self):
+        if self.__invitationQuery == None:
+            da = self.context.zsqlalchemy
+            assert da, 'No data-adaptor found'
+            self.__invitationQuery = InviationQuery(da)
+        return self.__invitationQuery
         
     @property
     def currentInvitations(self):
@@ -37,7 +41,7 @@ class GSInviationsRespond(BrowserView):
              self.siteInfo.name, self.siteInfo.id)
         log.info(m)
         
-        invitations = self.groupMemberQuery.get_current_invitiations_for_site(
+        invitations = self.invitationQuery.get_current_invitiations_for_site(
             self.siteInfo.id, self.userInfo.id)
         for inv in invitations:
             usrInf = createObject('groupserver.UserFromId', 
@@ -173,7 +177,7 @@ class GSInviationsRespond(BrowserView):
         assert type(groups) == list
         
         inviteIds = [i['group_id'] for i in self.currentInvitations]
-        accept_invite = self.groupMemberQuery.accept_invitation
+        accept_invite = self.invitationQuery.accept_invitation
         for groupInfo in groups:
             assert groupInfo.id in inviteIds, \
               'Not invited to join %s' % groupInfo.id
@@ -192,7 +196,7 @@ class GSInviationsRespond(BrowserView):
         SIDE EFFECTS
         '''
         inviteIds = [i['group_id'] for i in self.currentInvitations]
-        di = self.groupMemberQuery.decline_invitation
+        di = self.invitationQuery.decline_invitation
         for groupInfo in groups:
             assert groupInfo.id in inviteIds, \
               'Not invited to join %s' % groupInfo.id
