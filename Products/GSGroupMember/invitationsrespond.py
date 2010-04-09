@@ -3,7 +3,7 @@ from Products.Five import BrowserView
 from zope.component import createObject
 from Products.CustomUserFolder.userinfo import GSUserInfo
 from utils import inform_ptn_coach_of_join
-from gs.profile.invite.queries import InviationQuery
+from gs.profile.invite.queries import InvitationQuery
 from groupmembership import join_group
 
 # TODO: Replace with an audit trail
@@ -113,8 +113,8 @@ class GSInviationsRespond(BrowserView):
             else:
                 m = u'You did not accept any invitations.'
                 
-            declined = [k.split('-decline')[0] for k in responses
-              if '-decline' in k]
+            declined = [k.split('-decline')[0] for k in responses 
+                        if '-decline' in k]
             for d in declined:
                 assert d not in accepted
             if declined:

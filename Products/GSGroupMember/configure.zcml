@@ -85,10 +85,11 @@
     class=".invitesitemembers.GSInviteSiteMembersForm"
     permission="zope2.ManageUsers"/>
 
-  <adapter for="Products.GSRedirect.interfaces.IGSRedirectTraversal"
+  <!--TODO: Move
+    adapter for="Products.GSRedirect.interfaces.IGSRedirectTraversal"
     factory=".invitationredirect.GSInvitationResponseRedirect"
     provides="Products.GSRedirect.interfaces.IGSRedirect"
-    name="group_invitation" />
+    name="group_invitation" /-->
 
   <browser:pages
     for="Products.GSContent.interfaces.IGSSiteFolder"
