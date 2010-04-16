@@ -16,11 +16,34 @@ ABELManageMembers = function () {
             updatedWidget.attr("checked", true);
         }
     }
+    
+    var removeMemberChange = function () {
+        var updatedWidget = jQuery(this);
+        var memberId = updatedWidget.attr('id').split('-')[0].split('.')[1];
+        var allRelatedWidgets = jQuery("#" + memberId + "-actions input");
+        var checkedValue = updatedWidget.attr("checked");
+
+        if (checkedValue == true) {
+            // If we select the remove button, deselect and 
+            // disable all other options for this member
+            for ( i=0 ; i < allRelatedWidgets.length ; i=i+1 ) {
+                jQuery(allRelatedWidgets[i]).attr("checked", false).attr("disabled", "disabled");
+            }
+            // Then re-select and re-enable the one that changed
+            updatedWidget.removeAttr("disabled").attr("checked", true);
+        } else {
+            // If we deselect the remove button, re-enable all other options for this member
+            for ( i=0 ; i < allRelatedWidgets.length ; i=i+1 ) {
+                jQuery(allRelatedWidgets[i]).removeAttr("disabled");
+            }
+        }
+    }
 
     // Public methods and properties
     return {
         init: function () {
             jQuery(".ptnCoach :radio").change(ptnCoachChange);
+            jQuery(".remove :checkbox").change(removeMemberChange);
         }
     };
 }(); // ABELManageMembers

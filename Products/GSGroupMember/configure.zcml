@@ -14,7 +14,7 @@
   <five:traversable 
     class="OFS.Folder.Folder" />
   
-  <browser:resource name="managemembers-20091106.js"
+  <browser:resource name="managemembers-20100416.js"
     file="browser/javascript/managemembers.js"
     permission="zope.Public" />
 
@@ -58,7 +58,7 @@
   <!--Pages-->
   <browser:page 
     for="Products.XWFChat.interfaces.IGSGroupFolder"
-    name="manage_group_members.html"
+    name="managemembers.html"
     class=".managemembersform.GSManageGroupMembersForm"
     permission="zope2.ManageUsers"/>
 

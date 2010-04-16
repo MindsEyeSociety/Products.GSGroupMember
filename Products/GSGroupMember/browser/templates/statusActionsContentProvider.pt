@@ -3,13 +3,20 @@
     tal:define="view options/view;
       userInfo memberStatusActions/userInfo;
       status memberStatusActions/status;
-      fields memberStatusActions/form_fields"
-    tal:attributes="id string:${userInfo/id}-actions">
-    <a href="#"
-      tal:attributes="href userInfo/url" 
-      tal:content="userInfo/name">
-      A Member
-    </a> &#8212; <span tal:replace="status/status_label"/>
+      fields memberStatusActions/form_fields;
+      isOdd repeat/memberStatusActions/odd"
+    tal:attributes="id string:${userInfo/id}-actions;
+      class python:isOdd and 'statusActions odd' or 'statusActions even'">
+    <div
+      tal:define="user userInfo/user"
+      tal:replace="structure provider:groupserver.UserImage" />
+    <h3>
+      <a href="#"
+        tal:attributes="href userInfo/url" 
+        tal:content="userInfo/name">
+        A Member
+      </a> &#8212; <span tal:replace="status/status_label"/>
+    </h3>
     <tal:block 
       define="allWidgets view/widgets;
         fieldIds python:[ f.__name__ for f in fields ]"
