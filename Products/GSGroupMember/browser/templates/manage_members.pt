@@ -4,7 +4,13 @@
       <span tal:replace="view/label"/> :
       <span tal:replace="view/siteInfo/get_name">A Site</span>
     </title>
-    
+    <tal:block metal:fill-slot="style">
+      <style type="text/css">
+        div .userimage {
+          float: right;
+        }
+      </style>
+    </tal:block>
   </head>
   <body>
     <div metal:fill-slot="messages" tal:condition="view/status" 
