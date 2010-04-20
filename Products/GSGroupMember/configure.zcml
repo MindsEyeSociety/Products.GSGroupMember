@@ -22,6 +22,10 @@
     factory=".memberstatusaudit.StatusAuditEventFactory"
     name="groupserver.GSGroupMemberStatus"
     permission="zope.Public" />
+  <utility 
+    factory=".leaveaudit.LeaveAuditEventFactory"
+    name="groupserver.GSGroupMemberLeave"
+    permission="zope.Public" />
   
   <!--Vocabularies-->
   <utility

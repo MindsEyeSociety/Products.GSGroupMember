@@ -172,7 +172,7 @@ class GSStatusFormFields(object):
             self.__moderate = False
             if self.status.groupIsModerated and self.status.isNormalMember:
                 self.__moderate =\
-                  Bool(__name__=u'%s-moderateAdd' % self.userInfo.id,
+                  Bool(__name__=u'%s-moderatedAdd' % self.userInfo.id,
                     title=u'Start moderating messages from %s' %\
                       self.userInfo.name,
                     description=u'Start moderating messages from %s' %\
@@ -180,7 +180,7 @@ class GSStatusFormFields(object):
                     required=False)
             elif self.status.groupIsModerated and self.status.isModerated:
                 self.__moderate =\
-                  Bool(__name__=u'%s-moderateRemove' % self.userInfo.id,
+                  Bool(__name__=u'%s-moderatedRemove' % self.userInfo.id,
                     title=u'Stop moderating messages from %s' %\
                       self.userInfo.name,
                     description=u'Stop moderating messages from %s' %\

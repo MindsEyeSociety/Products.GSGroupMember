@@ -59,6 +59,5 @@ class GSGroupMembersInfo(object):
               self.fullMembers + self.invitedMembers
             members.sort(sort_by_name)
             self.__members = members
-            print members
         return self.__members
 

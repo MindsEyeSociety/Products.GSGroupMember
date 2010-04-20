@@ -10,21 +10,20 @@ from Products.CustomUserFolder.interfaces import IGSUserInfo
 from Products.GSAuditTrail import IAuditEvent, BasicAuditEvent, AuditQuery
 from Products.GSAuditTrail.utils import event_id_from_data
 
-SUBSYSTEM = 'groupserver.GSGroupMemberStatus'
+SUBSYSTEM = 'groupserver.GSGroupMemberLeave'
 import logging
 log = logging.getLogger(SUBSYSTEM) #@UndefinedVariable
 
 UNKNOWN        = '0'  # Unknown is always "0"
-GAIN           = '1'
-LOSE           = '2'
+REMOVE         = '1'
 
-class StatusAuditEventFactory(object):
-    """A Factory for member status events.
+class LeaveAuditEventFactory(object):
+    """A Factory for group leaving events.
     """
     implements(IFactory)
 
-    title=u'GroupServer Group Status Audit Event Factory'
-    description=u'Creates a GroupServer event auditor for group status changes'
+    title=u'GroupServer Leave Group Audit Event Factory'
+    description=u'Creates a GroupServer event auditor for leaving groups'
 
     def __call__(self, context, event_id, code, date,
         userInfo, instanceUserInfo, siteInfo, groupInfo,
@@ -32,15 +31,10 @@ class StatusAuditEventFactory(object):
         """Create an event
         """
         assert subsystem == SUBSYSTEM, 'Subsystems do not match'
-        
-        if (code == GAIN):
-            event = GainStatusEvent(context, event_id, date, 
-              userInfo, instanceUserInfo, siteInfo, groupInfo, 
-              instanceDatum)
-        elif (code == LOSE):
-            event = LoseStatusEvent(context, event_id, date, 
-              userInfo, instanceUserInfo, siteInfo, groupInfo, 
-              instanceDatum)
+
+        if (code == REMOVE):
+            event = RemoveEvent(context, event_id, date, 
+              userInfo, instanceUserInfo, siteInfo, groupInfo)
         else:
             event = BasicAuditEvent(context, event_id, UNKNOWN, date, 
               userInfo, instanceUserInfo, siteInfo, groupInfo, 
@@ -51,35 +45,33 @@ class StatusAuditEventFactory(object):
     def getInterfaces(self):
         return implementedBy(BasicAuditEvent)
 
-class GainStatusEvent(BasicAuditEvent):
-    ''' An audit-trail event representing a group member gaining a 
-        particular status within the group
+class RemoveEvent(BasicAuditEvent):
+    ''' An audit-trail event representing a user being removed
+        from a group
     '''
     implements(IAuditEvent)
 
     def __init__(self, context, id, d, userInfo, instanceUserInfo, 
-                  siteInfo, groupInfo, instanceDatum):
-        """ Create a gain-status event
+                  siteInfo, groupInfo):
+        """Create a removal event
         """
-        BasicAuditEvent.__init__(self, context, id,  GAIN, d, userInfo,
-          instanceUserInfo, siteInfo, groupInfo, instanceDatum, None, 
-          SUBSYSTEM)
+        BasicAuditEvent.__init__(self, context, id,  REMOVE, d, userInfo,
+          instanceUserInfo, siteInfo, groupInfo, None, None, SUBSYSTEM)
           
     def __str__(self):
-        retval = u'%s (%s) gave %s (%s) the status of %s in %s (%s) on %s (%s).' % \
-           (self.userInfo.name,         self.userInfo.id,
+        retval = u'%s (%s) was removed from %s (%s) on %s (%s) by %s (%s).' % (
             self.instanceUserInfo.name, self.instanceUserInfo.id,
-            self.instanceDatum,
             self.groupInfo.name,        self.groupInfo.id,
-            self.siteInfo.name,         self.siteInfo.id)
+            self.siteInfo.name,         self.siteInfo.id,
+            self.userInfo.name,         self.userInfo.id)
         return retval
     
     @property
     def xhtml(self):
         cssClass = u'audit-event groupserver-group-member-%s' %\
           self.code
-        retval = u'<span class="%s">Given the status of %s in %s</span>'%\
-          (cssClass, self.instanceDatum, self.groupInfo.name)
+        retval = u'<span class="%s">Removed from %s</span>'%\
+          (cssClass, self.groupInfo.name)
         
         if self.instanceUserInfo.id != self.userInfo.id:
             retval = u'%s &#8212; %s' %\
@@ -88,49 +80,11 @@ class GainStatusEvent(BasicAuditEvent):
           (retval, munge_date(self.context, self.date))
         return retval
 
-class LoseStatusEvent(BasicAuditEvent):
-    ''' An audit-trail event representing a group member losing a 
-        particular status within a group
-    '''
-    implements(IAuditEvent)
-
-    def __init__(self, context, id, d, userInfo, instanceUserInfo, 
-                  siteInfo, groupInfo, instanceDatum):
-        """ Create a lose-status event
-        """
-        BasicAuditEvent.__init__(self, context, id,  LOSE, d, userInfo,
-          instanceUserInfo, siteInfo, groupInfo, instanceDatum, None, 
-          SUBSYSTEM)
-          
-    def __str__(self):
-        retval = u'%s (%s) removed the status of %s from %s (%s) '\
-          u'in %s (%s) on %s (%s).' %\
-           (self.userInfo.name,         self.userInfo.id,
-            self.instanceDatum,
-            self.instanceUserInfo.name, self.instanceUserInfo.id,
-            self.groupInfo.name,        self.groupInfo.id,
-            self.siteInfo.name,         self.siteInfo.id)
-        return retval
-    
-    @property
-    def xhtml(self):
-        cssClass = u'audit-event groupserver-group-member-%s' %\
-          self.code
-        retval = u'<span class="%s">Rescinded status of %s in %s</span>'%\
-          (cssClass, self.instanceDatum, self.groupInfo.name)
-        
-        if self.instanceUserInfo.id != self.userInfo.id:
-            retval = u'%s &#8212; %s' %\
-              (retval, userInfo_to_anchor(self.userInfo))              
-        retval = u'%s (%s)' % \
-          (retval, munge_date(self.context, self.date))
-        return retval
-
-class StatusAuditor(object):
-    """An auditor for group status.
+class LeaveAuditor(object):
+    """An Auditor for leaving
     """
     def __init__(self, context, instanceUserInfo):
-        """Create a status auditor.
+        """Create a leaving auditor.
         """
         self.context = context
         self.instanceUserInfo = instanceUserInfo
@@ -139,7 +93,7 @@ class StatusAuditor(object):
         self.__groupInfo = None
         self.__factory = None
         self.__queries = None
-    
+        
     @property
     def userInfo(self):
         if self.__userInfo == None:
@@ -164,7 +118,7 @@ class StatusAuditor(object):
     @property
     def factory(self):
         if self.__factory == None:
-            self.__factory = StatusAuditEventFactory()
+            self.__factory = LeaveAuditEventFactory()
         return self.__factory
         
     @property
