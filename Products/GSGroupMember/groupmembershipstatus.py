@@ -55,7 +55,7 @@ class GSGroupMembershipStatus(object):
         self.postingIsSpecial = \
           self.groupInfo.group_type == 'announcement'
         self.numPostingMembers = \
-          self.mailingListInfo.posting_members
+          len(self.mailingListInfo.posting_members)
 
     @property
     def status_label(self):

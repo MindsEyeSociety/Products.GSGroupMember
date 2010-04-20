@@ -208,7 +208,7 @@ class GSGroupMemberManager(object):
         roles = list(self.group.get_local_roles_for_userid(userId))
         assert 'GroupAdmin' not in roles, '%s was marked for becoming '\
           'a GroupAdmin in %s (%s), but is one already.' %\
-           (userId, groupInfo.name, groupInfo.id)
+           (userId, self.groupInfo.name, groupInfo.id)
         self.group.manage_addLocalRoles(userId, ['GroupAdmin'])
         auditor.info(GAIN, 'Group Administrator')
         retval = 'Became a Group Administrator.'
@@ -218,7 +218,7 @@ class GSGroupMemberManager(object):
         roles = list(self.group.get_local_roles_for_userid(userId))
         assert 'GroupAdmin' in roles, '%s was marked for removal '\
           'as a GroupAdmin in %s (%s), but does not have the role.' %\
-           (userId, groupInfo.name, groupInfo.id)
+           (userId, self.groupInfo.name, groupInfo.id)
         roles.remove('GroupAdmin')
         if roles:
             self.group.manage_setLocalRoles(userId, roles)
@@ -233,7 +233,7 @@ class GSGroupMemberManager(object):
         moderatorIds = [ m.id for m in self.listInfo.moderators ]
         assert userId not in moderatorIds, '%s was marked for addition '\
           'as a moderator in %s (%s), but is already a moderator.' %\
-           (userId, groupInfo.name, groupInfo.id)
+           (userId, self.groupInfo.name, groupInfo.id)
         moderatorIds.append(userId)
         if groupList.hasProperty('moderator_members'):
             groupList.manage_changeProperties(moderator_members=moderatorIds)
@@ -248,7 +248,7 @@ class GSGroupMemberManager(object):
         moderatorIds = [ m.id for m in self.listInfo.moderators ]
         assert userId in moderatorIds, '%s was marked for removal '\
           'as a moderator in %s (%s), but is not listed as a moderator.' %\
-           (userId, groupInfo.name, groupInfo.id)
+           (userId, self.groupInfo.name, groupInfo.id)
         moderatorIds.remove(userId)
         if groupList.hasProperty('moderator_members'):
             groupList.manage_changeProperties(moderator_members=moderatorIds)
@@ -263,7 +263,7 @@ class GSGroupMemberManager(object):
         moderatedIds = [ m.id for m in self.listInfo.moderatees ]
         assert userId not in moderatedIds, '%s was marked for '\
           'moderation in %s (%s), but is already moderated.' %\
-           (userId, groupInfo.name, groupInfo.id)
+           (userId, self.groupInfo.name, groupInfo.id)
         moderatedIds.append(userId)
         if groupList.hasProperty('moderated_members'):
             groupList.manage_changeProperties(moderated_members=moderatedIds)
@@ -278,7 +278,7 @@ class GSGroupMemberManager(object):
         moderatedIds = [ m.id for m in self.listInfo.moderatees ]
         assert userId in moderatedIds, '%s was marked to be unmoderated '\
           'in %s (%s), but is not listed as a moderated member.' %\
-           (userId, groupInfo.name, groupInfo.id)
+           (userId, self.groupInfo.name, groupInfo.id)
         moderatedIds.remove(userId)
         if groupList.hasProperty('moderated_members'):
             groupList.manage_changeProperties(moderated_members=moderatedIds)
@@ -290,10 +290,10 @@ class GSGroupMemberManager(object):
         
     def addPostingMember(self, userId, auditor):
         groupList = self.listInfo.mlist
-        postingMemberIds = grouplist.getProperty('posting_members', [])
+        postingMemberIds = [ m.id for m in self.listInfo.posting_members ]
         assert userId not in postingMemberIds, '%s was marked to become a '\
           'posting member in %s (%s), but is already a posting member.' %\
-           (userId, groupInfo.name, groupInfo.id)        
+           (userId, self.groupInfo.name, groupInfo.id)        
         numPostingMembers = len(postingMemberIds)
         if numPostingMembers >= MAX_POSTING_MEMBERS:
             retval = '***Not become a posting member, as the number of '\
@@ -311,10 +311,10 @@ class GSGroupMemberManager(object):
 
     def removePostingMember(self, userId):
         groupList = self.listInfo.mlist
-        postingMemberIds = groupList.getProperty('posting_members', [])
+        postingMemberIds = [ m.id for m in self.listInfo.posting_members ]
         assert userId in postingMemberIds, '%s was marked for removal as '\
           'a posting member in %s (%s), but is not a posting member.' %\
-           (userId, groupInfo.name, groupInfo.id)
+           (userId, self.groupInfo.name, groupInfo.id)
         postingMemberIds.remove(userId)
         if groupList.hasProperty('posting_members'):
             groupList.manage_changeProperties(posting_members=postingMemberIds)

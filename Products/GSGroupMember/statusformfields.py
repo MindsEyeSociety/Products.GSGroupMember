@@ -159,9 +159,9 @@ class GSStatusFormFields(object):
             elif self.status.groupIsModerated and self.status.isModerator:
                 self.__moderator =\
                   Bool(__name__=u'%s-moderatorRemove' % self.userInfo.id,
-                    title=u'Revoke moderator status from %s' %\
+                    title=u'Revoke Moderator status from %s' %\
                       self.userInfo.name,
-                    description=u'Revoke moderator status from %s' %\
+                    description=u'Revoke Moderator status from %s' %\
                       self.userInfo.name,
                     required=False)
         return self.__moderator
@@ -199,17 +199,17 @@ class GSStatusFormFields(object):
                    self.status.isOddlyConfigured): 
                 self.__postingMember =\
                   Bool(__name__=u'%s-postingMemberAdd' % self.userInfo.id,
-                    title=u'Make %s a posting member' %\
+                    title=u'Make %s a Posting Member' %\
                       self.userInfo.name,
-                    description=u'Make %s a posting member' %\
+                    description=u'Make %s a Posting Member' %\
                       self.userInfo.name,
                     required=False)
             elif self.status.postingIsSpecial and self.status.isPostingMember:
                 self.__postingMember =\
                   Bool(__name__=u'%s-postingMemberRemove' % self.userInfo.id,
-                    title=u'Revoke the ability to post from %s' %\
+                    title=u'Revoke the Posting Member privileges from %s' %\
                       self.userInfo.name,
-                    description=u'Revoke the ability to post from %s' %\
+                    description=u'Revoke the Posting Member privileges from %s' %\
                       self.userInfo.name,
                     required=False)
         return self.__postingMember
