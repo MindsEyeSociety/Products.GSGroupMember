@@ -4,7 +4,13 @@
       <span tal:replace="view/label"/> :
       <span tal:replace="view/siteInfo/get_name">A Site</span>
     </title>
-    
+    <tal:block metal:fill-slot="style">
+      <style type="text/css">
+        div .userimage {
+          float: right;
+        }
+      </style>
+    </tal:block>
   </head>
   <body>
     <div metal:fill-slot="messages" tal:condition="view/status" 
@@ -41,6 +47,10 @@
           &#8212; 
           in <span tal:replace="view/groupInfo/name">this group</span>.
         </p>
+        <div class="ptnCoach" 
+          tal:define="widgets python:[view.widgets['ptnCoachRemove']]">
+          <div tal:replace="structure provider:groupserver.FormWidgets"/>
+        </div>
         <tal:block define="statusActions memberManager/memberStatusActions;
           widgets view/widgets">
           <div tal:replace="structure provider:groupserver.MemberStatusActions"/>
@@ -53,6 +63,16 @@
           </tal:block>
         </div>
       </form>
+    </tal:block>
+    <tal:block metal:fill-slot="javascript">
+      <script type="text/javascript"
+        src="/++resource++managemembers-20100416.js">&#160;</script>
+      <script type="text/javascript">
+        jQuery.noConflict();
+        jQuery(document).ready( function () {
+          ABELManageMembers.init();
+        });
+      </script>
     </tal:block>
   </body>
 </html>

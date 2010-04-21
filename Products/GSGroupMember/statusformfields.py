@@ -1,12 +1,12 @@
 # coding=utf-8
-import AccessControl
 from zope.app.apidoc import interface
 from zope.component import createObject, adapts
 from zope.interface import implements
 from zope.formlib import form
-from zope.schema import *
+from zope.schema import Bool, Choice
 
-from Products.CustomUserFolder.interfaces import IGSUserInfo
+from zope.schema.vocabulary import SimpleTerm, SimpleVocabulary
+from Products.GSGroup.changebasicprivacy import radio_widget
 
 from groupmembershipstatus import GSGroupMembershipStatus
 from interfaces import IGSStatusFormFields, IGSGroupMembershipStatus,\
@@ -27,19 +27,24 @@ class GSStatusFormFields(object):
         self.groupInfo = status.groupInfo
         self.siteInfo = status.siteInfo
         
-        self.__adminUserInfo = None
-        self.__adminUserStatus = None
+        self.__adminUserInfo = self.__adminUserStatus = None
         
-        self.__groupAdmin = None
-        self.__moderator = None
-        self.__moderate = None
-        self.__postingMember = None
+        self.__groupAdmin = None 
+        self.__ptnCoach = self.__postingMember = None
+        self.__moderator = self.__moderate = None
         self.__remove = None
         
-        self.__allFields = None
-        self.__validFields = None
+        self.__allFields = self.__validFields = None
         self.__form_fields = None
-    
+
+    # AM: We're unable to get the logged-in user
+    #   in this context. Ideally we would grab
+    #   the logged-in user and use their status 
+    #   to determine whether some actions can be
+    #   taken, but that's not currently possible.
+    #   These properties can stay here as testament
+    #   to our good intentions, and hopefully can
+    #   be modified in the future.
     @property
     def adminUserInfo(self):
         if self.__adminUserInfo == None:
@@ -61,9 +66,10 @@ class GSStatusFormFields(object):
         if self.__allFields == None:
             self.__allFields = [
               self.groupAdmin,
+              self.ptnCoach,
+              self.postingMember,
               self.moderator,
               self.moderate,
-              self.postingMember,
               self.remove
             ]
         return self.__allFields
@@ -96,15 +102,19 @@ class GSStatusFormFields(object):
             self.__groupAdmin = False
             if (self.status.isNormalMember or \
                 self.status.isPtnCoach or \
-                self.status.isModerator) and not self.status.isOddlyConfigured:
+                self.status.isModerator) and not \
+                (self.status.isGroupAdmin or self.status.isOddlyConfigured):
                 self.__groupAdmin = \
-                  Bool(__name__=u'%s_groupAdmin' % self.userInfo.id,
+                  Bool(__name__=u'%s-groupAdminAdd' % self.userInfo.id,
                     title=u'Make %s a Group Administrator' % self.userInfo.name,
                     description=u'Make %s a Group Administrator' % self.userInfo.name,
                     required=False)
-            elif self.status.isGroupAdmin and self.adminUserStatus.isSiteAdmin:
+            # AM: Admins shouldn't be able to revoke the group-admin
+            #   status of other admins of the same or higher rank.
+            #elif self.status.isGroupAdmin and self.adminUserStatus.isSiteAdmin:
+            elif self.status.isGroupAdmin:
                 self.__groupAdmin = \
-                  Bool(__name__=u'%s_groupAdmin' % self.userInfo.id,
+                  Bool(__name__=u'%s-groupAdminRemove' % self.userInfo.id,
                     title=u'Revoke the Group Administrator privileges '\
                       u'from %s' % self.userInfo.name,
                     description=u'Revoke the Group Administrator privileges '\
@@ -112,6 +122,23 @@ class GSStatusFormFields(object):
                     required=False)
         return self.__groupAdmin
               
+    @property
+    def ptnCoach(self):
+        if self.__ptnCoach == None:
+            self.__ptnCoach = False
+            if (self.status.isNormalMember or \
+                self.status.isGroupAdmin or \
+                self.status.isModerator) and not \
+                (self.status.isPtnCoach or self.status.isOddlyConfigured):
+                ptnCoachTerm = SimpleTerm(True, True,
+                  u'Make %s the Participation Coach' % self.userInfo.name)
+                ptnCoachVocab = SimpleVocabulary([ptnCoachTerm])
+                self.__ptnCoach = \
+                  form.Fields(Choice(__name__=u'%s-ptnCoach' % self.userInfo.id,
+                    vocabulary=ptnCoachVocab,
+                    required=False), custom_widget=radio_widget)
+        return self.__ptnCoach
+    
     @property
     def moderator(self):
         if self.__moderator == None:
@@ -123,7 +150,7 @@ class GSStatusFormFields(object):
                self.status.isUnverified or \
                self.status.isOddlyConfigured):
                 self.__moderator =\
-                  Bool(__name__=u'%s_moderator' % self.userInfo.id,
+                  Bool(__name__=u'%s-moderatorAdd' % self.userInfo.id,
                     title=u'Make %s a Moderator for this group' %\
                       self.userInfo.name,
                     description=u'Make %s a Moderator for this group' %\
@@ -131,10 +158,10 @@ class GSStatusFormFields(object):
                     required=False)
             elif self.status.groupIsModerated and self.status.isModerator:
                 self.__moderator =\
-                  Bool(__name__=u'%s_moderator' % self.userInfo.id,
-                    title=u'Revoke moderator status from %s' %\
+                  Bool(__name__=u'%s-moderatorRemove' % self.userInfo.id,
+                    title=u'Revoke Moderator status from %s' %\
                       self.userInfo.name,
-                    description=u'Revoke moderator status from %s' %\
+                    description=u'Revoke Moderator status from %s' %\
                       self.userInfo.name,
                     required=False)
         return self.__moderator
@@ -145,7 +172,7 @@ class GSStatusFormFields(object):
             self.__moderate = False
             if self.status.groupIsModerated and self.status.isNormalMember:
                 self.__moderate =\
-                  Bool(__name__=u'%s_moderate' % self.userInfo.id,
+                  Bool(__name__=u'%s-moderatedAdd' % self.userInfo.id,
                     title=u'Start moderating messages from %s' %\
                       self.userInfo.name,
                     description=u'Start moderating messages from %s' %\
@@ -153,7 +180,7 @@ class GSStatusFormFields(object):
                     required=False)
             elif self.status.groupIsModerated and self.status.isModerated:
                 self.__moderate =\
-                  Bool(__name__=u'%s_moderate' % self.userInfo.id,
+                  Bool(__name__=u'%s-moderatedRemove' % self.userInfo.id,
                     title=u'Stop moderating messages from %s' %\
                       self.userInfo.name,
                     description=u'Stop moderating messages from %s' %\
@@ -171,18 +198,18 @@ class GSStatusFormFields(object):
                    self.status.isUnverified or \
                    self.status.isOddlyConfigured): 
                 self.__postingMember =\
-                  Bool(__name__=u'%s_postingMember' % self.userInfo.id,
-                    title=u'Make %s a posting member' %\
+                  Bool(__name__=u'%s-postingMemberAdd' % self.userInfo.id,
+                    title=u'Make %s a Posting Member' %\
                       self.userInfo.name,
-                    description=u'Make %s a posting member' %\
+                    description=u'Make %s a Posting Member' %\
                       self.userInfo.name,
                     required=False)
             elif self.status.postingIsSpecial and self.status.isPostingMember:
                 self.__postingMember =\
-                  Bool(__name__=u'%s_postingMember' % self.userInfo.id,
-                    title=u'Revoke the ability to post from %s' %\
+                  Bool(__name__=u'%s-postingMemberRemove' % self.userInfo.id,
+                    title=u'Revoke the Posting Member privileges from %s' %\
                       self.userInfo.name,
-                    description=u'Revoke the ability to post from %s' %\
+                    description=u'Revoke the Posting Member privileges from %s' %\
                       self.userInfo.name,
                     required=False)
         return self.__postingMember
@@ -191,11 +218,14 @@ class GSStatusFormFields(object):
     def remove(self):
         if self.__remove == None:
             self.__remove = False
-            if not self.status.isSiteAdmin and \
-              not(self.status.isGroupAdmin and \
-                  self.adminUserStatus.isGroupAdmin):
+            # AM: Admins shouldn't be able to remove other
+            #   admins of the same or higher rank. 
+            #if not self.status.isSiteAdmin and \
+            #  not(self.status.isGroupAdmin and \
+            #      self.adminUserStatus.isGroupAdmin):
+            if (not self.status.isSiteAdmin) and (not self.status.isGroupAdmin):
                 self.__remove =\
-                  Bool(__name__=u'%s_remove' % self.userInfo.id,
+                  Bool(__name__=u'%s-remove' % self.userInfo.id,
                     title=u'Remove %s from the group' %\
                       self.userInfo.name,
                     description=u'Remove %s from the group' %\

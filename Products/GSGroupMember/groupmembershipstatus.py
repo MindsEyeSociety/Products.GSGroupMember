@@ -55,7 +55,7 @@ class GSGroupMembershipStatus(object):
         self.postingIsSpecial = \
           self.groupInfo.group_type == 'announcement'
         self.numPostingMembers = \
-          self.mailingListInfo.posting_members
+          len(self.mailingListInfo.posting_members)
 
     @property
     def status_label(self):
@@ -86,7 +86,7 @@ class GSGroupMembershipStatus(object):
             if self.isOddlyConfigured:
                 label = 'Oddly Configured Member: %s' % label
             if self.isUnverified:
-                label = '%s with no verified email addresses.' % label
+                label = '%s with no verified email addresses' % label
             self.__status_label = label
         retval = self.__status_label
         assert retval

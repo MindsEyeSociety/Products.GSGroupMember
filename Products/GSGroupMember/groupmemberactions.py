@@ -1,5 +1,4 @@
 # coding=utf-8
-import AccessControl
 from zope.app.apidoc import interface
 from zope.component import createObject, adapts
 from zope.interface import implements
