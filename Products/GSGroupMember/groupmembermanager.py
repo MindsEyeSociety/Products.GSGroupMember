@@ -81,53 +81,20 @@ class GSGroupMemberManager(object):
         '''
         ptnCoachToRemove = data.pop('ptnCoachRemove')
         toChange = filter(lambda k:data.get(k), data.keys())
+        actionsNotTaken = {}
 
-        # Members to remove. If selected for removal,
-        #  the JS should stop any other actions being
-        #  specified for that member, but we don't
-        #  want to make any assumptions, so we'll go
-        #  through and remove any other actions.
-        membersToRemove = \
-          [ k.split('-')[0] for k in toChange 
-            if k.split('-')[1] == 'remove' ]
-        for k in toChange:
-            if k.split('-')[0] in membersToRemove:
-                toChange.remove(k)
-        
-        # Posting members to remove. We want to get
-        #  them out of the way at the start, so that
-        #  we can add other posting members without
-        #  going over the limit.
-        postingMembersToRemove = \
-          [ k.split('-')[0] for k in toChange 
-            if k.split('-')[1] == 'postingMemberRemove' ]
-        
-        # Sanity check re number of ptn coaches,
-        #  and establish whether the current one
-        #  needs to be removed even if that was 
-        #  not explicitly required.
-        ptnCoachToAdd = \
-          [ k.split('-')[0] for k in toChange 
-            if k.split('-')[1] == 'ptnCoach' ]
-        if ptnCoachToAdd:
-            assert len(ptnCoachToAdd)==1, \
-              'More than one user specified as the '\
-              'Participation Coach for %s: %s' %\
-              (self.groupInfo.id, ptnCoachToAdd)
-            ptnCoachToAdd = ptnCoachToAdd[0]
-            if self.groupInfo.ptn_coach:
-                ptnCoachToRemove = True
-        
-        # Aggregate all remaining actions by user.
-        otherActions = ODict()
-        for k in toChange:
-            memberId = k.split('-')[0]
-            if not otherActions.has_key(memberId):
-                otherActions[memberId] = [k.split('-')[1]]
-            else:
-                otherActions[memberId].append(k.split('-')[1])
+        toChange, membersToRemove = \
+          self.triageMembersToRemove(toChange)
+        toChange, postingMembersToRemove = \
+          self.triagePostingMembersToRemove(toChange)
+        toChange, ptnCoachToRemove, ptnCoachToAdd, actionsNotTaken = \
+          self.triagePtnCoach(toChange, ptnCoachToRemove, actionsNotTaken)
+        otherActions = self.getOtherActions(toChange)
+        otherActions, actionsNotTaken = \
+          self.checkForDoubleModeration(otherActions, actionsNotTaken)
+            
         retval = self.set_data(membersToRemove, postingMembersToRemove,
-                          ptnCoachToRemove, ptnCoachToAdd, otherActions)
+          ptnCoachToRemove, ptnCoachToAdd, actionsNotTaken, otherActions)
         
         # Reset the caches so that we get the member
         # data afresh when the form reloads.
@@ -135,11 +102,137 @@ class GSGroupMemberManager(object):
         self.__memberStatusActions = None
         self.__form_fields = None
         return retval
+
+    def triageMembersToRemove(self, toChange):
+        ''' 
+          Members to remove. If selected for removal,
+          the JS should stop any other actions being
+          specified for that member, but we don't
+          want to make any assumptions, so we'll go
+          through and remove any other actions.
+        '''
+        membersToRemove = \
+          [ k.split('-')[0] for k in toChange 
+            if k.split('-')[1] == 'remove' ]
+        for k in toChange:
+            if k.split('-')[0] in membersToRemove:
+                toChange.remove(k)
+        retval = toChange, membersToRemove
+        return retval
+    
+    def triagePostingMembersToRemove(self, toChange):
+        '''
+          Posting members to remove. We want to get
+          them out of the way at the start, so that
+          we can add other posting members without
+          going over the limit.
+        '''
+        postingMembersToRemove = []
+        for k in toChange:
+            if k.split('-')[1] == 'postingMemberRemove':
+                postingMembersToRemove.append(k.split('-')[0])
+                toChange.remove(k)
+        retval = toChange, postingMembersToRemove
+        return retval
+    
+    def triagePtnCoach(self, toChange, ptnCoachToRemove, actionsNotTaken):
+        ''' 
+          Sanity check re number of ptn coaches,
+          and establish whether the current one
+          needs to be removed even if that was 
+          not explicitly required.
+        '''
+        ptnCoachToAdd = []
+        for k in toChange:
+            if k.split('-')[1] == 'ptnCoach':
+                ptnCoachToAdd.append(k.split('-')[0])
+                toChange.remove(k)
+        if ptnCoachToAdd and (len(ptnCoachToAdd)>1):
+            # If more than one member was specified, then
+            #  don't make anyone the ptn coach.
+            actionsNotTaken['ptnCoach'] = ptnCoachToAdd
+            ptnCoachToAdd = None
+        elif len(ptnCoachToAdd)==1:
+            ptnCoachToAdd = ptnCoachToAdd[0]
+            if self.groupInfo.ptn_coach:
+                ptnCoachToRemove = True
+        retval = (toChange, ptnCoachToRemove, ptnCoachToAdd, actionsNotTaken)
+        return retval
+    
+    def getOtherActions(self, toChange):
+        ''' Aggregate all remaining actions by user.
+        '''
+        otherActions = ODict()
+        for k in toChange:
+            memberId = k.split('-')[0]
+            if not otherActions.has_key(memberId):
+                otherActions[memberId] = [k.split('-')[1]]
+            else:
+                otherActions[memberId].append(k.split('-')[1])
+        return otherActions
+    
+    def checkForDoubleModeration(self, otherActions, actionsNotTaken):
+        '''
+          If an admin manages to specify that a member should
+          become both a moderator and moderated, we won't try
+          to guess which one they meant. We'll just tell them
+          that we haven't taken either action.
+        '''
+        print 'actionsNotTaken: %s' % actionsNotTaken
+        print 'otherActions: %s' % otherActions
+        print otherActions.keys()
+        for memberId in otherActions.keys():
+            print 'memberId: %s' % memberId
+            print 'actions: %s' % otherActions[memberId]
+            print 'moderatorAdd: %s' % ('moderatorAdd' in otherActions[memberId])
+            print 'moderatedAdd: %s' % ('moderatedAdd' in otherActions[memberId])
+            if ('moderatorAdd' in otherActions[memberId]) and \
+              ('moderatedAdd' in otherActions[memberId]):
+                print '%s: double-moderated' % memberId
+                if not actionsNotTaken.has_key('doubleModeration'):
+                    print 'No other member has been caught for double moderation yet'
+                    actionsNotTaken['doubleModeration'] = [memberId]
+                else:
+                    print 'Other members caught for double-moderation: %s' %\
+                      actionsNotTaken['doubleModeration'] 
+                    actionsNotTaken['doubleModeration'].append(memberId)
+                print 'Double-moderation list now: %s' % actionsNotTaken['doubleModeration'] 
+                otherActions[memberId].remove('moderatorAdd')
+                otherActions[memberId].remove('moderatedAdd')
+                #if not otherActions[memberId]:
+                #    del(otherActions[memberId])
+            print otherActions.keys()
+        retval = (otherActions, actionsNotTaken)
+        return retval
                 
     def set_data(self, membersToRemove, postingMembersToRemove, 
-                   ptnCoachToRemove, ptnCoachToAdd, changes):
+             ptnCoachToRemove, ptnCoachToAdd, notTaken, changes):
         retval = ''''''
         changeLog = ODict()
+        
+        # 0. Summarise actions not taken.
+        if notTaken.has_key('ptnCoach'):
+            attemptedChangeIds = notTaken['ptnCoach']
+            attemptedChangeUsers = \
+              [ createObject('groupserver.UserFromId', self.group, a)
+                for a in attemptedChangeIds ]
+            attemptedNames = [a.name for a in attemptedChangeUsers ]
+            retval += '<p>The Participation Coach was <b>not changed</b>, '\
+              'because there can be only one and you specified %d (%s).</p>' %\
+              (len(attemptedChangeIds), comma_comma_and(attemptedNames))
+        if notTaken.has_key('doubleModeration'):
+            attemptedChangeIds = notTaken['doubleModeration']
+            attemptedChangeUsers = \
+              [ createObject('groupserver.UserFromId', self.group, a)
+                for a in attemptedChangeIds ]
+            memberMembers = len(attemptedChangeIds)==1 and 'member was' or 'members were'
+            retval += '<p>The moderation level of the following %s '\
+              '<b>not changed</b>, because members cannot be both ' \
+              'moderated and moderators:</p><ul>' % memberMembers
+            for m in attemptedChangeUsers:
+                retval += '<li><a href="%s">%s</a></li>' %\
+                  (m.url, m.name)
+            retval += '</ul>'
 
         # 1. Remove all the members to be removed.
         for memberId in membersToRemove:
@@ -168,7 +261,7 @@ class GSGroupMemberManager(object):
             else:
                 changeLog[ptnCoachToAdd].append(change)
         
-        # 4. Make other changes member by member.
+        # 5. Make other changes member by member.
         for memberId in changes.keys():
             userInfo = \
               createObject('groupserver.UserFromId', 
