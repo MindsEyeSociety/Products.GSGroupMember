@@ -478,6 +478,13 @@ def userInfo_to_user(u):
         user = u
     return user
 
+def user_to_userInfo(u):
+    if ICustomUser.providedBy(u):
+        user = IGSUserInfo(u)
+    else:
+        user = u
+    return user
+
 def get_groups_on_site(site):
     assert hasattr(site, 'groups'), u'No groups on the site %s' % site.getId()
     groups = getattr(site, 'groups')
@@ -632,7 +639,7 @@ def user_posting_member_of_group(userInfo, groupInfo):
     assert type(retval) == bool
     return retval
 
-def join_group(user, groupInfo):
+def join_group(u, groupInfo):
     '''Join the user to a group
     
     DESCRIPTION
@@ -640,7 +647,7 @@ def join_group(user, groupInfo):
       (if necessary).
       
     ARGUMENTS
-      "user":       The CustomUser that is joined to the group.
+      "user":       The user that is joined to the group.
       "groupInfo":  The group that the user is joined to.
       
     RETURNS
@@ -650,8 +657,8 @@ def join_group(user, groupInfo):
       The user is a member of the group, and a member of the site that the
       group belongs to.
     '''
-    assert ICustomUser.providedBy(user), '%s is not a user' % user
-    userInfo = IGSUserInfo(user)
+    userInfo = user_to_userInfo(u)
+    user = userInfo_to_user(u)
     assert IGSGroupInfo.providedBy(groupInfo), '%s is not a GroupInfo' %\
       groupInfo
     assert not(user_member_of_group(user, groupInfo.groupObj)), \
