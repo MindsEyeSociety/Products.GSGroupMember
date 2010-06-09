@@ -7,7 +7,7 @@ from Products.Five.browser.pagetemplatefile import ZopeTwoPageTemplateFile
 from Products.GSProfile.edit_profile import multi_check_box_widget
 from Products.GSGroup.changebasicprivacy import radio_widget
 from interfaces import IGSInviteSiteMembers
-from gs.profile.invite.utils import invite_to_groups
+from gs.group.member.invite.utils import invite_to_groups
 
 # TODO Audit
 import logging
