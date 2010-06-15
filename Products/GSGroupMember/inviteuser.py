@@ -8,7 +8,7 @@ from Products.CustomUserFolder.interfaces import IGSUserInfo
 from Products.GSProfile.edit_profile import multi_check_box_widget
 
 from interfaces import IGSInvitationGroups
-from gs.profile.invite.utils import invite_to_groups
+from gs.group.member.invite.utils import invite_to_groups
 
 # TODO Audit
 import logging
