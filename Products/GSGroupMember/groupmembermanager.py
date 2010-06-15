@@ -81,53 +81,10 @@ class GSGroupMemberManager(object):
         '''
         ptnCoachToRemove = data.pop('ptnCoachRemove')
         toChange = filter(lambda k:data.get(k), data.keys())
-
-        # Members to remove. If selected for removal,
-        #  the JS should stop any other actions being
-        #  specified for that member, but we don't
-        #  want to make any assumptions, so we'll go
-        #  through and remove any other actions.
-        membersToRemove = \
-          [ k.split('-')[0] for k in toChange 
-            if k.split('-')[1] == 'remove' ]
-        for k in toChange:
-            if k.split('-')[0] in membersToRemove:
-                toChange.remove(k)
-        
-        # Posting members to remove. We want to get
-        #  them out of the way at the start, so that
-        #  we can add other posting members without
-        #  going over the limit.
-        postingMembersToRemove = \
-          [ k.split('-')[0] for k in toChange 
-            if k.split('-')[1] == 'postingMemberRemove' ]
-        
-        # Sanity check re number of ptn coaches,
-        #  and establish whether the current one
-        #  needs to be removed even if that was 
-        #  not explicitly required.
-        ptnCoachToAdd = \
-          [ k.split('-')[0] for k in toChange 
-            if k.split('-')[1] == 'ptnCoach' ]
-        if ptnCoachToAdd:
-            assert len(ptnCoachToAdd)==1, \
-              'More than one user specified as the '\
-              'Participation Coach for %s: %s' %\
-              (self.groupInfo.id, ptnCoachToAdd)
-            ptnCoachToAdd = ptnCoachToAdd[0]
-            if self.groupInfo.ptn_coach:
-                ptnCoachToRemove = True
-        
-        # Aggregate all remaining actions by user.
-        otherActions = ODict()
-        for k in toChange:
-            memberId = k.split('-')[0]
-            if not otherActions.has_key(memberId):
-                otherActions[memberId] = [k.split('-')[1]]
-            else:
-                otherActions[memberId].append(k.split('-')[1])
-        retval = self.set_data(membersToRemove, postingMembersToRemove,
-                          ptnCoachToRemove, ptnCoachToAdd, otherActions)
+        if ptnCoachToRemove:
+            toChange['ptnCoachToRemove'] = True
+        changes, cancelled = self.marshallChanges(toChange)
+        retval = self.set_data(changes, cancelled)
         
         # Reset the caches so that we get the member
         # data afresh when the form reloads.
@@ -135,22 +92,115 @@ class GSGroupMemberManager(object):
         self.__memberStatusActions = None
         self.__form_fields = None
         return retval
-                
-    def set_data(self, membersToRemove, postingMembersToRemove, 
-                   ptnCoachToRemove, ptnCoachToAdd, changes):
+
+    def marshallChanges(self, toChange):
+        retval = {}
+        for k in toChange:
+            memberId, action = k.split('-')
+            if retval.has_key(action):
+                retval[action].append(memberId)
+            else:
+                retval[action] = [memberId]
+        toChange, cancelledChanges = self.sanitiseChanges(retval)
+        retval = (self.changesByUser(toChange), cancelledChanges)
+        return retval
+    
+    def sanitiseChanges(self, toChange):
+        cancelledChanges = {}
+        actions = toChange.keys()
+        
+        # For members to be removed, cancel all other actions.
+        #  Don't bother reporting on these cancellations.
+        for mId in toChange.get('remove',[]):
+            for a in filter(lambda x:(x!='remove') and (x!='ptnCoachToRemove'), actions):
+                members = toChange.get(a,[])
+                if mId in members:
+                    members.remove(mId)
+                    toChange[a] = members
+        
+        # Check if a member to be removed is also the Ptn Coach, and update removal if req'd.
+        if self.groupInfo.ptn_coach and (self.groupInfo.ptn_coach in toChange.get('remove',[])):
+            toChange['ptnCoachToRemove'] = True
+        
+        # If more than one ptnCoach was specified, then cancel the change.
+        ptnCoachToAdd = toChange.get('ptnCoach',[])
+        if ptnCoachToAdd and (len(ptnCoachToAdd)>1):
+            cancelledChanges['ptnCoach'] = ptnCoachToAdd
+            toChange.pop('ptnCoach')
+        elif len(ptnCoachToAdd)==1:
+            toChange['ptnCoach'] = ptnCoachToAdd[0]
+            if self.groupInfo.ptn_coach:   # Update Ptn Coach removal if req'd.
+                toChange['ptnCoachToRemove'] = True
+        
+        # Check for double moderation.
+        toBeModerated = toChange.get('moderatedAdd',[])
+        toBeModerators = toChange.get('moderatorAdd',[])
+        cancelledChanges['doubleModeration'] = \
+          [ mId for mId in toBeModerators if mId in toBeModerated ]
+        for mId in cancelledChanges['doubleModeration']:
+            toBeModerated.remove(mId)
+            toBeModerators.remove(mId)
+        if toBeModerated:
+            toChange['moderatedAdd'] = toBeModerated
+        else:
+            toChange.pop('moderatedAdd')
+        if toBeModerators:
+            toChange['moderatorAdd'] = toBeModerators
+        else:
+            toChange.pop('moderatorAdd')
+        
+        retval = (toChange, cancelledChanges)
+        return retval
+
+    def changesByUser(self, toChange):
+        retval = {}
+        for k in toChange.keys():
+            mIds = toChange[k]
+            for mId in mIds:
+                if retval.has_key(mId):
+                    retval[mId] = retval[mId].append(k)
+                else:
+                    retval[mId] = [k]
+        return retval 
+
+    def set_data(self, changes, notTaken):
         retval = ''''''
         changeLog = ODict()
+        
+        # 0. Summarise actions not taken.
+        if notTaken.has_key('ptnCoach'):
+            attemptedChangeIds = notTaken['ptnCoach']
+            attemptedChangeUsers = \
+              [ createObject('groupserver.UserFromId', self.group, a)
+                for a in attemptedChangeIds ]
+            attemptedNames = [a.name for a in attemptedChangeUsers ]
+            retval += '<p>The Participation Coach was <b>not changed</b>, '\
+              'because there can be only one and you specified %d (%s).</p>' %\
+              (len(attemptedChangeIds), comma_comma_and(attemptedNames))
+        if notTaken.has_key('doubleModeration'):
+            attemptedChangeIds = notTaken['doubleModeration']
+            attemptedChangeUsers = \
+              [ createObject('groupserver.UserFromId', self.group, a)
+                for a in attemptedChangeIds ]
+            memberMembers = len(attemptedChangeIds)==1 and 'member was' or 'members were'
+            retval += '<p>The moderation level of the following %s '\
+              '<b>not changed</b>, because members cannot be both ' \
+              'moderated and moderators:</p><ul>' % memberMembers
+            for m in attemptedChangeUsers:
+                retval += '<li><a href="%s">%s</a></li>' %\
+                  (m.url, m.name)
+            retval += '</ul>'
 
         # 1. Remove all the members to be removed.
-        for memberId in membersToRemove:
+        for memberId in changes.get('remove',[]):
             changeLog[memberId] = self.removeMember(memberId)
         
         # 2. Remove all the posting members to be removed.
-        for memberId in postingMembersToRemove:
+        for memberId in changes.get('postingMemberRemove',[]):
             changeLog[memberId] = [self.removePostingMember(memberId)]
         
         # 3. If there's a ptn coach to be removed, do it now.
-        if ptnCoachToRemove:
+        if changes.get('ptnCoachToRemove', False):
             oldCoachId, change = self.removePtnCoach()
             if oldCoachId:
                 if not changeLog.has_key(oldCoachId):
@@ -159,8 +209,7 @@ class GSGroupMemberManager(object):
                     changeLog[oldCoachId].append(change)
         
         # 4. If there's a ptn coach to add, do it now.
-        #  No sense performing the check for every
-        #  member with changes.
+        ptnCoachToAdd = changes.get('ptnCoach',[])
         if ptnCoachToAdd:
             change = self.addPtnCoach(ptnCoachToAdd)
             if not changeLog.has_key(ptnCoachToAdd):
@@ -168,7 +217,7 @@ class GSGroupMemberManager(object):
             else:
                 changeLog[ptnCoachToAdd].append(change)
         
-        # 4. Make other changes member by member.
+        # 5. Make other changes member by member.
         for memberId in changes.keys():
             userInfo = \
               createObject('groupserver.UserFromId', 
@@ -327,11 +376,6 @@ class GSGroupMemberManager(object):
         return retval
     
     def addPtnCoach(self, ptnCoachToAdd):
-        # The old Participation Coach should have been removed
-        # after we set removePtnCoach to True after doing our
-        # sanity check in make_changes().
-        # We'll call it again to be safe, and check whether it
-        # was necessary. But if so, we'll just log it and carry on. 
         if self.removePtnCoach():
             msg = 'Participation Coach should have been '\
               'removed before setting new one, but wasn\'t.'
