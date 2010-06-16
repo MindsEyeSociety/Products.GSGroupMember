@@ -81,13 +81,9 @@ class GSGroupMemberManager(object):
         '''
         ptnCoachToRemove = data.pop('ptnCoachRemove')
         toChange = filter(lambda k:data.get(k), data.keys())
-        print '\ndata to change: %s\n' % toChange
         if ptnCoachToRemove:
             toChange['ptnCoachToRemove'] = True
         changesByAction, changesByMember, cancelledChanges = self.marshallChanges(toChange)
-        print '\nChanges By Action: %s\n' % changesByAction
-        print '\nChanges By Member: %s\n' % changesByMember
-        print '\nCancelled Changes: %s\n' % cancelledChanges
         retval = self.set_data(changesByAction, changesByMember, cancelledChanges)
         
         # Reset the caches so that we get the member
@@ -107,9 +103,7 @@ class GSGroupMemberManager(object):
                 changes[action].append(memberId)
             else:
                 changes[action] = [memberId]
-        print '\nChanges to Sanitise: %s\n' % changes
         toChange, cancelledChanges = self.sanitiseChanges(changes)
-        print '\nChanges to Organise: %s\n' % toChange
         changesByAction, changesByMember = self.organiseChanges(toChange) 
         retval = (changesByAction, changesByMember, cancelledChanges)
         return retval
