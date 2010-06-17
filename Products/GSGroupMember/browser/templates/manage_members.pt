@@ -6,8 +6,24 @@
     </title>
     <tal:block metal:fill-slot="style">
       <style type="text/css">
-        div .userimage {
-          float: right;
+        .statusActions {
+          position: relative;
+          border-top: thin solid black;
+          border-bottom: thin solid black;
+          padding-bottom: 1em;
+          padding-left: 0.69em;
+        }
+        .userimage {
+          position: absolute;
+          top: 1em;
+          right: 1em;
+          padding: 0;
+        }
+        .form-widget {
+          margin: 0.69em 0 0.69em;
+        }
+        .ptnCoach {
+          margin: 0;
         }
       </style>
     </tal:block>
@@ -47,9 +63,12 @@
           &#8212; 
           in <span tal:replace="view/groupInfo/name">this group</span>.
         </p>
-        <div class="ptnCoach" 
-          tal:define="widgets python:[view.widgets['ptnCoachRemove']]">
-          <div tal:replace="structure provider:groupserver.FormWidgets"/>
+        <div class="statusActions odd">
+          <h4>Set No Participation Coach in <span tal:replace="view/groupInfo/name">this group</span></h4>
+          <div class="ptnCoach" 
+            tal:define="widgets python:[view.widgets['ptnCoachRemove']]">
+            <div tal:replace="structure provider:groupserver.FormWidgets"/>
+          </div>
         </div>
         <tal:block define="statusActions memberManager/memberStatusActions;
           widgets view/widgets">
