@@ -6,18 +6,28 @@
     </title>
     <tal:block metal:fill-slot="style">
       <style type="text/css">
+        .message-result p {
+          margin: 0;
+        }
+        .message-result ul {
+          margin: 0 0 0.69em;
+        }
+        .message-result li {
+          margin: 0 1em 0;
+        }
         .statusActions {
           position: relative;
           border-top: thin solid black;
           border-bottom: thin solid black;
           padding-bottom: 1em;
           padding-left: 0.69em;
+          overflow: hidden;
         }
         .userimage {
-          position: absolute;
-          top: 1em;
-          right: 1em;
           padding: 0;
+          float: right;
+          margin-top: 1em;
+          margin-right: 1em;
         }
         .form-widget {
           margin: 0.69em 0 0.69em;
@@ -63,17 +73,19 @@
           &#8212; 
           in <span tal:replace="view/groupInfo/name">this group</span>.
         </p>
-        <div class="statusActions odd">
-          <h4>Set No Participation Coach in <span tal:replace="view/groupInfo/name">this group</span></h4>
+        <tal:block define="statusActions memberManager/memberStatusActions;
+          widgets view/widgets">
+          <div tal:replace="structure provider:groupserver.MemberStatusActions"/>
+        </tal:block>
+        <div class="statusActions"
+          tal:condition="not:memberManager/postingIsSpecial"
+          tal:attributes="class python:((len(memberManager.membersInfo.members)%2)==0) and 'statusActions odd' or 'statusActions'">
+          <h3>Participation Coach</h3>
           <div class="ptnCoach" 
             tal:define="widgets python:[view.widgets['ptnCoachRemove']]">
             <div tal:replace="structure provider:groupserver.FormWidgets"/>
           </div>
         </div>
-        <tal:block define="statusActions memberManager/memberStatusActions;
-          widgets view/widgets">
-          <div tal:replace="structure provider:groupserver.MemberStatusActions"/>
-        </tal:block>
         <div class="buttons" tal:condition="view/availableActions">
           <tal:block repeat="action view/actions">
             <div class="formelementbutton">

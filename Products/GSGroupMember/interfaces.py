@@ -228,6 +228,6 @@ class IGSManageMembersForm(Interface):
     """ One user-independent field.
     """
     ptnCoachRemove = Choice(vocabulary=SimpleVocabulary([SimpleTerm(True, \
-        True, u'No participation coach')]),
+        True, u'Elect to have no participation coach')]),
       required=False)
     

@@ -65,8 +65,8 @@ class GSStatusFormFields(object):
     def allFields(self):
         if self.__allFields == None:
             self.__allFields = [
-              self.groupAdmin,
               self.ptnCoach,
+              self.groupAdmin,
               self.postingMember,
               self.moderator,
               self.moderate,
@@ -103,7 +103,8 @@ class GSStatusFormFields(object):
             if (self.status.isNormalMember or \
                 self.status.isPtnCoach or \
                 self.status.isModerator) and not \
-                (self.status.isGroupAdmin or self.status.isOddlyConfigured):
+                (self.status.isGroupAdmin or self.status.isModerated or \
+                 self.status.isOddlyConfigured):
                 self.__groupAdmin = \
                   Bool(__name__=u'%s-groupAdminAdd' % self.userInfo.id,
                     title=u'Make %s a Group Administrator' % self.userInfo.name,
@@ -126,10 +127,12 @@ class GSStatusFormFields(object):
     def ptnCoach(self):
         if self.__ptnCoach == None:
             self.__ptnCoach = False
-            if (self.status.isNormalMember or \
+            if not(self.status.postingIsSpecial) and \
+               (self.status.isNormalMember or \
                 self.status.isGroupAdmin or \
                 self.status.isModerator) and not \
-                (self.status.isPtnCoach or self.status.isOddlyConfigured):
+                (self.status.isPtnCoach or self.status.isModerated or \
+                 self.status.isOddlyConfigured):
                 ptnCoachTerm = SimpleTerm(True, True,
                   u'Make %s the Participation Coach' % self.userInfo.name)
                 ptnCoachVocab = SimpleVocabulary([ptnCoachTerm])

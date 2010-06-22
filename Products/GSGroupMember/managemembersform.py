@@ -20,13 +20,16 @@ class GSManageGroupMembersForm(PageForm):
         self.groupInfo = createObject('groupserver.GroupInfo', context)
         self.groupName = self.groupInfo.name
         self.label = u'Manage the Members of %s' % self.groupName
-
         self.memberManager = GSGroupMemberManager(self.groupInfo.groupObj)
         self.__form_fields = None
     
     @property
     def form_fields(self):
         if self.__form_fields == None:
+            if not(self.memberManager.postingIsSpecial) and \
+              not(self.request.form.has_key('form.ptnCoachRemove')) and \
+              not(self.groupInfo.ptn_coach):
+                self.request.form['form.ptnCoachRemove'] = u'True'
             self.__form_fields = self.memberManager.form_fields
         return self.__form_fields
     

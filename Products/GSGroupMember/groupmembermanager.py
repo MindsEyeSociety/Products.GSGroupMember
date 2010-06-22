@@ -9,6 +9,7 @@ from Products.XWFCore.XWFUtils import comma_comma_and, getOption
 from Products.GSGroup.mailinglistinfo import GSMailingListInfo
 from Products.GSGroup.changebasicprivacy import radio_widget
 
+from Products.GSGroupMember.statusformfields import MAX_POSTING_MEMBERS
 from Products.GSGroupMember.leaveaudit import LeaveAuditor, REMOVE
 from Products.GSGroupMember.memberstatusaudit import StatusAuditor, GAIN, LOSE
 from Products.GSGroupMember.groupMembersInfo import GSGroupMembersInfo
@@ -18,8 +19,6 @@ from Products.GSGroupMember.interfaces import IGSMemberActionsSchema, IGSManageM
 
 import logging
 log = logging.getLogger('GSGroupMemberManager')
-
-MAX_POSTING_MEMBERS = 5
 
 class GSGroupMemberManager(object):
     implements(IGSGroupMemberManager)
@@ -32,7 +31,7 @@ class GSGroupMemberManager(object):
         self.listInfo = GSMailingListInfo(group)
         
         self.__membersInfo = self.__memberStatusActions = None
-        self.__form_fields = None
+        self.__postingIsSpecial = self.__form_fields = None
     
     @property
     def membersInfo(self):
@@ -48,6 +47,13 @@ class GSGroupMemberManager(object):
                   self.groupInfo, self.siteInfo)
                 for m in self.membersInfo.members ]
         return self.__memberStatusActions
+    
+    @property
+    def postingIsSpecial(self):
+        if self.__postingIsSpecial == None:
+            self.__postingIsSpecial = \
+              self.memberStatusActions[0].status.postingIsSpecial
+        return self.__postingIsSpecial
     
     @property
     def form_fields(self):
@@ -77,12 +83,12 @@ class GSGroupMemberManager(object):
             this is done automatically by Formlib).
         
         SIDE EFFECTS
-            Resets the self.__form_fields cache.
+            Resets the member and form fields caches.
         '''
-        ptnCoachToRemove = data.pop('ptnCoachRemove')
+        #ptnCoachToRemove = data.pop('ptnCoachRemove')
         toChange = filter(lambda k:data.get(k), data.keys())
-        if ptnCoachToRemove:
-            toChange['ptnCoachToRemove'] = True
+        #if ptnCoachToRemove:
+        #    toChange['ptnCoachToRemove'] = True
         changesByAction, changesByMember, cancelledChanges = self.marshallChanges(toChange)
         retval = self.set_data(changesByAction, changesByMember, cancelledChanges)
         
@@ -95,8 +101,9 @@ class GSGroupMemberManager(object):
 
     def marshallChanges(self, toChange):
         changes = {}
-        if 'ptnCoachToRemove' in toChange:
-            changes['ptnCoachToRemove'] = toChange.pop('ptnCoachToRemove')
+        if 'ptnCoachRemove' in toChange:
+            changes['ptnCoachToRemove'] = True
+            toChange.remove('ptnCoachRemove')
         for k in toChange:
             memberId, action = k.split('-')
             if changes.has_key(action):
@@ -136,18 +143,19 @@ class GSGroupMemberManager(object):
                 toChange['ptnCoachToRemove'] = True
         
         # Check for posting members exceeding the maximum.
-        numCurrentPostingMembers = len(self.listInfo.posting_members)
-        numPostingMembersToRemove = len(toChange.get('postingMemberRemove',[]))
-        numPostingMembersToAdd = len(toChange.get('postingMemberAdd',[]))
-        totalPostingMembersToBe = \
-          (numCurrentPostingMembers - numPostingMembersToRemove + numPostingMembersToAdd) 
-        if totalPostingMembersToBe > MAX_POSTING_MEMBERS:
-            numAddedMembersToCut = (totalPostingMembersToBe-MAX_POSTING_MEMBERS)
-            membersToAdd = toChange['postingMemberAdd']
-            addedMembersToCut = membersToAdd[-numAddedMembersToCut:]
-            cancelledChanges['postingMember'] = addedMembersToCut
-            index = (len(membersToAdd)-len(addedMembersToCut))
-            toChange['postingMemberAdd'] = membersToAdd[:index] 
+        if self.postingIsSpecial:
+            numCurrentPostingMembers = len(self.listInfo.posting_members)
+            numPostingMembersToRemove = len(toChange.get('postingMemberRemove',[]))
+            numPostingMembersToAdd = len(toChange.get('postingMemberAdd',[]))
+            totalPostingMembersToBe = \
+              (numCurrentPostingMembers - numPostingMembersToRemove + numPostingMembersToAdd) 
+            if totalPostingMembersToBe > MAX_POSTING_MEMBERS:
+                numAddedMembersToCut = (totalPostingMembersToBe-MAX_POSTING_MEMBERS)
+                membersToAdd = toChange['postingMemberAdd']
+                addedMembersToCut = membersToAdd[-numAddedMembersToCut:]
+                cancelledChanges['postingMember'] = addedMembersToCut
+                index = (len(membersToAdd)-len(addedMembersToCut))
+                toChange['postingMemberAdd'] = membersToAdd[:index] 
         
         # Check for double moderation.
         toBeModerated = toChange.get('moderatedAdd',[])
@@ -180,10 +188,10 @@ class GSGroupMemberManager(object):
         for k in toChange.keys():
             mIds = toChange[k]
             for mId in mIds:
-                if changesByMember.has_key(mId):
-                    changesByMember[mId] = changesByMember[mId].append(k)
-                else:
+                if not changesByMember.has_key(mId):
                     changesByMember[mId] = [k]
+                else:
+                    changesByMember[mId].append(k)
         retval = (changesByAction, changesByMember)
         return retval
 
@@ -219,11 +227,13 @@ class GSGroupMemberManager(object):
             attemptedChangeUsers = \
               [ createObject('groupserver.UserFromId', self.group, a)
                 for a in attemptedChangeIds ]
+            indefiniteArticle = len(attemptedChangeIds)==1 and 'a ' or ''
             memberMembers = len(attemptedChangeIds)==1 and 'member' or 'members'
-            retval += '<p>The following %s <b>did not become</b> '\
+            retval += '<p>The following %s <b>did not become</b> %s'\
               'posting %s, because otherwise the maximum of %d ' \
               'posting members would have been exceeded:</p><ul>' %\
-               (memberMembers, memberMembers, MAX_POSTING_MEMBERS)
+               (memberMembers, indefiniteArticle, 
+                memberMembers, MAX_POSTING_MEMBERS)
             for m in attemptedChangeUsers:
                 retval += '<li><a href="%s">%s</a></li>' %\
                   (m.url, m.name)
@@ -418,10 +428,7 @@ class GSGroupMemberManager(object):
         return retval
     
     def addPtnCoach(self, ptnCoachToAdd):
-        if self.removePtnCoach():
-            msg = 'Participation Coach should have been '\
-              'removed before setting new one, but wasn\'t.'
-            log.warn(msg)
+        self.removePtnCoach()
         if self.group.hasProperty('ptn_coach_id'):
             self.group.manage_changeProperties(ptn_coach_id=ptnCoachToAdd)
         else:
@@ -489,7 +496,7 @@ class GSGroupMemberManager(object):
             ptnCoach.user.send_notification('leave_group_admin', 
                                 self.groupInfo.id, n_dict=n_dict)
         leaveAuditor = LeaveAuditor(self.group, userInfo)
-        leaveAuditor.info(REMOVE, userInfo)
+        leaveAuditor.info(REMOVE)
         retval = changes
         return retval
         
