@@ -9,6 +9,7 @@ from Products.XWFCore.XWFUtils import comma_comma_and, getOption
 from Products.GSGroup.mailinglistinfo import GSMailingListInfo
 from Products.GSGroup.changebasicprivacy import radio_widget
 
+from Products.GSGroupMember.statusformfields import MAX_POSTING_MEMBERS
 from Products.GSGroupMember.leaveaudit import LeaveAuditor, REMOVE
 from Products.GSGroupMember.memberstatusaudit import StatusAuditor, GAIN, LOSE
 from Products.GSGroupMember.groupMembersInfo import GSGroupMembersInfo
@@ -18,8 +19,6 @@ from Products.GSGroupMember.interfaces import IGSMemberActionsSchema, IGSManageM
 
 import logging
 log = logging.getLogger('GSGroupMemberManager')
-
-MAX_POSTING_MEMBERS = 5
 
 class GSGroupMemberManager(object):
     implements(IGSGroupMemberManager)
@@ -32,7 +31,7 @@ class GSGroupMemberManager(object):
         self.listInfo = GSMailingListInfo(group)
         
         self.__membersInfo = self.__memberStatusActions = None
-        self.__form_fields = None
+        self.__postingIsSpecial = self.__form_fields = None
     
     @property
     def membersInfo(self):
@@ -48,6 +47,13 @@ class GSGroupMemberManager(object):
                   self.groupInfo, self.siteInfo)
                 for m in self.membersInfo.members ]
         return self.__memberStatusActions
+    
+    @property
+    def postingIsSpecial(self):
+        if self.__postingIsSpecial == None:
+            self.__postingIsSpecial = \
+              self.memberStatusActions[0].status.postingIsSpecial
+        return self.__postingIsSpecial
     
     @property
     def form_fields(self):
@@ -77,14 +83,14 @@ class GSGroupMemberManager(object):
             this is done automatically by Formlib).
         
         SIDE EFFECTS
-            Resets the self.__form_fields cache.
+            Resets the member and form fields caches.
         '''
-        ptnCoachToRemove = data.pop('ptnCoachRemove')
+        #ptnCoachToRemove = data.pop('ptnCoachRemove')
         toChange = filter(lambda k:data.get(k), data.keys())
-        if ptnCoachToRemove:
-            toChange['ptnCoachToRemove'] = True
-        changes, cancelled = self.marshallChanges(toChange)
-        retval = self.set_data(changes, cancelled)
+        #if ptnCoachToRemove:
+        #    toChange['ptnCoachToRemove'] = True
+        changesByAction, changesByMember, cancelledChanges = self.marshallChanges(toChange)
+        retval = self.set_data(changesByAction, changesByMember, cancelledChanges)
         
         # Reset the caches so that we get the member
         # data afresh when the form reloads.
@@ -94,23 +100,27 @@ class GSGroupMemberManager(object):
         return retval
 
     def marshallChanges(self, toChange):
-        retval = {}
+        changes = {}
+        if 'ptnCoachRemove' in toChange:
+            changes['ptnCoachToRemove'] = True
+            toChange.remove('ptnCoachRemove')
         for k in toChange:
             memberId, action = k.split('-')
-            if retval.has_key(action):
-                retval[action].append(memberId)
+            if changes.has_key(action):
+                changes[action].append(memberId)
             else:
-                retval[action] = [memberId]
-        toChange, cancelledChanges = self.sanitiseChanges(retval)
-        retval = (self.changesByUser(toChange), cancelledChanges)
+                changes[action] = [memberId]
+        toChange, cancelledChanges = self.sanitiseChanges(changes)
+        changesByAction, changesByMember = self.organiseChanges(toChange) 
+        retval = (changesByAction, changesByMember, cancelledChanges)
         return retval
     
     def sanitiseChanges(self, toChange):
         cancelledChanges = {}
         actions = toChange.keys()
         
-        # For members to be removed, cancel all other actions.
-        #  Don't bother reporting on these cancellations.
+        # For members to be removed, cancel all other actions,
+        # but don't bother reporting on these cancellations.
         for mId in toChange.get('remove',[]):
             for a in filter(lambda x:(x!='remove') and (x!='ptnCoachToRemove'), actions):
                 members = toChange.get(a,[])
@@ -132,44 +142,66 @@ class GSGroupMemberManager(object):
             if self.groupInfo.ptn_coach:   # Update Ptn Coach removal if req'd.
                 toChange['ptnCoachToRemove'] = True
         
+        # Check for posting members exceeding the maximum.
+        if self.postingIsSpecial:
+            numCurrentPostingMembers = len(self.listInfo.posting_members)
+            numPostingMembersToRemove = len(toChange.get('postingMemberRemove',[]))
+            numPostingMembersToAdd = len(toChange.get('postingMemberAdd',[]))
+            totalPostingMembersToBe = \
+              (numCurrentPostingMembers - numPostingMembersToRemove + numPostingMembersToAdd) 
+            if totalPostingMembersToBe > MAX_POSTING_MEMBERS:
+                numAddedMembersToCut = (totalPostingMembersToBe-MAX_POSTING_MEMBERS)
+                membersToAdd = toChange['postingMemberAdd']
+                addedMembersToCut = membersToAdd[-numAddedMembersToCut:]
+                cancelledChanges['postingMember'] = addedMembersToCut
+                index = (len(membersToAdd)-len(addedMembersToCut))
+                toChange['postingMemberAdd'] = membersToAdd[:index] 
+        
         # Check for double moderation.
         toBeModerated = toChange.get('moderatedAdd',[])
         toBeModerators = toChange.get('moderatorAdd',[])
-        cancelledChanges['doubleModeration'] = \
+        doubleModerated = \
           [ mId for mId in toBeModerators if mId in toBeModerated ]
-        for mId in cancelledChanges['doubleModeration']:
+        if doubleModerated:
+            cancelledChanges['doubleModeration'] = doubleModerated
+        for mId in doubleModerated:
             toBeModerated.remove(mId)
             toBeModerators.remove(mId)
         if toBeModerated:
             toChange['moderatedAdd'] = toBeModerated
-        else:
+        elif toChange.has_key('moderatedAdd'):
             toChange.pop('moderatedAdd')
         if toBeModerators:
             toChange['moderatorAdd'] = toBeModerators
-        else:
+        elif toChange.has_key('moderatorAdd'):
             toChange.pop('moderatorAdd')
         
         retval = (toChange, cancelledChanges)
         return retval
 
-    def changesByUser(self, toChange):
-        retval = {}
+    def organiseChanges(self, toChange):
+        changesByAction = {}
+        changesByMember = {}
+        for a in ['remove','postingMemberRemove','ptnCoachToRemove','ptnCoach']:
+            if toChange.get(a,None):
+                changesByAction[a] = toChange.pop(a)
         for k in toChange.keys():
             mIds = toChange[k]
             for mId in mIds:
-                if retval.has_key(mId):
-                    retval[mId] = retval[mId].append(k)
+                if not changesByMember.has_key(mId):
+                    changesByMember[mId] = [k]
                 else:
-                    retval[mId] = [k]
-        return retval 
+                    changesByMember[mId].append(k)
+        retval = (changesByAction, changesByMember)
+        return retval
 
-    def set_data(self, changes, notTaken):
+    def set_data(self, changesByAction, changesByMember, cancelledChanges):
         retval = ''''''
         changeLog = ODict()
         
         # 0. Summarise actions not taken.
-        if notTaken.has_key('ptnCoach'):
-            attemptedChangeIds = notTaken['ptnCoach']
+        if cancelledChanges.has_key('ptnCoach'):
+            attemptedChangeIds = cancelledChanges['ptnCoach']
             attemptedChangeUsers = \
               [ createObject('groupserver.UserFromId', self.group, a)
                 for a in attemptedChangeIds ]
@@ -177,8 +209,8 @@ class GSGroupMemberManager(object):
             retval += '<p>The Participation Coach was <b>not changed</b>, '\
               'because there can be only one and you specified %d (%s).</p>' %\
               (len(attemptedChangeIds), comma_comma_and(attemptedNames))
-        if notTaken.has_key('doubleModeration'):
-            attemptedChangeIds = notTaken['doubleModeration']
+        if cancelledChanges.has_key('doubleModeration'):
+            attemptedChangeIds = cancelledChanges['doubleModeration']
             attemptedChangeUsers = \
               [ createObject('groupserver.UserFromId', self.group, a)
                 for a in attemptedChangeIds ]
@@ -190,17 +222,37 @@ class GSGroupMemberManager(object):
                 retval += '<li><a href="%s">%s</a></li>' %\
                   (m.url, m.name)
             retval += '</ul>'
+        if cancelledChanges.has_key('postingMember'):
+            attemptedChangeIds = cancelledChanges['postingMember']
+            attemptedChangeUsers = \
+              [ createObject('groupserver.UserFromId', self.group, a)
+                for a in attemptedChangeIds ]
+            indefiniteArticle = len(attemptedChangeIds)==1 and 'a ' or ''
+            memberMembers = len(attemptedChangeIds)==1 and 'member' or 'members'
+            retval += '<p>The following %s <b>did not become</b> %s'\
+              'posting %s, because otherwise the maximum of %d ' \
+              'posting members would have been exceeded:</p><ul>' %\
+               (memberMembers, indefiniteArticle, 
+                memberMembers, MAX_POSTING_MEMBERS)
+            for m in attemptedChangeUsers:
+                retval += '<li><a href="%s">%s</a></li>' %\
+                  (m.url, m.name)
+            retval += '</ul>'
 
         # 1. Remove all the members to be removed.
-        for memberId in changes.get('remove',[]):
+        for memberId in changesByAction.get('remove',[]):
             changeLog[memberId] = self.removeMember(memberId)
         
         # 2. Remove all the posting members to be removed.
-        for memberId in changes.get('postingMemberRemove',[]):
-            changeLog[memberId] = [self.removePostingMember(memberId)]
+        for memberId in changesByAction.get('postingMemberRemove',[]):
+            change = self.removePostingMember(memberId)
+            if not changeLog.has_key(memberId):
+                changeLog[memberId] = [change]
+            else:
+                changeLog[memberId].append(change)
         
         # 3. If there's a ptn coach to be removed, do it now.
-        if changes.get('ptnCoachToRemove', False):
+        if changesByAction.get('ptnCoachToRemove', False):
             oldCoachId, change = self.removePtnCoach()
             if oldCoachId:
                 if not changeLog.has_key(oldCoachId):
@@ -209,7 +261,7 @@ class GSGroupMemberManager(object):
                     changeLog[oldCoachId].append(change)
         
         # 4. If there's a ptn coach to add, do it now.
-        ptnCoachToAdd = changes.get('ptnCoach',[])
+        ptnCoachToAdd = changesByAction.get('ptnCoach', None)
         if ptnCoachToAdd:
             change = self.addPtnCoach(ptnCoachToAdd)
             if not changeLog.has_key(ptnCoachToAdd):
@@ -218,12 +270,12 @@ class GSGroupMemberManager(object):
                 changeLog[ptnCoachToAdd].append(change)
         
         # 5. Make other changes member by member.
-        for memberId in changes.keys():
+        for memberId in changesByMember.keys():
             userInfo = \
               createObject('groupserver.UserFromId', 
                 self.group, memberId)
             auditor = StatusAuditor(self.group, userInfo)
-            actions = changes[memberId]
+            actions = changesByMember[memberId]
             if not changeLog.has_key(memberId):
                 changeLog[memberId] = []
             if 'groupAdminAdd' in actions:
@@ -241,7 +293,7 @@ class GSGroupMemberManager(object):
             if 'postingMemberAdd' in actions:
                 changeLog[memberId].append(self.addPostingMember(memberId, auditor))
 
-        # 5. Format the feedback.
+        # 6. Format the feedback.
         for memberId in changeLog.keys():
             userInfo = \
               createObject('groupserver.UserFromId', 
@@ -376,10 +428,7 @@ class GSGroupMemberManager(object):
         return retval
     
     def addPtnCoach(self, ptnCoachToAdd):
-        if self.removePtnCoach():
-            msg = 'Participation Coach should have been '\
-              'removed before setting new one, but wasn\'t.'
-            log.warn(msg)
+        self.removePtnCoach()
         if self.group.hasProperty('ptn_coach_id'):
             self.group.manage_changeProperties(ptn_coach_id=ptnCoachToAdd)
         else:
@@ -447,7 +496,7 @@ class GSGroupMemberManager(object):
             ptnCoach.user.send_notification('leave_group_admin', 
                                 self.groupInfo.id, n_dict=n_dict)
         leaveAuditor = LeaveAuditor(self.group, userInfo)
-        leaveAuditor.info(REMOVE, userInfo)
+        leaveAuditor.info(REMOVE)
         retval = changes
         return retval
         

@@ -47,9 +47,9 @@ ABELManageMembers = function () {
         var allRelatedWidgets = null;
         
         if (moderationAction == "moderatorAdd") {
-            allRelatedWidgets = jQuery("#form." + memberId + "-moderatedAdd");
+            allRelatedWidgets = jQuery("#form\\." + memberId + "-moderatedAdd");
         } else {
-            allRelatedWidgets = jQuery("#form." + memberId + "-moderatorAdd");
+            allRelatedWidgets = jQuery("#form\\." + memberId + "-moderatorAdd");
         }
 
         if (checkedValue == true) {

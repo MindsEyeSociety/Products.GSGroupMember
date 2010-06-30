@@ -25,6 +25,16 @@ setup(name='Products.GSGroupMember',
       zip_safe=False,
       install_requires=[
           'setuptools',
+          'Products.GSGroup',
+          'Products.XWFCore',
+          'Products.CustomUserFolder',
+          'Products.GSProfile',
+          'Products.XWFCore',
+          'Products.GSSearch',
+          'Products.GSAuditTrail',
+          'Products.GSContent',
+          'gs.profile.invite',
+          'gs.group.member.invite',
           # -*- Extra requirements: -*-
       ],
       entry_points="""
