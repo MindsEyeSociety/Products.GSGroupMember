@@ -75,13 +75,6 @@
 
   <browser:page 
     for="Products.CustomUserFolder.interfaces.ICustomUser"
-    name="invitations_respond.html"
-    class=".invitationsrespond.GSInviationsRespond"
-    template="browser/templates/invitationsrespond.pt" 
-    permission="zope2.ManageProperties" />
-
-  <browser:page 
-    for="Products.CustomUserFolder.interfaces.ICustomUser"
     name="invite.html"
     class=".inviteuser.InviteUserForm"
     permission="zope2.Public"/>
