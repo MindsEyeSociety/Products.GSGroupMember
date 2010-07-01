@@ -17,21 +17,6 @@ class IGSInvitationGroups(Interface):
       unique=True,
       required=True)
 
-class IGSInviteSiteMembers(Interface):
-    site_members = List(title=u'Site Members',
-      description=u'The members of this site that are not a member of '\
-        u'this group.',
-      value_type=Choice(title=u'Group',
-                      vocabulary='groupserver.InviteMembersNonGroupMembers'),
-      unique=True,
-      required=True)
-
-    delivery = Choice(title=u'Group Message Delivery Settings',
-      description=u'The message delivery settings for the new group '\
-        u'members.',
-      vocabulary=deliveryVocab,
-      default='email')
-
 class IGSJoinGroup(Interface):
     delivery = Choice(title=u'Message Delivery Settings',
       description=u'Your message delivery settings.',

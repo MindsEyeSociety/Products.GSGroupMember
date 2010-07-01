@@ -662,7 +662,7 @@ def join_group(u, groupInfo):
     assert IGSGroupInfo.providedBy(groupInfo), '%s is not a GroupInfo' %\
       groupInfo
     assert not(user_member_of_group(user, groupInfo.groupObj)), \
-      'User %s (%s) already in %s (%s)' % \
+      u'User %s (%s) already in %s (%s)' % \
       (userInfo.name, userInfo.id, groupInfo.name, groupInfo.name)
     
     siteInfo = groupInfo.siteInfo
