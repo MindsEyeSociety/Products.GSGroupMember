@@ -5,12 +5,13 @@
   xmlns:sqlos="http://namespaces.sqlobject.org/sqlos"
   xmlns:five="http://namespaces.zope.org/five">
 
-  <!-- declare a marker interface on the Folder class to allow us 
-    to add marker Interfaces, views and adaptation -->
-  <five:implements 
-    class="OFS.Folder.Folder"
-    interface="zope.app.folder.interfaces.IFolder" />
-  <!-- make it known to Five -->
+  <class class="OFS.Folder.Folder">
+      <implements interface="zope.app.folder.interfaces.IFolder" />
+  </class>
+
+  <class class=".usercanpost.GSGroupMemberPostingInfo">
+      <implements interface=".interfaces.IGSPostingUser" />
+  </class>
   
   <!--Vocabularies-->
   <utility
@@ -108,10 +109,6 @@
     provides="zope.contentprovider.interfaces.IContentProvider"
     name="groupserver.UserCanPost"/>
     
-
-  <five:implements 
-    class=".usercanpost.GSGroupMemberPostingInfo"
-    interface=".interfaces.IGSPostingUser" />
   <adapter
     factory=".usercanpost.GSGroupMemberPostingInfo"
     for="Products.XWFChat.interfaces.IGSGroupFolder Products.CustomUserFolder.interfaces.IGSUserInfo"
