@@ -499,4 +499,4 @@ class GSGroupMemberManager(object):
         leaveAuditor.info(REMOVE)
         retval = changes
         return retval
-        
+

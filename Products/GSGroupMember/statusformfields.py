@@ -235,5 +235,4 @@ class GSStatusFormFields(object):
                       self.userInfo.name,
                     required=False)
         return self.__remove
-    
-    
+
