@@ -6,7 +6,7 @@ from zope.schema.interfaces import IVocabulary,\
   IVocabularyTokenized, ITitledTokenizedTerm
 from zope.interface.common.mapping import IEnumerableMapping 
 from Products.XWFCore.XWFUtils import getOption
-from Products.GSGroupMember.utils import inform_ptn_coach_of_join, invite_id
+from Products.GSGroupMember.utils import inform_ptn_coach_of_join
 import time
 import AccessControl
 
@@ -100,15 +100,18 @@ class InvitationGroupsForSite(JoinableGroupsForSite):
     '''
     def __init__(self, user, context):
         JoinableGroupsForSite.__init__(self, user)
-        self.__groups = None
-        
-        da = self.context.zsqlalchemy 
-        assert da, 'No data-adaptor found'
-        self.groupMemberQuery = GroupMemberQuery(da)
-
+        self.__groupMemberQuery = self.__groups = None        
         self.viewingUserInfo = createObject('groupserver.LoggedInUser', 
           context)
-        
+
+    @property
+    def groupMemberQuery(self):
+        if self.__groupMemberQuery == None:
+            da = self.context.zsqlalchemy 
+            assert da, 'No data-adaptor found'
+            self.__groupMemberQuery = GroupMemberQuery(da)
+        return self.__groupMemberQuery
+
     @property
     def groups(self):
         if self.__groups == None:
@@ -362,11 +365,15 @@ class InviteSiteMembersNonGroupMembers(SiteMembersNonGroupMembers):
     def __init__(self, context):
         SiteMembersNonGroupMembers.__init__(self, context)
         
-        self.__members = None
+        self.__members = self.__groupMemberQuery = None
         
-        da = self.context.zsqlalchemy 
-        assert da, 'No data-adaptor found'
-        self.groupMemberQuery = GroupMemberQuery(da)
+    @property
+    def groupMemberQuery(self):
+        if self.__groupMemberQuery == None:
+            da = self.context.zsqlalchemy 
+            assert da, 'No data-adaptor found'
+            self.__groupMemberQuery = GroupMemberQuery(da)
+        return self.__groupMemberQuery
 
     @property
     def members(self):
@@ -433,11 +440,7 @@ def get_invited_members(context, siteId, groupId):
 
 def get_unverified_group_users(context, groupId, excludeGroup = ''):
     # AM: To be removed when the new Manage Members code is deployed
-    #  and the old admin pages removed.   
-    da = context.zsqlalchemy 
-    assert da, 'No data-adaptor found'
-    groupMemberQuery = GroupMemberQuery(da)
-
+    #  and the old admin pages removed. 
     unverifiedUsers = []
     group_users = get_group_users(context, groupId, excludeGroup)
     for u in group_users:
@@ -471,6 +474,13 @@ def groupInfo_to_group(g):
 def userInfo_to_user(u):
     if IGSUserInfo.providedBy(u):
         user = u.user
+    else:
+        user = u
+    return user
+
+def user_to_userInfo(u):
+    if ICustomUser.providedBy(u):
+        user = IGSUserInfo(u)
     else:
         user = u
     return user
@@ -629,7 +639,7 @@ def user_posting_member_of_group(userInfo, groupInfo):
     assert type(retval) == bool
     return retval
 
-def join_group(user, groupInfo):
+def join_group(u, groupInfo):
     '''Join the user to a group
     
     DESCRIPTION
@@ -637,7 +647,7 @@ def join_group(user, groupInfo):
       (if necessary).
       
     ARGUMENTS
-      "user":       The CustomUser that is joined to the group.
+      "user":       The user that is joined to the group.
       "groupInfo":  The group that the user is joined to.
       
     RETURNS
@@ -647,12 +657,12 @@ def join_group(user, groupInfo):
       The user is a member of the group, and a member of the site that the
       group belongs to.
     '''
-    assert ICustomUser.providedBy(user), '%s is not a user' % user
-    userInfo = IGSUserInfo(user)
+    userInfo = user_to_userInfo(u)
+    user = userInfo_to_user(u)
     assert IGSGroupInfo.providedBy(groupInfo), '%s is not a GroupInfo' %\
       groupInfo
     assert not(user_member_of_group(user, groupInfo.groupObj)), \
-      'User %s (%s) already in %s (%s)' % \
+      u'User %s (%s) already in %s (%s)' % \
       (userInfo.name, userInfo.id, groupInfo.name, groupInfo.name)
     
     siteInfo = groupInfo.siteInfo
@@ -680,83 +690,4 @@ def join_group(user, groupInfo):
 
     assert user_member_of_group(user, groupInfo.groupObj)
     assert user_member_of_site(user, siteInfo.siteObj)
-
-def invite_to_groups(userInfo, invitingUserInfo, groups):
-    '''Invite the user to join a group
-    
-    DESCRIPTION
-      Invites an existing user to join a group.
-      
-    ARGUMENTS
-      "user":       The CustomUser that is invited to join the group.
-      "invitingUserInfo": The user that isi inviting the other to join the 
-                          group.
-      "groups":  The group (or groups) that the user is joined to.
-      
-    RETURNS
-      None.
-      
-    SIDE EFFECTS
-      An invitation is added to the database, and a notification is
-      sent out to the user.
-    '''
-    assert IGSUserInfo.providedBy(userInfo), '%s is not a IGSUserInfo' %\
-      userInfo
-    assert IGSUserInfo.providedBy(invitingUserInfo),\
-      '%s is not a IGSUserInfo' % userInfo
-
-    # --=mpj17=-- Haskell an his polymorphism can get knotted
-    if type(groups) == list:
-        groupInfos = groups
-    else:
-        groupInfos = [groups]
-        
-    assert groupInfos != []
-    
-    siteInfo = groupInfos[0].siteInfo
-
-    #--=mpj17=-- Arse to Zope. Really, arse to Zope and its randomly failing
-    #            acquisition.
-    da = siteInfo.siteObj.aq_parent.aq_parent.zsqlalchemy
-    assert da, 'No data-adaptor found'
-    groupMemberQuery = GroupMemberQuery(da)
-
-    groupNames = []    
-    for groupInfo in groupInfos:
-        assert IGSGroupInfo.providedBy(groupInfo)
-        assert not(user_member_of_group(userInfo, groupInfo)), \
-          'User %s (%s) already in %s (%s)' % \
-        (userInfo.name, userInfo.id, groupInfo.name, groupInfo.name)
-    
-        inviteId = invite_id(siteInfo.id, groupInfo.id, 
-                              userInfo.id, invitingUserInfo.id)
-
-        m = u'invite_to_group: %s (%s) inviting %s (%s) to join %s (%s) on '\
-          u'%s (%s) with id %s'%\
-          (invitingUserInfo.name, invitingUserInfo.id,
-            userInfo.name, userInfo.id,
-            groupInfo.name, groupInfo.id,
-            siteInfo.name, siteInfo.id,
-            inviteId)
-        log.info(m)
-        groupMemberQuery.add_invitation(inviteId, siteInfo.id, groupInfo.id, 
-            userInfo.id, invitingUserInfo.id)
-
-        groupNames.append(groupInfo.name)
-
-        if len(groupNames) > 1:
-            c = u', '.join(groupNames[:-1])
-            g = u' and '.join((c, groupNames[-1]))
-        else:
-            g = groupNames[0]
-    
-    responseURL = '%s/r/group_invitation/%s' % (siteInfo.url, inviteId)
-    n_dict={'userFn': userInfo.name,
-            'invitingUserFn': invitingUserInfo.name,
-            'siteName': siteInfo.name,
-            'siteURL': siteInfo.url,
-            'groupName': g,
-            'responseURL': responseURL}
-    userInfo.user.send_notification('invite_join_group', 'default', 
-        n_dict=n_dict)
 

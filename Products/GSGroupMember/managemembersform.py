@@ -22,27 +22,37 @@ class GSManageGroupMembersForm(PageForm):
         self.siteInfo = createObject('groupserver.SiteInfo', context)
         self.groupInfo = createObject('groupserver.GroupInfo', context)
         self.groupName = self.groupInfo.name
-        self.label = 'Manage the Members of %s' % self.groupName
-
+        self.label = u'Manage the Members of %s' % self.groupName
         self.memberManager = GSGroupMemberManager(self.groupInfo.groupObj)
-        self.form_fields = self.memberManager.form_fields
+        self.__form_fields = None
     
-    def setUpWidgets(self, ignore_request=False, data=None):
+    @property
+    def form_fields(self):
+        if self.__form_fields == None:
+            if not(self.memberManager.postingIsSpecial) and \
+              not(self.request.form.has_key('form.ptnCoachRemove')) and \
+              not(self.groupInfo.ptn_coach):
+                self.request.form['form.ptnCoachRemove'] = u'True'
+            self.__form_fields = self.memberManager.form_fields
+        return self.__form_fields
+    
+    def setUpWidgets(self, ignore_request=False, data={}):
         self.adapters = {}
-        if not data:
-            data = self.memberManager.data
         self.widgets = form.setUpWidgets(
             self.form_fields, self.prefix, self.context,
             self.request, form=self, data=data,
             ignore_request=ignore_request)
+        for widget in self.widgets:
+            widget._displayItemForMissingValue = False
         assert self.widgets
         
     @form.action(label=u'Change', failure='handle_change_action_failure')
     def handle_change(self, action, data):
-        self.status = u'Something changed!'
-        #assert data
-#        assert self.memberManager
-#        self.memberManager.data = data
+        status = self.memberManager.make_changes(data)
+        self.status = status
+        # Reset the form_fields cache so that the
+        # page reloads with the updated widgets
+        self.__form_fields = None
 
     def handle_change_action_failure(self, action, data, errors):
         if len(errors) == 1:

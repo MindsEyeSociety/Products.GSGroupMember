@@ -2,6 +2,7 @@
 """Interfaces for the registration and password-reset pages."""
 from zope.interface.interface import Interface
 from zope.interface import Attribute
+from zope.schema.vocabulary import SimpleTerm, SimpleVocabulary
 from zope.schema import *
 from zope.contentprovider.interfaces import IContentProvider
 from Products.GSProfile.interfaces import deliveryVocab
@@ -15,21 +16,6 @@ class IGSInvitationGroups(Interface):
                         vocabulary='groupserver.InvitationGroups'),
       unique=True,
       required=True)
-
-class IGSInviteSiteMembers(Interface):
-    site_members = List(title=u'Site Members',
-      description=u'The members of this site that are not a member of '\
-        u'this group.',
-      value_type=Choice(title=u'Group',
-                      vocabulary='groupserver.InviteMembersNonGroupMembers'),
-      unique=True,
-      required=True)
-
-    delivery = Choice(title=u'Group Message Delivery Settings',
-      description=u'The message delivery settings for the new group '\
-        u'members.',
-      vocabulary=deliveryVocab,
-      default='email')
 
 class IGSJoinGroup(Interface):
     delivery = Choice(title=u'Message Delivery Settings',
@@ -77,7 +63,7 @@ class IGSManageGroupMembersForm(Interface):
     memberManager = Attribute("""A GSGroupMemberManager instance""")
     # Form fields will be taken from memberManager.form_fields
     form_fields = Attribute("""The fields to be displayed in a form""")
-    
+
 class IGSGroupMemberManager(Interface):
     groupInfo = Attribute("""A groupInfo instance""")
     siteInfo = Attribute("""A siteInfo instance""")
@@ -181,6 +167,9 @@ class IGSStatusFormFields(Interface):
     groupAdmin = Bool(title=u'Make fn a Group Administrator (or Unmake)',
       description=u'Make fn a Group Administrator (or Unmake)',
       required=False)
+    ptnCoach = Bool(title=u'Make fn the Participation Coach (or Unmake)',
+      description=u'Make fn the Participation Coach (or Unmake)',
+      required=False)
     moderator = Bool(title=u'Make fn a Moderator (or Unmake)',
       description=u'Make fn a Moderator (or Unmake)',
       required=False)
@@ -220,3 +209,10 @@ class IGSMemberActionsSchema(Interface):
       description=u'Is this a dummy value?',
       required=False)
         
+class IGSManageMembersForm(Interface):
+    """ One user-independent field.
+    """
+    ptnCoachRemove = Choice(vocabulary=SimpleVocabulary([SimpleTerm(True, \
+        True, u'Elect to have no participation coach')]),
+      required=False)
+    
