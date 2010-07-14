@@ -212,6 +212,8 @@ class InvitedGroupMembers(object):
               self.siteInfo.id, self.groupInfo.id)
             self.__members = [ createObject('groupserver.UserFromId', 
                                self.context, uId) for uId in userIds ]
+            self.__members = [m for m in self.__members 
+                                if not m.anonymous]
         assert type(self.__members) == list
         #assert reduce(lambda a, b: a and b, 
         #    [IGSUserInfo.providedBy(u) for u in self.__members], True)
