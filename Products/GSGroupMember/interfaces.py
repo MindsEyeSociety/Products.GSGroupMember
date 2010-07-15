@@ -55,22 +55,7 @@ class IGSUserCanPostContentProvider(IContentProvider):
       description=u'The name of the ZPT file that is used to render the '\
         u'status message.',
       required=False,
-      default=u"browser/templates/canpost.pt")
-
-class IGSManageGroupMembersForm(Interface):
-    groupInfo = Attribute("""A groupInfo instance""")
-    siteInfo = Attribute("""A siteInfo instance""")
-    memberManager = Attribute("""A GSGroupMemberManager instance""")
-    # Form fields will be taken from memberManager.form_fields
-    form_fields = Attribute("""The fields to be displayed in a form""")
-
-class IGSGroupMemberManager(Interface):
-    groupInfo = Attribute("""A groupInfo instance""")
-    siteInfo = Attribute("""A siteInfo instance""")
-    membersInfo = Attribute("""A GSGroupMembersInfo instance""")
-    memberStatusActions = Attribute("""A list of GSMemberStatusActions instances""")
-    # Form fields will be gathered user-by-user, from memberStatusActions 
-    form_fields = Attribute("""The fields to be displayed in a form""") 
+      default=u"browser/templates/canpost.pt") 
     
 class IGSGroupMembersInfo(Interface):
     groupInfo = Attribute("""A groupInfo instance""")
@@ -85,14 +70,6 @@ class IGSGroupMembersInfo(Interface):
                                """but neither declined nor accepted""")
     invitedMemberCount = Attribute("""The number of members who have been invited to """\
                                    """the group, but neither declined nor accepted""")
-    
-class IGSMemberStatusActions(Interface):
-    userInfo = Attribute("""A userInfo instance""")
-    groupInfo = Attribute("""A groupInfo instance""")
-    siteInfo = Attribute("""A siteInfo instance""")
-    status = Attribute("""A GSGroupMembershipStatus instance""")
-    form_fields = Attribute("""The fields to be displayed in a form to change """\
-                            """the membership status of this user""")
 
 class IGSGroupMembershipStatus(Interface):
     userInfo = Attribute("""A userInfo instance""")
@@ -148,71 +125,4 @@ class IGSGroupMembershipStatus(Interface):
       description=u'The number of posting members in this group',
       required=False)
     
-class IGSStatusFormFields(Interface):
-    """ An adapter to take a member's status within a group, and
-        give us the appropriate form_fields to alter the status,
-        also depending on the status of the logged-in administrator.
-    """
-    status = Attribute("""A GSGroupMembershipStatus instance""")
-    userInfo = Attribute("""A userInfo instance""")
-    groupInfo = Attribute("""A groupInfo instance""")
-    siteInfo = Attribute("""A siteInfo instance""")
-    
-    adminUserInfo = Attribute("""A userInfo instance for the logged-in administrator""")
-    adminUserStatus = Attribute("""A GSGroupMembershipStatus instance for the logged-in administrator""")
-    
-    form_fields = Attribute("""The fields to be displayed in a form to change """\
-                            """the membership status of this user""")
-
-    groupAdmin = Bool(title=u'Make fn a Group Administrator (or Unmake)',
-      description=u'Make fn a Group Administrator (or Unmake)',
-      required=False)
-    ptnCoach = Bool(title=u'Make fn the Participation Coach (or Unmake)',
-      description=u'Make fn the Participation Coach (or Unmake)',
-      required=False)
-    moderator = Bool(title=u'Make fn a Moderator (or Unmake)',
-      description=u'Make fn a Moderator (or Unmake)',
-      required=False)
-    moderate = Bool(title=u'Moderate fn (or Unmoderate)',
-      description=u'Moderate fn (or Unmoderate)',
-      required=False)
-    postingMember = Bool(title=u'Make fn a Posting Member (or Unmake)',
-      description=u'Make fn a Posting Member (or Unmake)',
-      required=False)
-    remove = Bool(title=u'Remove fn from the Group',
-      description=u'Remove fn from the Group',
-      required=False)
-    
-class IGSMemberStatusActionsContentProvider(Interface):
-    """The content provider for the actions available to change """\
-    """a group member's status within the group"""
-    
-    #statusActions = Attribute("""A GSMemberStatusActions instance""")
-    statusActions = List(title=u'Instances',
-      description=u'GSMemberStatusActions instances',
-      required=True)
-    
-    widgets = List(title=u'Widgets',
-      description=u'Form Widgets',
-      required=True)
-    
-    pageTemplateFileName = Text(title=u"Page Template File Name",
-      description=u'The name of the ZPT file that is used to render the '\
-        u'group member\'s status and the appropriate form widgets.',
-      required=False,
-      default=u"browser/templates/statusActionsContentProvider.pt") 
-    
-class IGSMemberActionsSchema(Interface):
-    """ Dummy interface to get the schema started.
-    """
-    dummy = Bool(title=u'Dummy',
-      description=u'Is this a dummy value?',
-      required=False)
-        
-class IGSManageMembersForm(Interface):
-    """ One user-independent field.
-    """
-    ptnCoachRemove = Choice(vocabulary=SimpleVocabulary([SimpleTerm(True, \
-        True, u'Elect to have no participation coach')]),
-      required=False)
     

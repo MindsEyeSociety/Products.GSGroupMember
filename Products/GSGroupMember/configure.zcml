@@ -13,19 +13,6 @@
       <implements interface=".interfaces.IGSPostingUser" />
   </class>
   
-  <browser:resource name="managemembers-20100616.js"
-    file="browser/javascript/managemembers.js"
-    permission="zope.Public" />
-
-  <utility 
-    factory=".memberstatusaudit.StatusAuditEventFactory"
-    name="groupserver.GSGroupMemberStatus"
-    permission="zope.Public" />
-  <utility 
-    factory=".leaveaudit.LeaveAuditEventFactory"
-    name="groupserver.GSGroupMemberLeave"
-    permission="zope.Public" />
-  
   <!--Vocabularies-->
   <utility
       provides="zope.schema.interfaces.IVocabularyFactory"
@@ -59,12 +46,6 @@
       />
 
   <!--Pages-->
-  <browser:page 
-    for="Products.XWFChat.interfaces.IGSGroupFolder"
-    name="managemembers.html"
-    class=".managemembersform.GSManageGroupMembersForm"
-    permission="zope2.ManageUsers"/>
-
   <browser:page 
     for="Products.CustomUserFolder.interfaces.ICustomUser"
     name="invitations.html"
@@ -114,10 +95,6 @@
     factory=".usercanpost.GSGroupMemberPostingInfo"
     for="Products.XWFChat.interfaces.IGSGroupFolder Products.CustomUserFolder.interfaces.IGSUserInfo"
     provides=".interfaces.IGSPostingUser" />
-
-  <interface 
-    interface=".interfaces.IGSMemberStatusActionsContentProvider"
-    type="zope.contentprovider.interfaces.ITALNamespaceData"/>
 
 </configure>
 
