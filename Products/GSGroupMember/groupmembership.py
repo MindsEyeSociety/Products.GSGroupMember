@@ -677,6 +677,8 @@ def join_group(u, groupInfo):
     log.info(m)
     user.add_groupWithNotification(member_id(groupInfo.id))
 
+    # TODO: Change to all group admins
+    #  <https://projects.iopen.net/groupserver/ticket/410>
     ptnCoachId = groupInfo.get_property('ptn_coach_id', '')
     if ptnCoachId:
         ptnCoachInfo = createObject('groupserver.UserFromId', 

@@ -5,7 +5,6 @@ from zope.interface import Attribute
 from zope.schema.vocabulary import SimpleTerm, SimpleVocabulary
 from zope.schema import *
 from zope.contentprovider.interfaces import IContentProvider
-from Products.GSProfile.interfaces import deliveryVocab
 
 class IGSInvitationGroups(Interface):
     invitation_groups = List(title=u'Invitation Groups',
@@ -16,12 +15,6 @@ class IGSInvitationGroups(Interface):
                         vocabulary='groupserver.InvitationGroups'),
       unique=True,
       required=True)
-
-class IGSJoinGroup(Interface):
-    delivery = Choice(title=u'Message Delivery Settings',
-      description=u'Your message delivery settings.',
-      vocabulary=deliveryVocab,
-      default='email')
 
 class IGSPostingUser(Interface):
     canPost = Bool(title=u'Can Post',
