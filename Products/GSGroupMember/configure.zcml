@@ -59,18 +59,6 @@
     class=".inviteuser.InviteUserForm"
     permission="zope2.Public"/>
 
-  <browser:page 
-    for="Products.XWFChat.interfaces.IGSGroupFolder"
-    name="join.html"
-    class=".join.JoinForm"
-    permission="zope2.View"/>
-
-  <!--TODO: Move
-    adapter for="Products.GSRedirect.interfaces.IGSRedirectTraversal"
-    factory=".invitationredirect.GSInvitationResponseRedirect"
-    provides="Products.GSRedirect.interfaces.IGSRedirect"
-    name="group_invitation" /-->
-
   <browser:pages
     for="Products.GSContent.interfaces.IGSSiteFolder"
     class="Products.GSContent.view.GSContentView"
