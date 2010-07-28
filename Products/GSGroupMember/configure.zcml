@@ -53,12 +53,6 @@
     template="browser/templates/invitationslog.pt" 
     permission="zope2.View" />
 
-  <browser:page 
-    for="Products.CustomUserFolder.interfaces.ICustomUser"
-    name="invite.html"
-    class=".inviteuser.InviteUserForm"
-    permission="zope2.Public"/>
-
   <browser:pages
     for="Products.GSContent.interfaces.IGSSiteFolder"
     class="Products.GSContent.view.GSContentView"
