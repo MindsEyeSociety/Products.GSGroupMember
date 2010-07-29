@@ -1,7 +1,5 @@
 # coding=utf-8
 import sqlalchemy as sa
-import pytz, datetime
-
 import logging
 log = logging.getLogger("GroupMemberQuery") #@UndefinedVariable
 
@@ -16,6 +14,7 @@ class GroupMemberQuery(object):
         s.append_whereclause(uit.c.site_id  == siteId)
         s.append_whereclause(uit.c.group_id  == groupId)
         s.append_whereclause(uit.c.user_id  == userId)
+        s.append_whereclause(uit.c.withdrawn_date == None)
         s.append_whereclause(uit.c.response_date == None)
 
         r = s.execute()
@@ -32,6 +31,7 @@ class GroupMemberQuery(object):
         s = sa.select([uit.c.user_id.distinct()])
         s.append_whereclause(uit.c.site_id == siteId)
         s.append_whereclause(uit.c.group_id == groupId)
+        s.append_whereclause(uit.c.withdrawn_date == None)
         s.append_whereclause(uit.c.response_date == None)
         
         r = s.execute()
