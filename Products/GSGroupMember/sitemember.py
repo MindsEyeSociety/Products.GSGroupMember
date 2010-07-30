@@ -1,19 +1,15 @@
 # coding=utf-8
-from zope.interface import implements, alsoProvides, providedBy
-from zope.component import getUtility, createObject
+from zope.interface import implements, providedBy
+from zope.component import createObject
 from zope.schema.vocabulary import SimpleTerm
-from zope.schema.interfaces import ITokenizedTerm, IVocabulary,\
+from zope.schema.interfaces import IVocabulary,\
   IVocabularyTokenized, ITitledTokenizedTerm
 from zope.interface.common.mapping import IEnumerableMapping 
 
-from Products.CustomUserFolder.interfaces import IGSUserInfo
-
-from sitemember import SiteMembers
-
 import logging
-log = logging.getLogger('SiteMemberNonGroupMembers')
+log = logging.getLogger('SiteMember') #@UndefinedVariable
 
-class SiteMembersNonGroupMembers(object):
+class SiteMembers(object):
     implements(IVocabulary, IVocabularyTokenized)
     __used_for__ = IEnumerableMapping
 
@@ -21,16 +17,13 @@ class SiteMembersNonGroupMembers(object):
         self.context = context
         self.__siteInfo = createObject('groupserver.SiteInfo', context)
         self.__groupsInfo = createObject('groupserver.GroupsInfo', context)
-        self.__groupInfo =  createObject('groupserver.GroupInfo', context)
         
-        self.__acl_users = self.__nonMembers = self.__admin = None
-        
-        self.siteMembers = SiteMembers(context)
+        self.__acl_users = self.__members = self.__admin = None
 
     def __iter__(self):
         """See zope.schema.interfaces.IIterableVocabulary"""
         retval = [SimpleTerm(m.id, m.id, m.name)
-                  for m in self.nonMembers]
+                  for m in self.members]
         for term in retval:
             assert term
             assert ITitledTokenizedTerm in providedBy(term)
@@ -43,8 +36,7 @@ class SiteMembersNonGroupMembers(object):
 
     def __contains__(self, value):
         """See zope.schema.interfaces.IBaseVocabulary"""
-        retval = False
-        retval = value in [m.id for m in self.nonMembers]
+        retval = value in [m.id for m in self.members]
         assert type(retval) == bool
         return retval
 
@@ -58,7 +50,7 @@ class SiteMembersNonGroupMembers(object):
         
     def getTermByToken(self, token):
         """See zope.schema.interfaces.IVocabularyTokenized"""
-        for m in self.nonMembers:
+        for m in self.members:
             if m.id == token:
                 retval = SimpleTerm(m.id, m.id, m.name)
                 assert retval
@@ -66,7 +58,7 @@ class SiteMembersNonGroupMembers(object):
                 assert retval.token == retval.value
                 return retval
         raise LookupError, token
-
+        
     @property
     def acl_users(self):
         if self.__acl_users == None:
@@ -74,19 +66,36 @@ class SiteMembersNonGroupMembers(object):
             assert sr, 'No site root'
             self.__acl_users = sr.acl_users
         assert self.__acl_users, 'No ACL Users'
-        return self.__acl_users
-
-    @property
-    def nonMembers(self):
-        m = u'Getting the list of members of %s (%s) who are not members '\
-          u'of %s (%s)' %\
-          (self.__siteInfo.name, self.__siteInfo.id,
-           self.__groupInfo.name, self.__groupInfo.id)
-        log.info(m)
-        
-        groupMemberGroupId = '%s_member' % self.__groupInfo.id
-        retval = [u for u in self.siteMembers.members
-                  if groupMemberGroupId not in 
-                    self.acl_users.getUser(u.id).getGroups()]
+        return self.__acl_users        
+  
+    def get_site_member_group_user_ids(self):
+        siteMemberGroupId = '%s_member' % self.__siteInfo.id
+        siteMemberGroup = self.acl_users.getGroupById(siteMemberGroupId)
+        assert siteMemberGroup,\
+          u'Could not get site-member group for %s (%s)' %\
+          (self.__siteInfo.name, self.__siteInfo.id)
+  
+        retval = [uid for uid in siteMemberGroup.getUsers() 
+                  if self.acl_users.getUser(uid)]
+        assert type(retval) == list,\
+          'Retval is a %s, not a list' % type(siteMemberGroup)
+        types = [type(u)==str for u in retval]
+        assert reduce(lambda a, b: a and b, types, True),\
+          u'Not all strings returned'
         return retval
+        
+    @property
+    def members(self):
+        assert self.context
+        assert self.__siteInfo
+        if self.__members == None:
+            m = u'Generating membership list for %s (%s)' %\
+              (self.__siteInfo.name, self.__siteInfo.id)
+            log.info(m)
+            siteMemberGroupIds = self.get_site_member_group_user_ids()
+            self.__members =\
+              [createObject('groupserver.UserFromId', self.context, uid)
+               for uid in siteMemberGroupIds]
+        assert type(self.__members) == list
+        return self.__members
 

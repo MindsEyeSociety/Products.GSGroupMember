@@ -1,23 +1,27 @@
-from zope.component import createObject
+# coding=utf-8
+from zope.component import createObject, provideAdapter, adapts
 from zope.pagetemplate.pagetemplatefile import PageTemplateFile
-import zope.interface, zope.component, zope.publisher.interfaces
-import zope.viewlet.interfaces, zope.contentprovider.interfaces 
-from Products.XWFCore import XWFUtils, ODict
-from Products.CustomUserFolder.interfaces import IGSUserInfo
-from interfaces import *
+from zope.contentprovider.interfaces import IContentProvider, \
+  UpdateNotCalled
+from zope.interface import Interface, implements
+from zope.publisher.interfaces.browser import IDefaultBrowserLayer
+
+from Products.GSGroup.joining import GSGroupJoining
+
+from interfaces import IGSUserCanPostContentProvider
 from groupmembership import JoinableGroupsForSite, InvitationGroupsForSite
 
 import logging
-log = logging.getLogger('GSUserCanPostContentProvider')
+log = logging.getLogger('GSUserCanPostContentProvider') #@UndefinedVariable
 
 class GSUserCanPostContentProvider(object):
     """GroupServer context-menu for the user profile area.
     """
 
-    zope.interface.implements( IGSUserCanPostContentProvider )
-    zope.component.adapts(zope.interface.Interface,
-        zope.publisher.interfaces.browser.IDefaultBrowserLayer,
-        zope.interface.Interface)
+    implements( IGSUserCanPostContentProvider )
+    adapts(Interface,
+        IDefaultBrowserLayer,
+        Interface)
 
     def __init__(self, context, request, view):
         self.__parent__ = self.view = view
@@ -40,7 +44,7 @@ class GSUserCanPostContentProvider(object):
 
     def render(self):
         if not self.__updated:
-            raise interfaces.UpdateNotCalled
+            raise UpdateNotCalled
 
         pageTemplate = PageTemplateFile(self.pageTemplateFileName)
         return pageTemplate(view=self)
@@ -58,8 +62,7 @@ class GSUserCanPostContentProvider(object):
 
     @property
     def canJoin(self):
-        joinableGroups = JoinableGroupsForSite(self.userInfo.user,
-                                               self.groupInfo.groupObj)
+        joinableGroups = JoinableGroupsForSite(self.userInfo.user)
         retval = self.groupInfo.id in joinableGroups
         assert type(retval) == bool
         return retval
@@ -68,7 +71,8 @@ class GSUserCanPostContentProvider(object):
     def canInvite(self):
         invitationGroups = InvitationGroupsForSite(self.userInfo.user,
                                                self.groupInfo.groupObj)
-        retval = self.groupInfo.id in invitationGroups
+        retval = (self.groupInfo.id in invitationGroups) and \
+          not self.canJoin
         assert type(retval) == bool
         return retval
 
@@ -82,9 +86,9 @@ class GSUserCanPostContentProvider(object):
         
     @property
     def joinability(self):
-        return GSGroupJoining(self.groupInfo.groupObj).joinability()
+        return GSGroupJoining(self.groupInfo.groupObj).joinability
         
-zope.component.provideAdapter(GSUserCanPostContentProvider,
-    provides=zope.contentprovider.interfaces.IContentProvider,
-    name="groupserver.UserCanPost")
+provideAdapter(GSUserCanPostContentProvider,
+               provides=IContentProvider,
+               name="groupserver.UserCanPost")
 

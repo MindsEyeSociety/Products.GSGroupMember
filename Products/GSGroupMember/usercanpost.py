@@ -1,17 +1,18 @@
 # coding=utf-8
-import time, pytz
+import pytz
 from datetime import datetime, timedelta
 
 from zope.app.apidoc import interface
 from zope.component import createObject, adapts
 from zope.interface import implements
 
-from Products.CustomUserFolder.interfaces import ICustomUser, IGSUserInfo
+from Products.CustomUserFolder.interfaces import IGSUserInfo
 from Products.XWFChat.interfaces import IGSGroupFolder
-from Products.GSContent.interfaces import IGSGroupInfo
+from Products.GSGroup.interfaces import IGSGroupInfo
 from Products.GSGroupMember.groupmembership import user_member_of_group,\
   user_participation_coach_of_group, user_admin_of_group 
-from Products.XWFCore.XWFUtils import munge_date, timedelta_to_string
+from Products.XWFCore.XWFUtils import munge_date, timedelta_to_string, \
+  comma_comma_and
 from Products.GSSearch.queries import MessageQuery
 from Products.GSProfile import interfaces as profileinterfaces
 from interfaces import IGSPostingUser
@@ -28,11 +29,10 @@ class GSGroupMemberPostingInfo(object):
           u'%s is not a user-info' % userInfo
         
         self.site_root = site_root = group.site_root()
-
-        mailingListManager = self.mailingListManager = site_root.ListManager
-        mailingList = self.mailingList =\
-          mailingListManager.get_list(group.getId())
-
+        
+        self.mailingListManager = site_root.ListManager
+        self.mailingList = self.mailingListManager.get_list(group.getId())
+        
         self.userInfo = userInfo
         self.groupInfo = IGSGroupInfo(group)
         
@@ -48,7 +48,8 @@ class GSGroupMemberPostingInfo(object):
     @property
     def status(self):
         if self.__status == None:
-            justCall = self.canPost
+            # call self.canPost so that __status gets set as a side-effect.
+            _justCall = self.canPost
         retval = self.__status
         assert retval
         assert type(retval) == unicode
@@ -204,10 +205,13 @@ class GSGroupMemberPostingInfo(object):
                 # the interval
                 retval = True
                 d = self.old_message_post_date()
+                
                 canPostDate = d + td
+                prettyDate = munge_date(self.groupInfo.groupObj, 
+                    canPostDate, user=self.userInfo.user)
+                prettyDelta = timedelta_to_string(canPostDate - now)
                 self.__status = u'post again at %s\n-- in %s' %\
-                  (munge_date(self.groupInfo.groupObj, canPostDate), 
-                   timedelta_to_string(canPostDate - now))
+                  (prettyDate, prettyDelta)
                 self.__statusNum = 32
             else:
                 retval = False
@@ -222,12 +226,19 @@ class GSGroupMemberPostingInfo(object):
         gid = self.groupInfo.id
         uid = self.userInfo.id
         limit = self.mailingList.getValueFor('senderlimit')
+        offset = limit - 1
+        if offset < 0:
+            offset = 0
+            log.warning("senderlimit of %s was set to 0 or less" % gid)
+            
         tokens = createObject('groupserver.SearchTextTokens', '')
         posts = self.messageQuery.post_search_keyword(tokens, sid, [gid], 
-          [uid], 1, limit)
+          [uid], 1, offset)
+        
         assert len(posts) == 1
         retval = posts[0]['date']
         assert isinstance(retval, datetime)
+        
         return retval
 
     def user_blocked_from_posting(self):
@@ -260,16 +271,22 @@ class GSGroupMemberPostingInfo(object):
         requiredGroupProperties = self.get_required_group_properties()
         requiredProperties = requiredSiteProperties + requiredGroupProperties
         
-        retval = True
-        self.__status = u'required properties set'
-        for p in requiredProperties:
-            if not(self.userInfo.get_property(p, None)):
-              retval = False
-              field = [a for n, a in self.get_site_properties() if n == p][0]
-              self.__status = u'required attribute %s is not set' %\
-                field.title
-              self.__statusNum = self.__statusNum + 128
-              break
+        unsetRequiredProps = [p for p in requiredProperties
+                              if not(self.userInfo.get_property(p, None))]
+        if unsetRequiredProps:
+            retval = False
+            self.__status = u'required properties set'
+            fields = [a.title for n, a in self.get_site_properties() 
+                      if n in unsetRequiredProps]
+            f = comma_comma_and(fields)
+            attr = (len(fields) == 1 and u'attribute') or u'attributes'
+            isare = (len(fields) == 1 and u'is') or u'are'
+            self.__status = u'required %s %s %s not set' % (attr, f, isare)
+            self.__statusNum = self.__statusNum + 128
+        else:
+            retval = True
+            self.__status = u'required properties set'
+
         assert type(self.__status) == unicode
         assert type(retval) == bool
         return retval
@@ -310,7 +327,7 @@ class GSGroupMemberPostingInfo(object):
         user-profile attribute filled.
         '''
         groupProps = self.mailingList.getProperty('required_properties', [])
-        siteProps = [n for n, a in self.get_site_properties()]
+        siteProps = [n for n, _a in self.get_site_properties()]
         retval = []
         for prop in groupProps:
             if prop in siteProps:

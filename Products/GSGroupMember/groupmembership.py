@@ -1,22 +1,22 @@
 # coding=utf-8
-import time
-from zope.interface import implements, alsoProvides, providedBy
-from zope.component import getUtility, createObject
+from zope.interface import implements, providedBy
+from zope.component import createObject
 from zope.schema.vocabulary import SimpleTerm
-from zope.schema.interfaces import ITokenizedTerm, IVocabulary,\
+from zope.schema.interfaces import IVocabulary,\
   IVocabularyTokenized, ITitledTokenizedTerm
 from zope.interface.common.mapping import IEnumerableMapping 
+from Products.XWFCore.XWFUtils import getOption
+from Products.GSGroupMember.utils import inform_ptn_coach_of_join
+import time
 import AccessControl
 
 from Products.CustomUserFolder.interfaces import IGSUserInfo, ICustomUser
-from Products.GSContent.interfaces import IGSGroupInfo
-from Products.XWFChat.interfaces import IGSGroupFolder
-from Products.XWFCore.XWFUtils import getOption, sort_by_name
+from Products.XWFCore.XWFUtils import sort_by_name
+from Products.GSGroup.interfaces import IGSGroupInfo, IGSMailingListInfo
 from queries import GroupMemberQuery
-from utils import *
 
 import logging
-log = logging.getLogger('GSGroupMember GroupMembership')
+log = logging.getLogger('GSGroupMember GroupMembership') #@UndefinedVariable
 
 GROUP_FOLDER_TYPES = ('Folder', 'Folder (Ordered)')
 
@@ -24,12 +24,12 @@ class JoinableGroupsForSite(object):
     implements(IVocabulary, IVocabularyTokenized)
     __used_for__ = IEnumerableMapping
 
-    def __init__(self, user, context):
+    def __init__(self, user):
         self.context = user
         self.userInfo = createObject('groupserver.UserFromId', 
-                                     context, user.getId())
-        self.__groupsInfo = createObject('groupserver.GroupsInfo', context)
-        self.siteInfo = createObject('groupserver.SiteInfo', context)
+                                     user, user.getId())
+        self.__groupsInfo = createObject('groupserver.GroupsInfo', user)
+        self.siteInfo = createObject('groupserver.SiteInfo', user)
         
         self.__groups = None
        
@@ -51,7 +51,6 @@ class JoinableGroupsForSite(object):
 
     def __contains__(self, value):
         """See zope.schema.interfaces.IBaseVocabulary"""
-        retval = False
         retval = value in [g.get_id() for g in self.groups]
         assert type(retval) == bool
         return retval
@@ -81,7 +80,6 @@ class JoinableGroupsForSite(object):
         assert self.__groupsInfo
         
         if self.__groups == None:
-            userId = self.context.getId()
             gs = self.__groupsInfo.get_joinable_groups_for_user(self.context)
             self.__groups = [createObject('groupserver.GroupInfo', g)
                              for g in gs]
@@ -101,17 +99,19 @@ class InvitationGroupsForSite(JoinableGroupsForSite):
       rights to and the user (context) has not been invited to too much.
     '''
     def __init__(self, user, context):
-        JoinableGroupsForSite.__init__(self, user, context)
-        self.__groups = None
-        
-        da = self.context.zsqlalchemy 
-        assert da, 'No data-adaptor found'
-        self.groupMemberQuery = GroupMemberQuery(da)
+        JoinableGroupsForSite.__init__(self, user)
+        self.__groupMemberQuery = self.__groups = None        
+        self.viewingUserInfo = createObject('groupserver.LoggedInUser', 
+          context)
 
-        viewingUser = AccessControl.getSecurityManager().getUser()
-        self.viewingUserInfo = createObject('groupserver.UserFromId', 
-          context, viewingUser.getId())
-        
+    @property
+    def groupMemberQuery(self):
+        if self.__groupMemberQuery == None:
+            da = self.context.zsqlalchemy 
+            assert da, 'No data-adaptor found'
+            self.__groupMemberQuery = GroupMemberQuery(da)
+        return self.__groupMemberQuery
+
     @property
     def groups(self):
         if self.__groups == None:
@@ -147,9 +147,139 @@ class InvitationGroupsForSite(JoinableGroupsForSite):
         assert type(retval) == list
         return retval
 
+class InvitationGroupsForSiteAndCurrentUser(InvitationGroupsForSite):
+    def __init__(self, context):
+        InvitationGroupsForSite.__init__(self, context, context)
+        
 ###########
 # Members #
 ###########
+
+class InvitedGroupMembers(object):
+    implements(IVocabulary, IVocabularyTokenized)
+    __used_for__ = IEnumerableMapping
+
+    def __init__(self, context, siteInfo):
+        self.context = context
+        self.siteInfo = siteInfo
+        self.groupInfo = createObject('groupserver.GroupInfo', context)
+        self.__members = None
+       
+    def __iter__(self):
+        """See zope.schema.interfaces.IIterableVocabulary"""
+        retval = [SimpleTerm(u.id, u.id, u.name)
+                  for u in self.members]
+        for term in retval:
+            assert term
+            assert ITitledTokenizedTerm in providedBy(term)
+            assert term.token == term.value
+        return iter(retval)
+
+    def __len__(self):
+        """See zope.schema.interfaces.IIterableVocabulary"""
+        return len(self.members)
+
+    def __contains__(self, value):
+        """See zope.schema.interfaces.IBaseVocabulary"""
+        retval = value in [u.id for u in self.members]
+        assert type(retval) == bool
+        return retval
+
+    def getQuery(self):
+        """See zope.schema.interfaces.IBaseVocabulary"""
+        return None
+
+    def getTerm(self, value):
+        """See zope.schema.interfaces.IBaseVocabulary"""
+        return self.getTermByToken(value)
+        
+    def getTermByToken(self, token):
+        """See zope.schema.interfaces.IVocabularyTokenized"""
+        for u in self.members:
+            if u.id == token:
+                retval = SimpleTerm(u.id, u.id, u.name)
+                assert retval
+                assert ITitledTokenizedTerm in providedBy(retval)
+                assert retval.token == retval.value
+                return retval
+        raise LookupError, token
+
+    @property
+    def members(self):
+        assert self.context
+        if self.__members == None:
+            userIds = get_invited_members(self.context, 
+              self.siteInfo.id, self.groupInfo.id)
+            self.__members = [ createObject('groupserver.UserFromId', 
+                               self.context, uId) for uId in userIds ]
+            self.__members = [m for m in self.__members 
+                                if not m.anonymous]
+        assert type(self.__members) == list
+        #assert reduce(lambda a, b: a and b, 
+        #    [IGSUserInfo.providedBy(u) for u in self.__members], True)
+        return self.__members
+
+class GroupMembers(object):
+    implements(IVocabulary, IVocabularyTokenized)
+    __used_for__ = IEnumerableMapping
+
+    def __init__(self, context):
+        self.context = context
+        self.groupInfo = createObject('groupserver.GroupInfo', context)
+        self.__members = None
+       
+    def __iter__(self):
+        """See zope.schema.interfaces.IIterableVocabulary"""
+        retval = [SimpleTerm(u.id, u.id, u.name)
+                  for u in self.members]
+        for term in retval:
+            assert term
+            assert ITitledTokenizedTerm in providedBy(term)
+            assert term.token == term.value
+        return iter(retval)
+
+    def __len__(self):
+        """See zope.schema.interfaces.IIterableVocabulary"""
+        return len(self.members)
+
+    def __contains__(self, value):
+        """See zope.schema.interfaces.IBaseVocabulary"""
+        retval = value in [u.id for u in self.members]
+        assert type(retval) == bool
+        return retval
+
+    def getQuery(self):
+        """See zope.schema.interfaces.IBaseVocabulary"""
+        return None
+
+    def getTerm(self, value):
+        """See zope.schema.interfaces.IBaseVocabulary"""
+        return self.getTermByToken(value)
+        
+    def getTermByToken(self, token):
+        """See zope.schema.interfaces.IVocabularyTokenized"""
+        for u in self.members:
+            if u.id == token:
+                retval = SimpleTerm(u.id, u.id, u.name)
+                assert retval
+                assert ITitledTokenizedTerm in providedBy(retval)
+                assert retval.token == retval.value
+                return retval
+        raise LookupError, token
+
+    @property
+    def members(self):
+        assert self.context
+        
+        if self.__members == None:
+            # Get all members of the group
+            users = get_group_users(self.context, self.groupInfo.id)
+            self.__members = [ createObject('groupserver.UserFromId', 
+                                  u, u.getId()) for u in users ]
+        assert type(self.__members) == list
+        #assert reduce(lambda a, b: a and b, 
+        #    [IGSUserInfo.providedBy(u) for u in self.__members], True)
+        return self.__members
 
 class SiteMembers(object):
     implements(IVocabulary, IVocabularyTokenized)
@@ -177,7 +307,6 @@ class SiteMembers(object):
 
     def __contains__(self, value):
         """See zope.schema.interfaces.IBaseVocabulary"""
-        retval = False
         retval = value in [u.id for u in self.members]
         assert type(retval) == bool
         return retval
@@ -238,11 +367,15 @@ class InviteSiteMembersNonGroupMembers(SiteMembersNonGroupMembers):
     def __init__(self, context):
         SiteMembersNonGroupMembers.__init__(self, context)
         
-        self.__members = None
+        self.__members = self.__groupMemberQuery = None
         
-        da = self.context.zsqlalchemy 
-        assert da, 'No data-adaptor found'
-        self.groupMemberQuery = GroupMemberQuery(da)
+    @property
+    def groupMemberQuery(self):
+        if self.__groupMemberQuery == None:
+            da = self.context.zsqlalchemy 
+            assert da, 'No data-adaptor found'
+            self.__groupMemberQuery = GroupMemberQuery(da)
+        return self.__groupMemberQuery
 
     @property
     def members(self):
@@ -268,6 +401,11 @@ def get_group_users(context, groupId, excludeGroup = ''):
     Get the members of the user-group, identified by "groupId" who are
     not members of "excludeGroup"
     '''
+    # --mpj17=-- This is slightly wrong. I should get
+    #   * All users who have the GroupMember role
+    #     group.users_with_local_role('GroupMember')
+    #   * All users of all groups that have the GroupMember role
+    #     group.groups_with_local_role('GroupMember')
     assert context # What *is* the context?
     assert groupId
     assert type(groupId) == str
@@ -296,14 +434,23 @@ def get_group_users(context, groupId, excludeGroup = ''):
     #              [ICustomUser.providedBy(u) for u in retval], True)
     return retval
 
-def get_unverified_group_users(context, groupId, excludeGroup = ''):
+def get_invited_members(context, siteId, groupId):
     da = context.zsqlalchemy 
     assert da, 'No data-adaptor found'
     groupMemberQuery = GroupMemberQuery(da)
+    return groupMemberQuery.get_invited_members(siteId, groupId)
 
+def get_unverified_group_users(context, groupId, excludeGroup = ''):
+    # AM: To be removed when the new Manage Members code is deployed
+    #  and the old admin pages removed. 
+    unverifiedUsers = []
     group_users = get_group_users(context, groupId, excludeGroup)
-
-    return groupMemberQuery.get_unverified_members(group_users)
+    for u in group_users:
+        if not u.get_verifiedEmailAddresses():
+            unverifiedUsers.append(u)
+    retval = unverifiedUsers
+    assert type(retval)==list
+    return retval
 
 
 #############
@@ -333,8 +480,14 @@ def userInfo_to_user(u):
         user = u
     return user
 
+def user_to_userInfo(u):
+    if ICustomUser.providedBy(u):
+        user = IGSUserInfo(u)
+    else:
+        user = u
+    return user
+
 def get_groups_on_site(site):
-    retval = []
     assert hasattr(site, 'groups'), u'No groups on the site %s' % site.getId()
     groups = getattr(site, 'groups')
     retval = [g for g in \
@@ -343,7 +496,9 @@ def get_groups_on_site(site):
     assert type(retval) == list
     return retval
 
-# Membership Checks
+#####################
+# Membership Checks #
+#####################
 
 def user_member_of_group(u, g):
     '''Is the user the member of the group
@@ -413,7 +568,80 @@ def user_participation_coach_of_group(userInfo, groupInfo):
     assert type(retval) == bool
     return retval
 
-def join_group(user, groupInfo):
+def user_unverified_member_of_group(userInfo, groupInfo):
+    assert IGSUserInfo.providedBy(userInfo), \
+      '%s is not a IGSUserInfo' % userInfo
+    assert IGSGroupInfo.providedBy(groupInfo), \
+      '%s is not an IGSGroupInfo' % groupInfo
+    context = groupInfo.groupObj
+    unverified_group_members = \
+      get_unverified_group_users(context, groupInfo.id)
+    retval = user_member_of_group(userInfo, groupInfo)\
+      and (userInfo.id in [m.getId() for m in unverified_group_members])
+    assert type(retval) == bool
+    return retval
+
+def user_invited_member_of_group(userInfo, groupInfo, siteInfo):
+    assert IGSUserInfo.providedBy(userInfo), \
+      '%s is not a IGSUserInfo' % userInfo
+    assert IGSGroupInfo.providedBy(groupInfo), \
+      '%s is not an IGSGroupInfo' % groupInfo
+    context = groupInfo.groupObj
+    invited_group_members = \
+      InvitedGroupMembers(context, siteInfo).members
+    retval = userInfo.id in [ m.id for m in invited_group_members ]
+    assert type(retval) == bool
+    return retval
+    
+def user_moderator_of_group(userInfo, groupInfo):
+    assert IGSUserInfo.providedBy(userInfo), \
+      '%s is not an IGSUserInfo' % userInfo
+    assert IGSGroupInfo.providedBy(groupInfo), \
+      '%s is not an IGSGroupInfo' % groupInfo
+    context = groupInfo.groupObj
+    mlistInfo = IGSMailingListInfo(context)
+    retval = user_member_of_group(userInfo, groupInfo) and \
+      (userInfo.id in [ m.id for m in mlistInfo.moderators ])
+    assert type(retval) == bool
+    return retval
+    
+def user_moderated_member_of_group(userInfo, groupInfo):
+    assert IGSUserInfo.providedBy(userInfo), \
+      '%s is not an IGSUserInfo' % userInfo
+    assert IGSGroupInfo.providedBy(groupInfo), \
+      '%s is not an IGSGroupInfo' % groupInfo
+    context = groupInfo.groupObj
+    mlistInfo = IGSMailingListInfo(context)
+    retval = user_member_of_group(userInfo, groupInfo) and \
+      (userInfo.id in [ m.id for m in mlistInfo.moderatees ])
+    assert type(retval) == bool
+    return retval
+    
+def user_blocked_member_of_group(userInfo, groupInfo):
+    assert IGSUserInfo.providedBy(userInfo), \
+      '%s is not an IGSUserInfo' % userInfo
+    assert IGSGroupInfo.providedBy(groupInfo), \
+      '%s is not an IGSGroupInfo' % groupInfo
+    context = groupInfo.groupObj
+    mlistInfo = createObject('groupserver.MailingListInfo', context)
+    retval = user_member_of_group(userInfo, groupInfo) and \
+      (userInfo.id in [ m.id for m in mlistInfo.blocked_members ])
+    assert type(retval) == bool
+    return retval
+
+def user_posting_member_of_group(userInfo, groupInfo):
+    assert IGSUserInfo.providedBy(userInfo), \
+      '%s is not an IGSUserInfo' % userInfo
+    assert IGSGroupInfo.providedBy(groupInfo), \
+      '%s is not an IGSGroupInfo' % groupInfo
+    context = groupInfo.groupObj
+    mlistInfo = IGSMailingListInfo(context)
+    retval = user_member_of_group(userInfo, groupInfo) and \
+      (userInfo.id in [ m.id for m in mlistInfo.posting_members ])
+    assert type(retval) == bool
+    return retval
+
+def join_group(u, groupInfo):
     '''Join the user to a group
     
     DESCRIPTION
@@ -421,7 +649,7 @@ def join_group(user, groupInfo):
       (if necessary).
       
     ARGUMENTS
-      "user":       The CustomUser that is joined to the group.
+      "user":       The user that is joined to the group.
       "groupInfo":  The group that the user is joined to.
       
     RETURNS
@@ -431,12 +659,12 @@ def join_group(user, groupInfo):
       The user is a member of the group, and a member of the site that the
       group belongs to.
     '''
-    assert ICustomUser.providedBy(user), '%s is not a user' % user
-    userInfo = IGSUserInfo(user)
+    userInfo = user_to_userInfo(u)
+    user = userInfo_to_user(u)
     assert IGSGroupInfo.providedBy(groupInfo), '%s is not a GroupInfo' %\
       groupInfo
     assert not(user_member_of_group(user, groupInfo.groupObj)), \
-      'User %s (%s) already in %s (%s)' % \
+      u'User %s (%s) already in %s (%s)' % \
       (userInfo.name, userInfo.id, groupInfo.name, groupInfo.name)
     
     siteInfo = groupInfo.siteInfo
@@ -449,6 +677,8 @@ def join_group(user, groupInfo):
     log.info(m)
     user.add_groupWithNotification(member_id(groupInfo.id))
 
+    # TODO: Change to all group admins
+    #  <https://projects.iopen.net/groupserver/ticket/410>
     ptnCoachId = groupInfo.get_property('ptn_coach_id', '')
     if ptnCoachId:
         ptnCoachInfo = createObject('groupserver.UserFromId', 
@@ -464,83 +694,4 @@ def join_group(user, groupInfo):
 
     assert user_member_of_group(user, groupInfo.groupObj)
     assert user_member_of_site(user, siteInfo.siteObj)
-
-def invite_to_groups(userInfo, invitingUserInfo, groups):
-    '''Invite the user to join a group
-    
-    DESCRIPTION
-      Invites an existing user to join a group.
-      
-    ARGUMENTS
-      "user":       The CustomUser that is invited to join the group.
-      "invitingUserInfo": The user that isi inviting the other to join the 
-                          group.
-      "groups":  The group (or groups) that the user is joined to.
-      
-    RETURNS
-      None.
-      
-    SIDE EFFECTS
-      An invitation is added to the database, and a notification is
-      sent out to the user.
-    '''
-    assert IGSUserInfo.providedBy(userInfo), '%s is not a IGSUserInfo' %\
-      userInfo
-    assert IGSUserInfo.providedBy(invitingUserInfo),\
-      '%s is not a IGSUserInfo' % userInfo
-
-    # --=mpj17=-- Haskell an his polymorphism can get knotted
-    if type(groups) == list:
-        groupInfos = groups
-    else:
-        groupInfos = [groups]
-        
-    assert groupInfos != []
-    
-    siteInfo = groupInfos[0].siteInfo
-
-    #--=mpj17=-- Arse to Zope. Really, arse to Zope and its randomly failing
-    #            acquisition.
-    da = siteInfo.siteObj.aq_parent.aq_parent.zsqlalchemy
-    assert da, 'No data-adaptor found'
-    groupMemberQuery = GroupMemberQuery(da)
-
-    groupNames = []    
-    for groupInfo in groupInfos:
-        assert IGSGroupInfo.providedBy(groupInfo)
-        assert not(user_member_of_group(userInfo, groupInfo)), \
-          'User %s (%s) already in %s (%s)' % \
-        (userInfo.name, userInfo.id, groupInfo.name, groupInfo.name)
-    
-        inviteId = invite_id(siteInfo.id, groupInfo.id, 
-                              userInfo.id, invitingUserInfo.id)
-
-        m = u'invite_to_group: %s (%s) inviting %s (%s) to join %s (%s) on '\
-          u'%s (%s) with id %s'%\
-          (invitingUserInfo.name, invitingUserInfo.id,
-            userInfo.name, userInfo.id,
-            groupInfo.name, groupInfo.id,
-            siteInfo.name, siteInfo.id,
-            inviteId)
-        log.info(m)
-        groupMemberQuery.add_invitation(inviteId, siteInfo.id, groupInfo.id, 
-            userInfo.id, invitingUserInfo.id)
-
-        groupNames.append(groupInfo.name)
-
-        if len(groupNames) > 1:
-              c = u', '.join(groupNames[:-1])
-              g = u' and '.join((c, groupNames[-1]))
-        else:
-              g = groupNames[0]
-    
-    responseURL = '%s/r/group_invitation/%s' % (siteInfo.url, inviteId)
-    n_dict={'userFn': userInfo.name,
-            'invitingUserFn': invitingUserInfo.name,
-            'siteName': siteInfo.name,
-            'siteURL': siteInfo.url,
-            'groupName': g,
-            'responseURL': responseURL}
-    userInfo.user.send_notification('invite_join_group', 'default', 
-        n_dict=n_dict)
 

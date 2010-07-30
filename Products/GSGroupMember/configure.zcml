@@ -5,18 +5,14 @@
   xmlns:sqlos="http://namespaces.sqlobject.org/sqlos"
   xmlns:five="http://namespaces.zope.org/five">
 
-  <!-- declare a marker interface on the Folder class to allow us 
-    to add marker Interfaces, views and adaptation -->
-  <five:implements 
-    class="OFS.Folder.Folder"
-    interface="zope.app.folder.interfaces.IFolder" />
-  <!-- make it known to Five -->
-  <five:traversable 
-    class="OFS.Folder.Folder" />
-  
-  <interface 
-    interface=".invitedgroupmember.IGSInvitedGroupMember" />
+  <class class="OFS.Folder.Folder">
+      <implements interface="zope.app.folder.interfaces.IFolder" />
+  </class>
 
+  <class class=".usercanpost.GSGroupMemberPostingInfo">
+      <implements interface=".interfaces.IGSPostingUser" />
+  </class>
+  
   <!--Vocabularies-->
   <utility
       provides="zope.schema.interfaces.IVocabularyFactory"
@@ -25,7 +21,7 @@
       />
   <utility
       provides="zope.schema.interfaces.IVocabularyFactory"
-      component="Products.GSGroupMember.groupmembership.InvitationGroupsForSite"
+      component="Products.GSGroupMember.groupmembership.InvitationGroupsForSiteAndCurrentUser"
       name="groupserver.InvitationGroups"
       />
   <utility
@@ -38,6 +34,16 @@
       component="Products.GSGroupMember.groupmembership.InviteSiteMembersNonGroupMembers"
       name="groupserver.InviteMembersNonGroupMembers"
       />
+  <utility
+      provides="zope.schema.interfaces.IVocabularyFactory"
+      component="Products.GSGroupMember.groupmembership.GroupMembers"
+      name="groupserver.GroupMembers"
+      />
+  <utility
+      provides="zope.schema.interfaces.IVocabularyFactory"
+      component="Products.GSGroupMember.groupmembership.InvitedGroupMembers"
+      name="groupserver.InvitedGroupMembers"
+      />
 
   <!--Pages-->
   <browser:page 
@@ -46,30 +52,6 @@
     class=".invitationslog.GSInviationsLog"
     template="browser/templates/invitationslog.pt" 
     permission="zope2.View" />
-
-  <browser:page 
-    for="Products.CustomUserFolder.interfaces.ICustomUser"
-    name="invitations_respond.html"
-    class=".invitationsrespond.GSInviationsRespond"
-    template="browser/templates/invitationsrespond.pt" 
-    permission="zope2.ManageProperties" />
-
-  <browser:page 
-    for="Products.CustomUserFolder.interfaces.ICustomUser"
-    name="invite.html"
-    class=".inviteuser.InviteUserForm"
-    permission="zope2.Public"/>
-
-  <browser:page 
-    for="Products.XWFChat.interfaces.IGSGroupFolder"
-    name="admin_invite_site_members.html"
-    class=".invitesitemembers.GSInviteSiteMembersForm"
-    permission="zope2.ManageUsers"/>
-
-  <adapter for="Products.GSRedirect.interfaces.IGSRedirectTraversal"
-    factory=".invitationredirect.GSInvitationResponseRedirect"
-    provides="Products.GSRedirect.interfaces.IGSRedirect"
-    name="group_invitation" />
 
   <browser:pages
     for="Products.GSContent.interfaces.IGSSiteFolder"
@@ -84,10 +66,13 @@
   </browser:pages>
 
   <interface 
-    interface=".interfaces.IGSUserCanPostContentProvider"/>
-  <five:implements 
-    class=".usercanpost.GSGroupMemberPostingInfo"
-    interface=".interfaces.IGSPostingUser" />
+    interface=".interfaces.IGSUserCanPostContentProvider"
+    type="zope.contentprovider.interfaces.ITALNamespaceData"/>
+  <adapter
+    factory=".usercanpostcontentprovider.GSUserCanPostContentProvider"
+    provides="zope.contentprovider.interfaces.IContentProvider"
+    name="groupserver.UserCanPost"/>
+    
   <adapter
     factory=".usercanpost.GSGroupMemberPostingInfo"
     for="Products.XWFChat.interfaces.IGSGroupFolder Products.CustomUserFolder.interfaces.IGSUserInfo"
