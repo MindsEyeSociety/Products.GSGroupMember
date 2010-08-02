@@ -300,11 +300,13 @@ class GSGroupMemberPostingInfo(object):
         if self.__profileInterfaces == None:
             assert hasattr(self.site_root, 'GlobalConfiguration')
             config = self.site_root.GlobalConfiguration
-            interfaceName = config.getProperty('profileInterface',
-                                               'IGSCoreProfile')
-            assert hasattr(profileinterfaces, interfaceName), \
-                'Interface "%s" not found.' % interfaceName
-            profileInterface = getattr(profileinterfaces, interfaceName)
+            ifName = config.getProperty('profileInterface',
+                        'IGSCoreProfile')
+            # --=mpj17=-- Sometimes profileInterface is set to ''
+            ifName = (ifName and ifName) or 'IGSCoreProfile'
+            assert hasattr(profileinterfaces, ifName), \
+                'Interface "%s" not found.' % ifName
+            profileInterface = getattr(profileinterfaces, ifName)
             self.__profileInterfaces =\
               interface.getFieldsInOrder(profileInterface)
         retval = self.__profileInterfaces
