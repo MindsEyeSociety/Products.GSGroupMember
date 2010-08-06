@@ -2,7 +2,7 @@
 from zope.interface import implements, providedBy
 from zope.component import createObject
 from zope.schema.vocabulary import SimpleTerm
-from zope.schema.interfaces import IVocabulary,\
+from zope.schema.interfaces import IVocabulary, \
   IVocabularyTokenized, ITitledTokenizedTerm
 from zope.interface.common.mapping import IEnumerableMapping 
 
@@ -19,7 +19,7 @@ class SiteMembersNonGroupMembers(object):
         self.context = context
         self.__siteInfo = createObject('groupserver.SiteInfo', context)
         self.__groupsInfo = createObject('groupserver.GroupsInfo', context)
-        self.__groupInfo =  createObject('groupserver.GroupInfo', context)
+        self.__groupInfo = createObject('groupserver.GroupInfo', context)
         
         self.__acl_users = self.__nonMembers = self.__admin = None
         
@@ -76,7 +76,7 @@ class SiteMembersNonGroupMembers(object):
     @property
     def nonMembers(self):
         m = u'Getting the list of members of %s (%s) who are not members '\
-          u'of %s (%s)' %\
+          u'of %s (%s)' % \
           (self.__siteInfo.name, self.__siteInfo.id,
            self.__groupInfo.name, self.__groupInfo.id)
         log.info(m)

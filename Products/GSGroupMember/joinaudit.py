@@ -4,7 +4,7 @@ from datetime import datetime
 from zope.component import createObject
 from zope.component.interfaces import IFactory
 from zope.interface import implements, implementedBy
-from Products.GSAuditTrail import IAuditEvent, BasicAuditEvent,\
+from Products.GSAuditTrail import IAuditEvent, BasicAuditEvent, \
   AuditQuery
 from Products.GSAuditTrail.utils import event_id_from_data
 
@@ -12,16 +12,16 @@ SUBSYSTEM = 'groupserver.GSGroupMemberJoin'
 import logging
 log = logging.getLogger(SUBSYSTEM) #@UndefinedVariable
 
-UNKNOWN        = '0'  # Unknown is always "0"
-JOIN           = '1'
+UNKNOWN = '0'  # Unknown is always "0"
+JOIN    = '1'
 
 class JoinAuditEventFactory(object):
     """A Factory for allocation events.
     """
     implements(IFactory)
 
-    title=u'GroupServer Join Group Audit Event Factory'
-    description=u'Creates a GroupServer event auditor for joining groups'
+    title = u'GroupServer Join Group Audit Event Factory'
+    description = u'Creates a GroupServer event auditor for joining groups'
 
     def __call__(self, context, event_id, code, date,
         userInfo, instanceUserInfo, siteInfo, groupInfo,
@@ -86,14 +86,14 @@ class JoinAuditEventFactory(object):
         #   the classes that represent the events: they do not need
         #   the code or subsystem, for example.
         if (code == JOIN):
-            event = JoinEvent(context, event_id, date, 
+            event = JoinEvent(context, event_id, date,
               instanceUserInfo, siteInfo, groupInfo, instanceDatum)
         else:
             # If we get something odd, create a basic event with all
             #  the data we have. All call methods for audit-event
             #  factories will end in this call.
-            event = BasicAuditEvent(context, event_id, UNKNOWN, date, 
-              userInfo, instanceUserInfo, siteInfo, groupInfo, 
+            event = BasicAuditEvent(context, event_id, UNKNOWN, date,
+              userInfo, instanceUserInfo, siteInfo, groupInfo,
               instanceDatum, supplementaryDatum, SUBSYSTEM)
         assert event
         return event
@@ -111,24 +111,24 @@ class JoinEvent(BasicAuditEvent):
                   groupInfo, instanceDatum):
         """Create a join event
         """
-        BasicAuditEvent.__init__(self, context, id,  JOIN, d, None,
-          instanceUserInfo, siteInfo, groupInfo, instanceDatum, None, 
+        BasicAuditEvent.__init__(self, context, id, JOIN, d, None,
+          instanceUserInfo, siteInfo, groupInfo, instanceDatum, None,
           SUBSYSTEM)
           
     def __str__(self):
         retval = u'%s (%s) joined %s (%s) on %s (%s). '\
           u'Email delivery is set to "%s".' % (
             self.instanceUserInfo.name, self.instanceUserInfo.id,
-            self.groupInfo.name,        self.groupInfo.id,
-            self.siteInfo.name,          self.siteInfo.id,
+            self.groupInfo.name, self.groupInfo.id,
+            self.siteInfo.name, self.siteInfo.id,
             self.instanceDatum)
         return retval
     
     @property
     def xhtml(self):
-        cssClass = u'audit-event groupserver-group-member-%s' %\
+        cssClass = u'audit-event groupserver-group-member-%s' % \
           self.code
-        retval = u'<span class="%s">Joined %s</span>'%\
+        retval = u'<span class="%s">Joined %s</span>' % \
           (cssClass, self.groupInfo.name)
         return retval
 
@@ -148,21 +148,21 @@ class JoinAuditor(object):
     @property
     def instanceUserInfo(self):
         if self.__instanceUserInfo == None:
-            self.__instanceUserInfo =\
+            self.__instanceUserInfo = \
               createObject('groupserver.LoggedInUser', self.context)
         return self.__instanceUserInfo
         
     @property
     def siteInfo(self):
         if self.__siteInfo == None:
-            self.__siteInfo =\
+            self.__siteInfo = \
               createObject('groupserver.SiteInfo', self.context)
         return self.__siteInfo
         
     @property
     def groupInfo(self):
         if self.__groupInfo == None:
-            self.__groupInfo =\
+            self.__groupInfo = \
               createObject('groupserver.GroupInfo', self.context)
         return self.__groupInfo
         
@@ -209,12 +209,12 @@ class JoinAuditor(object):
             None
         """
         d = datetime.now(UTC)
-        eventId = event_id_from_data(self.instanceUserInfo, 
+        eventId = event_id_from_data(self.instanceUserInfo,
           self.instanceUserInfo, self.siteInfo, code, instanceDatum,
           '%s-%s' % (self.groupInfo.name, self.groupInfo.id))
           
-        e = self.factory(self.context, eventId,  code, d,
-          None, self.instanceUserInfo, self.siteInfo, 
+        e = self.factory(self.context, eventId, code, d,
+          None, self.instanceUserInfo, self.siteInfo,
           self.groupInfo, instanceDatum, None, SUBSYSTEM)
           
         self.queries.store(e)

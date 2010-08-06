@@ -2,7 +2,7 @@
 from zope.interface import implements, providedBy
 from zope.component import createObject
 from zope.schema.vocabulary import SimpleTerm
-from zope.schema.interfaces import IVocabulary,\
+from zope.schema.interfaces import IVocabulary, \
   IVocabularyTokenized, ITitledTokenizedTerm
 from zope.interface.common.mapping import IEnumerableMapping 
 
@@ -71,16 +71,16 @@ class SiteMembers(object):
     def get_site_member_group_user_ids(self):
         siteMemberGroupId = '%s_member' % self.__siteInfo.id
         siteMemberGroup = self.acl_users.getGroupById(siteMemberGroupId)
-        assert siteMemberGroup,\
-          u'Could not get site-member group for %s (%s)' %\
+        assert siteMemberGroup, \
+          u'Could not get site-member group for %s (%s)' % \
           (self.__siteInfo.name, self.__siteInfo.id)
   
         retval = [uid for uid in siteMemberGroup.getUsers() 
                   if self.acl_users.getUser(uid)]
-        assert type(retval) == list,\
+        assert type(retval) == list, \
           'Retval is a %s, not a list' % type(siteMemberGroup)
-        types = [type(u)==str for u in retval]
-        assert reduce(lambda a, b: a and b, types, True),\
+        types = [type(u) == str for u in retval]
+        assert reduce(lambda a, b: a and b, types, True), \
           u'Not all strings returned'
         return retval
         
@@ -89,11 +89,11 @@ class SiteMembers(object):
         assert self.context
         assert self.__siteInfo
         if self.__members == None:
-            m = u'Generating membership list for %s (%s)' %\
+            m = u'Generating membership list for %s (%s)' % \
               (self.__siteInfo.name, self.__siteInfo.id)
             log.info(m)
             siteMemberGroupIds = self.get_site_member_group_user_ids()
-            self.__members =\
+            self.__members = \
               [createObject('groupserver.UserFromId', self.context, uid)
                for uid in siteMemberGroupIds]
         assert type(self.__members) == list

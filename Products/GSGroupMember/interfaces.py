@@ -2,8 +2,7 @@
 """Interfaces for the registration and password-reset pages."""
 from zope.interface.interface import Interface
 from zope.interface import Attribute
-from zope.schema.vocabulary import SimpleTerm, SimpleVocabulary
-from zope.schema import *
+from zope.schema import Bool, Choice, Int, List, Text, TextLine
 from zope.contentprovider.interfaces import IContentProvider
 
 class IGSInvitationGroups(Interface):

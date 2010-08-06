@@ -2,13 +2,12 @@
 from zope.interface import implements, providedBy
 from zope.component import createObject
 from zope.schema.vocabulary import SimpleTerm
-from zope.schema.interfaces import IVocabulary,\
+from zope.schema.interfaces import IVocabulary, \
   IVocabularyTokenized, ITitledTokenizedTerm
 from zope.interface.common.mapping import IEnumerableMapping 
 from Products.XWFCore.XWFUtils import getOption
 from Products.GSGroupMember.utils import inform_ptn_coach_of_join
 import time
-import AccessControl
 
 from Products.CustomUserFolder.interfaces import IGSUserInfo, ICustomUser
 from Products.XWFCore.XWFUtils import sort_by_name
@@ -26,7 +25,7 @@ class JoinableGroupsForSite(object):
 
     def __init__(self, user):
         self.context = user
-        self.userInfo = createObject('groupserver.UserFromId', 
+        self.userInfo = createObject('groupserver.UserFromId',
                                      user, user.getId())
         self.__groupsInfo = createObject('groupserver.GroupsInfo', user)
         self.siteInfo = createObject('groupserver.SiteInfo', user)
@@ -35,7 +34,7 @@ class JoinableGroupsForSite(object):
        
     def __iter__(self):
         """See zope.schema.interfaces.IIterableVocabulary"""
-        retval = [SimpleTerm(g.get_id(), g.get_id(), 
+        retval = [SimpleTerm(g.get_id(), g.get_id(),
                              '%s: for %s' % (g.get_name(),
                                              g.get_property('real_life_group', '')))
                   for g in self.groups]
@@ -101,7 +100,7 @@ class InvitationGroupsForSite(JoinableGroupsForSite):
     def __init__(self, user, context):
         JoinableGroupsForSite.__init__(self, user)
         self.__groupMemberQuery = self.__groups = None        
-        self.viewingUserInfo = createObject('groupserver.LoggedInUser', 
+        self.viewingUserInfo = createObject('groupserver.LoggedInUser',
           context)
 
     @property
@@ -138,10 +137,10 @@ class InvitationGroupsForSite(JoinableGroupsForSite):
 
         bottom = time.time()
         m = u'Generated invitation groups of %s (%s) for %s (%s) on %s '\
-          u'(%s) in %.2fms' %\
-          (self.userInfo.name, self.userInfo.id, 
-           self.viewingUserInfo.name, self.viewingUserInfo.id, 
-           self.siteInfo.name, self.siteInfo.id, (bottom-top)*1000.0)
+          u'(%s) in %.2fms' % \
+          (self.userInfo.name, self.userInfo.id,
+           self.viewingUserInfo.name, self.viewingUserInfo.id,
+           self.siteInfo.name, self.siteInfo.id, (bottom - top) * 1000.0)
         log.info(m)        
 
         assert type(retval) == list
@@ -208,9 +207,9 @@ class InvitedGroupMembers(object):
     def members(self):
         assert self.context
         if self.__members == None:
-            userIds = get_invited_members(self.context, 
+            userIds = get_invited_members(self.context,
               self.siteInfo.id, self.groupInfo.id)
-            self.__members = [ createObject('groupserver.UserFromId', 
+            self.__members = [ createObject('groupserver.UserFromId',
                                self.context, uId) for uId in userIds ]
             self.__members = [m for m in self.__members 
                                 if not m.anonymous]
@@ -274,7 +273,7 @@ class GroupMembers(object):
         if self.__members == None:
             # Get all members of the group
             users = get_group_users(self.context, self.groupInfo.id)
-            self.__members = [ createObject('groupserver.UserFromId', 
+            self.__members = [ createObject('groupserver.UserFromId',
                                   u, u.getId()) for u in users ]
         assert type(self.__members) == list
         #assert reduce(lambda a, b: a and b, 
@@ -293,7 +292,7 @@ class SiteMembers(object):
        
     def __iter__(self):
         """See zope.schema.interfaces.IIterableVocabulary"""
-        retval = [SimpleTerm(u.id, u.id,u.name)
+        retval = [SimpleTerm(u.id, u.id, u.name)
                   for u in self.members]
         for term in retval:
             assert term
@@ -337,7 +336,7 @@ class SiteMembers(object):
         if self.__members == None:
             # Get all members of the site, who are not members of the group
             users = get_group_users(self.context, self.siteInfo.id)
-            self.__members = [createObject('groupserver.UserFromId',  
+            self.__members = [createObject('groupserver.UserFromId',
                                             self.context, u.getId()) 
                              for u in users]
         assert type(self.__members) == list
@@ -357,7 +356,7 @@ class SiteMembersNonGroupMembers(SiteMembers):
         if self.__members == None:
             users = get_group_users(self.context, self.siteInfo.id,
                                     self.groupInfo.id)
-            self.__members = [createObject('groupserver.UserFromId',  
+            self.__members = [createObject('groupserver.UserFromId',
                                             self.context, u.getId()) 
                              for u in users]
         assert type(self.__members) == list
@@ -387,15 +386,15 @@ class InviteSiteMembersNonGroupMembers(SiteMembersNonGroupMembers):
         if self.__members == None:
             # Get all members of the site, who are not members of the group
             users = get_group_users(self.context, sid, gid)
-            self.__members = [createObject('groupserver.UserFromId',  
+            self.__members = [createObject('groupserver.UserFromId',
                                             self.context, u.getId()) 
                              for u in users
-                             if (c(sid, gid, u.getId())<=n)]
+                             if (c(sid, gid, u.getId()) <= n)]
             self.__members.sort(sort_by_name)
         assert type(self.__members) == list
         return self.__members
 
-def get_group_users(context, groupId, excludeGroup = ''):
+def get_group_users(context, groupId, excludeGroup=''):
     '''Get the Members of a User Group
     
     Get the members of the user-group, identified by "groupId" who are
@@ -411,7 +410,7 @@ def get_group_users(context, groupId, excludeGroup = ''):
     assert type(groupId) == str
     assert type(excludeGroup) == str
     
-    memberGroupId  = member_id(groupId)
+    memberGroupId = member_id(groupId)
 
     site_root = context.site_root()
     assert site_root, 'No site_root'
@@ -440,7 +439,7 @@ def get_invited_members(context, siteId, groupId):
     groupMemberQuery = GroupMemberQuery(da)
     return groupMemberQuery.get_invited_members(siteId, groupId)
 
-def get_unverified_group_users(context, groupId, excludeGroup = ''):
+def get_unverified_group_users(context, groupId, excludeGroup=''):
     # AM: To be removed when the new Manage Members code is deployed
     #  and the old admin pages removed. 
     unverifiedUsers = []
@@ -449,7 +448,7 @@ def get_unverified_group_users(context, groupId, excludeGroup = ''):
         if not u.get_verifiedEmailAddresses():
             unverifiedUsers.append(u)
     retval = unverifiedUsers
-    assert type(retval)==list
+    assert type(retval) == list
     return retval
 
 
@@ -519,11 +518,11 @@ def user_member_of_group(u, g):
     memberGroup = member_id(group.getId())
     userGroups = user.getGroups()
     if retval and (memberGroup not in userGroups):
-        m = u'(%s) has the GroupMember role for (%s) but is not in  %s'%\
+        m = u'(%s) has the GroupMember role for (%s) but is not in  %s' % \
           (user.getId(), group.getId(), memberGroup)
         log.error(m)
     elif not(retval) and (memberGroup in userGroups):
-        m = u'(%s) is in %s, but does not have the GroupMember role in (%s)'%\
+        m = u'(%s) is in %s, but does not have the GroupMember role in (%s)' % \
           (user.getId(), memberGroup, group.getId())
         log.error(m)
         
@@ -559,7 +558,7 @@ def user_division_admin_of_group(u, g):
     return retval
 
 def user_participation_coach_of_group(userInfo, groupInfo):
-    assert IGSUserInfo.providedBy(userInfo), '%s is not a IGSUserInfo' %\
+    assert IGSUserInfo.providedBy(userInfo), '%s is not a IGSUserInfo' % \
       userInfo
     assert IGSGroupInfo.providedBy(groupInfo)
     ptnCoachId = groupInfo.get_property('ptn_coach_id', '')
@@ -661,7 +660,7 @@ def join_group(u, groupInfo):
     '''
     userInfo = user_to_userInfo(u)
     user = userInfo_to_user(u)
-    assert IGSGroupInfo.providedBy(groupInfo), '%s is not a GroupInfo' %\
+    assert IGSGroupInfo.providedBy(groupInfo), '%s is not a GroupInfo' % \
       groupInfo
     assert not(user_member_of_group(user, groupInfo.groupObj)), \
       u'User %s (%s) already in %s (%s)' % \
@@ -671,9 +670,9 @@ def join_group(u, groupInfo):
 
     m = u'join_group: adding the user %s (%s) to the group %s (%s) '\
         u'on %s (%s)' % \
-        (userInfo.name,  userInfo.id,
+        (userInfo.name, userInfo.id,
          groupInfo.name, groupInfo.id,
-         siteInfo.name,  siteInfo.id)
+         siteInfo.name, siteInfo.id)
     log.info(m)
     user.add_groupWithNotification(member_id(groupInfo.id))
 
@@ -681,7 +680,7 @@ def join_group(u, groupInfo):
     #  <https://projects.iopen.net/groupserver/ticket/410>
     ptnCoachId = groupInfo.get_property('ptn_coach_id', '')
     if ptnCoachId:
-        ptnCoachInfo = createObject('groupserver.UserFromId', 
+        ptnCoachInfo = createObject('groupserver.UserFromId',
                                      groupInfo.groupObj, ptnCoachId)
         inform_ptn_coach_of_join(ptnCoachInfo, userInfo, groupInfo)
 

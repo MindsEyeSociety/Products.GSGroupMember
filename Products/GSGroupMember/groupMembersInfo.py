@@ -1,9 +1,6 @@
 # coding=utf-8
 from zope.component import createObject
 from zope.interface import implements
-from zope.formlib import form
-from zope.schema import TextLine
-from Products.CustomUserFolder.interfaces import IGSUserInfo
 from Products.XWFCore.XWFUtils import sort_by_name
 
 from groupmembership import GroupMembers, InvitedGroupMembers

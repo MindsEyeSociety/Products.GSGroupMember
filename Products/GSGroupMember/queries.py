@@ -11,9 +11,9 @@ class GroupMemberQuery(object):
         uit = self.userInvitationTable
         cols = [sa.func.count(uit.c.invitation_id.distinct())]
         s = sa.select(cols)
-        s.append_whereclause(uit.c.site_id  == siteId)
-        s.append_whereclause(uit.c.group_id  == groupId)
-        s.append_whereclause(uit.c.user_id  == userId)
+        s.append_whereclause(uit.c.site_id == siteId)
+        s.append_whereclause(uit.c.group_id == groupId)
+        s.append_whereclause(uit.c.user_id == userId)
         s.append_whereclause(uit.c.withdrawn_date == None)
         s.append_whereclause(uit.c.response_date == None)
 

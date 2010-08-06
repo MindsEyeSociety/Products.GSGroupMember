@@ -1,15 +1,14 @@
 # coding=utf-8
-from zope.app.apidoc import interface
 from zope.component import createObject, adapts
 from zope.interface import implements
 from Products.CustomUserFolder.interfaces import IGSUserInfo
 from Products.XWFCore.XWFUtils import comma_comma_and
 from Products.GSContent.interfaces import IGSSiteInfo
-from Products.GSGroup.interfaces import IGSGroupInfo, IGSMailingListInfo
-from Products.GSGroupMember.groupmembership import user_division_admin_of_group,\
-  user_group_admin_of_group, user_participation_coach_of_group,\
-  user_moderator_of_group, user_moderated_member_of_group,\
-  user_blocked_member_of_group, user_posting_member_of_group,\
+from Products.GSGroup.interfaces import IGSGroupInfo
+from Products.GSGroupMember.groupmembership import user_division_admin_of_group, \
+  user_group_admin_of_group, user_participation_coach_of_group, \
+  user_moderator_of_group, user_moderated_member_of_group, \
+  user_blocked_member_of_group, user_posting_member_of_group, \
   user_invited_member_of_group
 from Products.GSGroupMember.interfaces import IGSGroupMembershipStatus
 
@@ -18,19 +17,16 @@ class GSGroupMembershipStatus(object):
     implements(IGSGroupMembershipStatus)
 
     def __init__(self, userInfo, groupInfo, siteInfo):
-        assert IGSUserInfo.providedBy(userInfo),\
+        assert IGSUserInfo.providedBy(userInfo), \
           u'%s is not a GSUserInfo' % userInfo
-        assert IGSGroupInfo.providedBy(groupInfo),\
+        assert IGSGroupInfo.providedBy(groupInfo), \
           u'%s is not a GSGroupInfo' % groupInfo
-        assert IGSSiteInfo.providedBy(siteInfo),\
+        assert IGSSiteInfo.providedBy(siteInfo), \
           u'%s is not a GSSiteInfo' % siteInfo
         
         self.userInfo = userInfo
         self.groupInfo = groupInfo
         self.siteInfo = siteInfo
-        self.mailingListInfo = \
-          createObject('groupserver.MailingListInfo', 
-                       groupInfo.groupObj)
         
         self.__status_label = None
         self.__isNormalMember = None
@@ -48,12 +44,15 @@ class GSGroupMembershipStatus(object):
         self.__isUnverified = None
         
         # Group Status
+        mailingListInfo = \
+          createObject('groupserver.MailingListInfo', 
+                        self.groupInfo.groupObj)
         self.groupIsModerated = \
-          self.mailingListInfo.is_moderated
+          mailingListInfo.is_moderated
         self.postingIsSpecial = \
           self.groupInfo.group_type == 'announcement'
         self.numPostingMembers = \
-          len(self.mailingListInfo.posting_members)
+          len(mailingListInfo.posting_members)
 
     @property
     def status_label(self):

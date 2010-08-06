@@ -17,6 +17,10 @@ from Products.GSSearch.queries import MessageQuery
 from Products.GSProfile import interfaces as profileinterfaces
 from interfaces import IGSPostingUser
 
+#TODO Replace with an audit trail
+import logging
+log = logging.getLogger('GSGroupMember')
+
 class GSGroupMemberPostingInfo(object):
 
     adapts(IGSGroupFolder, IGSUserInfo)

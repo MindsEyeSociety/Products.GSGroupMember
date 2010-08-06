@@ -18,7 +18,7 @@ class GSUserCanPostContentProvider(object):
     """GroupServer context-menu for the user profile area.
     """
 
-    implements( IGSUserCanPostContentProvider )
+    implements(IGSUserCanPostContentProvider)
     adapts(Interface,
         IDefaultBrowserLayer,
         Interface)
@@ -33,13 +33,13 @@ class GSUserCanPostContentProvider(object):
     def update(self):
         self.__updated = True
 
-        self.siteInfo = createObject('groupserver.SiteInfo', 
+        self.siteInfo = createObject('groupserver.SiteInfo',
           self.context)
-        self.groupInfo = createObject('groupserver.GroupInfo', 
+        self.groupInfo = createObject('groupserver.GroupInfo',
           self.context)
-        self.groupsInfo = createObject('groupserver.GroupsInfo', 
+        self.groupsInfo = createObject('groupserver.GroupsInfo',
           self.context)
-        self.userInfo = createObject('groupserver.LoggedInUser', 
+        self.userInfo = createObject('groupserver.LoggedInUser',
           self.context)
 
     def render(self):

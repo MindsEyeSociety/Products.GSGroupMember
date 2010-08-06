@@ -32,7 +32,7 @@ class GSInviationsLog(BrowserView):
         
     def get_currentInvitations(self):
         m = u'Generating a list of current group-invitations for %s (%s) '\
-          u'on %s (%s).' %\
+          u'on %s (%s).' % \
             (self.userInfo.name, self.userInfo.id,
              self.siteInfo.name, self.siteInfo.id)
         log.info(m)
@@ -40,7 +40,7 @@ class GSInviationsLog(BrowserView):
         invitations = self.groupMemberQuery.get_current_invitiations_for_site(
             self.siteInfo.id, self.userInfo.id)
         for inv in invitations:
-            usrInf = createObject('groupserver.UserFromId', 
+            usrInf = createObject('groupserver.UserFromId',
               self.context, inv['inviting_user_id'])
             inv['inviting_user'] = usrInf
             grpInf = createObject('groupserver.GroupInfo',
@@ -59,7 +59,7 @@ class GSInviationsLog(BrowserView):
 
     def get_pastInvitations(self):
         m = u'Generating a list of current past group-invitations for '\
-          u'%s (%s) on %s (%s).' %\
+          u'%s (%s) on %s (%s).' % \
             (self.userInfo.name, self.userInfo.id,
              self.siteInfo.name, self.siteInfo.id)
         log.info(m)
@@ -67,7 +67,7 @@ class GSInviationsLog(BrowserView):
         invitations = self.groupMemberQuery.get_past_invitiations_for_site(
             self.siteInfo.id, self.userInfo.id)
         for inv in invitations:
-            usrInf = createObject('groupserver.UserFromId', 
+            usrInf = createObject('groupserver.UserFromId',
               self.context, inv['inviting_user_id'])
             inv['inviting_user'] = usrInf
             grpInf = createObject('groupserver.GroupInfo',
@@ -83,10 +83,10 @@ class GSInviationsLog(BrowserView):
         invitations = self.groupMemberQuery.get_invitations_sent_by_user(
             self.siteInfo.id, self.userInfo.id)
         for inv in invitations:
-            usrInf = createObject('groupserver.UserFromId', 
+            usrInf = createObject('groupserver.UserFromId',
               self.context, inv['user_id'])
             inv['user'] = usrInf
-            grpInf = createObject('groupserver.GroupInfo', 
+            grpInf = createObject('groupserver.GroupInfo',
               self.context, inv['group_id'])
             inv['group'] = grpInf
         assert type(invitations) == list
