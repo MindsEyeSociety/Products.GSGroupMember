@@ -9,7 +9,7 @@ from Products.GSGroupMember.groupmembership import user_division_admin_of_group,
   user_group_admin_of_group, user_participation_coach_of_group, \
   user_moderator_of_group, user_moderated_member_of_group, \
   user_blocked_member_of_group, user_posting_member_of_group, \
-  user_invited_member_of_group
+  user_invited_member_of_group, user_member_of_group
 from Products.GSGroupMember.interfaces import IGSGroupMembershipStatus
 
 class GSGroupMembershipStatus(object):
@@ -30,6 +30,7 @@ class GSGroupMembershipStatus(object):
         
         self.__status_label = None
         self.__isNormalMember = None
+        self.__isConfused = None
         self.__isOddlyConfigured = None
         self.__isSiteAdmin = None
         self.__isGroupAdmin = None
@@ -73,7 +74,9 @@ class GSGroupMembershipStatus(object):
                 statuses.append('Moderated Member')
             if self.isBlocked:
                 statuses.append('Blocked Member')
-            if self.isInvited:
+            if self.isConfused:
+                statuses.append('Invited Member (despite already being in the group)')
+            elif self.isInvited:
                 statuses.append('Invited Member')
             label = comma_comma_and(statuses)
 
@@ -124,7 +127,8 @@ class GSGroupMembershipStatus(object):
             # A member is also oddly configured if they are any
             # combination of posting restrictions with only being invited.
             self.__isOddlyConfigured = \
-              ((self.isSiteAdmin or 
+              (self.isConfused or
+               (self.isSiteAdmin or 
                 self.isGroupAdmin or \
                 self.isPtnCoach or \
                 (self.isPostingMember and \
@@ -136,6 +140,13 @@ class GSGroupMembershipStatus(object):
         retval = self.__isOddlyConfigured
         assert type(retval) == bool
         return retval
+
+    @property
+    def isConfused(self):
+        if self.__isConfused == None:
+            isFullMember = user_member_of_group(self.userInfo, self.groupInfo)
+            self.__isConfused = (isFullMember and self.isInvited)
+        return self.__isConfused
 
     @property
     def isSiteAdmin(self):

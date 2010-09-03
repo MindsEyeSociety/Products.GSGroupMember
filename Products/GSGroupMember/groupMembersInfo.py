@@ -52,8 +52,14 @@ class GSGroupMembersInfo(object):
     @property
     def members(self):
         if self.__members == None:
-            members = \
-              self.fullMembers + self.invitedMembers
+            allMembers = self.fullMembers + self.invitedMembers
+            fullMemberIds = set([m.id for m in self.fullMembers])
+            invitedMemberIds = set([m.id for m in self.invitedMembers])
+            distinctMemberIds = fullMemberIds.union(invitedMemberIds)
+            members = []
+            for uId in distinctMemberIds:
+                member = [m for m in allMembers if m.id==uId][0]
+                members.append(member)
             members.sort(sort_by_name)
             self.__members = members
         return self.__members
