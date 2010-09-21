@@ -87,6 +87,11 @@ class GSGroupMembershipStatus(object):
                 label = 'Oddly Configured Member: %s' % label
             if self.isUnverified:
                 label = '%s with no verified email addresses' % label
+            if self.isInvited:
+                resendLink = 'resend_invitation.html?form.userId=%s' % \
+                  self.userInfo.id
+                label = '%s (<a href="%s">Resend Invitation</a>)' %\
+                  (label, resendLink) 
             self.__status_label = label
         retval = self.__status_label
         assert retval
