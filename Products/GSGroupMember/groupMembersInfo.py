@@ -2,7 +2,6 @@
 from zope.component import createObject
 from zope.interface import implements
 from Products.XWFCore.XWFUtils import sort_by_name
-
 from groupmembership import GroupMembers, InvitedGroupMembers
 from interfaces import IGSGroupMembersInfo
 
@@ -24,8 +23,10 @@ class GSGroupMembersInfo(object):
     @property
     def fullMembers(self):
         if self.__fullMembers == None:
-            self.__fullMembers = \
+            members = \
               GroupMembers(self.context).members
+            members.sort(sort_by_name)
+            self.__fullMembers = members
         return self.__fullMembers
     
     @property
@@ -38,8 +39,10 @@ class GSGroupMembersInfo(object):
     @property
     def invitedMembers(self):
         if self.__invitedMembers == None:
-            self.__invitedMembers = \
+            members = \
               InvitedGroupMembers(self.context, self.siteInfo).members
+            members.sort(sort_by_name)
+            self.__invitedMembers = members
         return self.__invitedMembers
     
     @property
