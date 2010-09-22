@@ -50,6 +50,7 @@ class IGSUserCanPostContentProvider(IContentProvider):
       default=u"browser/templates/canpost.pt") 
     
 class IGSGroupMembersInfo(Interface):
+    mlistInfo = Attribute("""A mailingListInfo instance""")
     groupInfo = Attribute("""A groupInfo instance""")
     siteInfo = Attribute("""A siteInfo instance""")
     members = Attribute("""All the members of the group, including invited members """\
@@ -62,11 +63,19 @@ class IGSGroupMembersInfo(Interface):
                                """but neither declined nor accepted""")
     invitedMemberCount = Attribute("""The number of members who have been invited to """\
                                    """the group, but neither declined nor accepted""")
+    ptnCoach = Attribute("""A userInfo instance""")
+    groupAdmins = Attribute("""A list of userInfo instances""")
+    siteAdmins = Attribute("""A list of userInfo instances""")
+    moderators = Attribute("""A list of userInfo instances""")
+    moderatees = Attribute("""A list of userInfo instances""")
+    blockedMembers = Attribute("""A list of userInfo instances""")
+    postingMembers = Attribute("""A list of userInfo instances""")
 
 class IGSGroupMembershipStatus(Interface):
     userInfo = Attribute("""A userInfo instance""")
     groupInfo = Attribute("""A groupInfo instance""")
     siteInfo = Attribute("""A siteInfo instance""")
+    membersInfo = Attribute("""An IGSGroupMembersInfo instance""")
         
     status_label = TextLine(title=u'Status',
       description=u'A textual description of the user\'s status '\

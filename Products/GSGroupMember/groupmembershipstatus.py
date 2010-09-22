@@ -3,30 +3,25 @@ from zope.component import createObject, adapts
 from zope.interface import implements
 from Products.CustomUserFolder.interfaces import IGSUserInfo
 from Products.XWFCore.XWFUtils import comma_comma_and
-from Products.GSContent.interfaces import IGSSiteInfo
-from Products.GSGroup.interfaces import IGSGroupInfo
 from Products.GSGroupMember.groupmembership import user_division_admin_of_group, \
-  user_group_admin_of_group, user_participation_coach_of_group, \
-  user_moderator_of_group, user_moderated_member_of_group, \
-  user_blocked_member_of_group, user_posting_member_of_group, \
-  user_invited_member_of_group, user_member_of_group
-from Products.GSGroupMember.interfaces import IGSGroupMembershipStatus
+  user_group_admin_of_group
+from Products.GSGroupMember.interfaces import IGSGroupMembershipStatus, \
+  IGSGroupMembersInfo
 
 class GSGroupMembershipStatus(object):
-    adapts(IGSUserInfo, IGSGroupInfo)
+    adapts(IGSUserInfo, IGSGroupMembersInfo)
     implements(IGSGroupMembershipStatus)
 
-    def __init__(self, userInfo, groupInfo, siteInfo):
+    def __init__(self, userInfo, membersInfo):
         assert IGSUserInfo.providedBy(userInfo), \
           u'%s is not a GSUserInfo' % userInfo
-        assert IGSGroupInfo.providedBy(groupInfo), \
-          u'%s is not a GSGroupInfo' % groupInfo
-        assert IGSSiteInfo.providedBy(siteInfo), \
-          u'%s is not a GSSiteInfo' % siteInfo
+        assert IGSGroupMembersInfo.providedBy(membersInfo), \
+          u'%s is not a GSGroupMembersInfo' % membersInfo
         
         self.userInfo = userInfo
-        self.groupInfo = groupInfo
-        self.siteInfo = siteInfo
+        self.membersInfo = membersInfo
+        self.groupInfo = membersInfo.groupInfo
+        self.siteInfo = membersInfo.siteInfo
         
         self.__status_label = None
         self.__isNormalMember = None
@@ -45,15 +40,9 @@ class GSGroupMembershipStatus(object):
         self.__isUnverified = None
         
         # Group Status
-        mailingListInfo = \
-          createObject('groupserver.MailingListInfo', 
-                        self.groupInfo.groupObj)
-        self.groupIsModerated = \
-          mailingListInfo.is_moderated
-        self.postingIsSpecial = \
-          self.groupInfo.group_type == 'announcement'
-        self.numPostingMembers = \
-          len(mailingListInfo.posting_members)
+        self.groupIsModerated = membersInfo.mlistInfo.is_moderated
+        self.postingIsSpecial = self.groupInfo.group_type == 'announcement'
+        self.numPostingMembers = len(membersInfo.postingMembers)
 
     @property
     def status_label(self):
@@ -93,9 +82,7 @@ class GSGroupMembershipStatus(object):
                 label = '%s (<a href="%s">Resend Invitation</a>)' %\
                   (label, resendLink) 
             self.__status_label = label
-        retval = self.__status_label
-        assert retval
-        return retval
+        return self.__status_label
 
     @property
     def isNormalMember(self):
@@ -110,16 +97,13 @@ class GSGroupMembershipStatus(object):
               not(self.isSiteAdmin) and \
                 not(self.isGroupAdmin) and \
                 not(self.isPtnCoach) and \
-                not(self.isPostingMember and \
-                     (self.groupInfo.group_type == 'announcement')) and \
+                not(self.isPostingMember and self.postingIsSpecial) and \
                 not(self.isModerator) and \
                 not(self.isModerated) and \
                 not(self.isBlocked) and \
                 not(self.isInvited) and \
                 not(self.isOddlyConfigured)
-        retval = self.__isNormalMember
-        assert type(retval) == bool
-        return retval
+        return self.__isNormalMember
     
     @property
     def isOddlyConfigured(self):
@@ -136,20 +120,19 @@ class GSGroupMembershipStatus(object):
                (self.isSiteAdmin or 
                 self.isGroupAdmin or \
                 self.isPtnCoach or \
-                (self.isPostingMember and \
-                  (self.groupInfo.group_type == 'announcement')) or\
-                self.isModerator) and \
-               (self.isModerated or self.isBlocked or self.isInvited)) or \
-              (self.isModerated and (self.isBlocked or self.isInvited)) or \
-              (self.isBlocked and self.isInvited)
-        retval = self.__isOddlyConfigured
-        assert type(retval) == bool
-        return retval
+                (self.isPostingMember and self.postingIsSpecial) or \
+                self.isModerator) \
+               and \
+               (self.isModerated or self.isBlocked or self.isInvited)) \
+              or (self.isModerated and (self.isBlocked or self.isInvited)) \
+              or (self.isBlocked and self.isInvited)
+        return self.__isOddlyConfigured
 
     @property
     def isConfused(self):
         if self.__isConfused == None:
-            isFullMember = user_member_of_group(self.userInfo, self.groupInfo)
+            isFullMember = self.userInfo.id in \
+              [u.id for u in self.membersInfo.fullMembers]
             self.__isConfused = (isFullMember and self.isInvited)
         return self.__isConfused
 
@@ -159,9 +142,7 @@ class GSGroupMembershipStatus(object):
             self.__isSiteAdmin = \
               user_division_admin_of_group(self.userInfo, \
                 self.groupInfo)
-        retval = self.__isSiteAdmin
-        assert type(retval) == bool
-        return retval
+        return self.__isSiteAdmin
         
     @property
     def isGroupAdmin(self):
@@ -169,79 +150,55 @@ class GSGroupMembershipStatus(object):
             self.__isGroupAdmin = \
               user_group_admin_of_group(self.userInfo, \
                 self.groupInfo)
-        retval = self.__isGroupAdmin
-        assert type(retval) == bool
-        return retval        
+        return self.__isGroupAdmin
 
     @property
     def isPtnCoach(self):
         if self.__isPtnCoach == None:
-            self.__isPtnCoach = \
-              user_participation_coach_of_group(self.userInfo, \
-                self.groupInfo)
-        retval = self.__isPtnCoach
-        assert type(retval) == bool
-        return retval
+            self.__isPtnCoach = self.membersInfo.ptnCoach and \
+              (self.membersInfo.ptnCoach.id == self.userInfo.id) or False
+        return self.__isPtnCoach
 
     @property
     def isPostingMember(self):
         if self.__isPostingMember == None:
-            self.__isPostingMember = \
-              user_posting_member_of_group(self.userInfo, \
-                self.groupInfo)
-        retval = self.__isPostingMember
-        assert type(retval) == bool
-        return retval
+            self.__isPostingMember = self.userInfo.id in \
+              [m.id for m in self.membersInfo.postingMembers]
+        return self.__isPostingMember
 
     @property
     def isModerator(self):
         if self.__isModerator == None:
-            self.__isModerator = \
-              user_moderator_of_group(self.userInfo, \
-                self.groupInfo)
-        retval = self.__isModerator
-        assert type(retval) == bool
-        return retval
+            self.__isModerator = self.userInfo.id in \
+              [m.id for m in self.membersInfo.moderators]
+        return self.__isModerator
 
     @property
     def isModerated(self):
         if self.__isModerated == None:
-            self.__isModerated = \
-              user_moderated_member_of_group(self.userInfo, \
-                self.groupInfo)
-        retval = self.__isModerated
-        assert type(retval) == bool
-        return retval
+            self.__isModerated = self.userInfo.id in \
+              [m.id for m in self.membersInfo.moderatees]
+        return self.__isModerated
 
     @property
     def isBlocked(self):
         if self.__isBlocked == None:
-            self.__isBlocked = \
-              user_blocked_member_of_group(self.userInfo, \
-                self.groupInfo)
-        retval = self.__isBlocked
-        assert type(retval) == bool
-        return retval
+            self.__isBlocked = self.userInfo.id in \
+              [m.id for m in self.membersInfo.blockedMembers]
+        return self.__isBlocked
 
     @property
     def isInvited(self):
         if self.__isInvited == None:
-            self.__isInvited = \
-              user_invited_member_of_group(self.userInfo, \
-                self.groupInfo, self.siteInfo)
-        retval = self.__isInvited
-        assert type(retval) == bool
-        return retval
+            self.__isInvited = self.userInfo.id in \
+              [u.id for u in self.membersInfo.invitedMembers]
+        return self.__isInvited
 
     @property
     def isUnverified(self):
         if self.__isUnverified == None:
+            self.__isUnverified = True
             if self.userInfo.user.get_verifiedEmailAddresses():
                 self.__isUnverified = False
-            else:
-                self.__isUnverified = True
-        retval = self.__isUnverified
-        assert type(retval) == bool
-        return retval
-    
+        return self.__isUnverified
     
