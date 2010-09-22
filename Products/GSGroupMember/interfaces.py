@@ -70,6 +70,8 @@ class IGSGroupMembersInfo(Interface):
     moderatees = Attribute("""A list of userInfo instances""")
     blockedMembers = Attribute("""A list of userInfo instances""")
     postingMembers = Attribute("""A list of userInfo instances""")
+    unverifiedMembers = Attribute("""A list of userInfo instances""")
+    managers = Attribute("""A list of userInfo instances""")
 
 class IGSGroupMembershipStatus(Interface):
     userInfo = Attribute("""A userInfo instance""")

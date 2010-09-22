@@ -24,6 +24,7 @@ class GSGroupMembersInfo(object):
         self.__ptnCoach = self.__groupAdmins = None
         self.__moderators = self.__moderatees = None
         self.__blockedMembers = self.__postingMembers = None
+        self.__unverifiedMembers = self.__managers = None
 
     @property
     def fullMembers(self):
@@ -180,4 +181,29 @@ class GSGroupMembersInfo(object):
                 posters.sort(sort_by_name)
                 self.__postingMembers = posters
         return self.__postingMembers
+    
+    @property
+    def unverifiedMembers(self):
+        if self.__unverifiedMembers == None:
+            members = [ m for m in self.members 
+              if not(m.user.get_verifiedEmailAddresses())]
+            members.sort(sort_by_name)
+            self.__unverifiedMembers = members
+        return self.__unverifiedMembers
+    
+    @property
+    def managers(self):
+        if self.__managers == None:
+            admins = self.groupAdmins + self.siteAdmins
+            groupAdminIds = set([a.id for a in self.groupAdmins])
+            siteAdminIds = set([a.id for a in self.siteAdmins])
+            distinctAdminIds = groupAdminIds.union(siteAdminIds)
+            managers = []
+            for uId in distinctAdminIds:
+                admin = [a for a in admins if a.id==uId][0]
+                managers.append(admin)
+            managers.sort(sort_by_name)
+            self.__managers = managers
+        return self.__managers
+    
     
