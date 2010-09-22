@@ -28,7 +28,8 @@ class GSGroupMembersInfo(object):
     @property
     def fullMembers(self):
         if self.__fullMembers == None:
-            self.__fullMembers = GroupMembers(self.context).members
+            members = GroupMembers(self.context).members
+            self.__fullMembers = members.sort(sort_by_name)
         return self.__fullMembers
     
     @property
@@ -38,8 +39,9 @@ class GSGroupMembersInfo(object):
     @property
     def invitedMembers(self):
         if self.__invitedMembers == None:
-            self.__invitedMembers = \
-              InvitedGroupMembers(self.context, self.siteInfo).members
+            members = \
+              InvitedGroupMembers(self.context, self.siteInfo).members 
+            self.__invitedMembers = members.sort(sort_by_name)
         return self.__invitedMembers
     
     @property
