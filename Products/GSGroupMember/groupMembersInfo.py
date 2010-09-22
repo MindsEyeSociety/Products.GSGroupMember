@@ -111,7 +111,8 @@ class GSGroupMembersInfo(object):
                     else:
                         moderators.append(createObject('groupserver.UserFromId', \
                                                        self.context, uId))
-                self.__moderators = moderators.sort(sort_by_name)
+                moderators.sort(sort_by_name)
+                self.__moderators = moderators
         return self.__moderators
       
     @property
@@ -144,7 +145,8 @@ class GSGroupMembersInfo(object):
                         if (not(isSiteAdmin) and not(isGrpAdmin) and \
                             not(isPtnCoach) and not(isModerator) and not(isBlocked)):
                             moderatees.append(u)
-                self.__moderatees = moderatees.sort(sort_by_name)
+                moderatees.sort(sort_by_name)
+                self.__moderatees = moderatees
         return self.__moderatees
       
     @property
@@ -175,6 +177,7 @@ class GSGroupMembersInfo(object):
                     else:
                         posters.append(createObject('groupserver.UserFromId', \
                                                     self.context, uId))
-                self.__postingMembers = posters.sort(sort_by_name)
+                posters.sort(sort_by_name)
+                self.__postingMembers = posters
         return self.__postingMembers
     
