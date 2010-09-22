@@ -198,6 +198,6 @@ class GSGroupMembershipStatus(object):
     def isUnverified(self):
         if self.__isUnverified == None:
             self.__isUnverified = self.userInfo.id in \
-              [m.id for m in self.membersInfo.verifiedMembers]
+              [m.id for m in self.membersInfo.unverifiedMembers]
         return self.__isUnverified
     
