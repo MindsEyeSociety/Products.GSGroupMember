@@ -115,6 +115,12 @@ class IGSGroupMembershipStatus(Interface):
       description=u'Has the member been invited to the group, but '\
         u'not yet accepted or declined the invitation?',
       required=True)
+    isFullMember = Bool(title=u'Is Full Member',
+      description=u'Is the user a full member of the group?',
+      required=True)
+    isMember = Bool(title=u'Is Member',
+      description=u'Is the user a member of the group, whether full or invited?',
+      required=True)
     isUnverified = Bool(title=u'Is Unverified',
       description=u'Does the member have no verified email addresses?',
       required=True)
