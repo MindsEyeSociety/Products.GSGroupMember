@@ -87,8 +87,8 @@ class GSGroupMembersInfo(object):
         if self.__groupAdmins == None:
             admins = self.group.users_with_local_role('GroupAdmin')
             self.__groupAdmins = \
-              [ createObject('groupserver.UserFromId', self.context, a) 
-                for a in admins if a.id in self.memberIds ]
+              [ createObject('groupserver.UserFromId', self.context, aId) 
+                for aId in admins if aId in self.memberIds ]
         return self.__groupAdmins
       
     @property
@@ -142,7 +142,7 @@ class GSGroupMembersInfo(object):
                         else:
                             moderatees.append(createObject('groupserver.UserFromId', \
                                                            self.context, uId))
-                elif not(self.mlist.is_moderate_new):
+                elif not(self.mlistInfo.is_moderate_new):
                     for u in self.fullMembers:
                         isPtnCoach = self.ptnCoach and (self.ptnCoach.id == u.id) or False
                         isGrpAdmin = u.id in [ a.id for a in self.groupAdmins ]
