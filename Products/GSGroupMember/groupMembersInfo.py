@@ -21,7 +21,8 @@ class GSGroupMembersInfo(object):
         self.__members = self.__memberIds = None
         self.__fullMembers = self.__invitedMembers = None
         
-        self.__ptnCoach = self.__groupAdmins = None
+        self.__ptnCoach = None
+        self.__groupAdmins = self.__siteAdmins = None
         self.__moderators = self.__moderatees = None
         self.__blockedMembers = self.__postingMembers = None
         self.__unverifiedMembers = self.__managers = None
@@ -85,13 +86,18 @@ class GSGroupMembersInfo(object):
     def groupAdmins(self):
         if self.__groupAdmins == None:
             admins = self.group.users_with_local_role('GroupAdmin')
-            self.__groupAdmins = [ createObject('groupserver.UserFromId',
-                                        self.context, a) for a in admins ]
+            self.__groupAdmins = \
+              [ createObject('groupserver.UserFromId', self.context, a) 
+                for a in admins if a.id in self.memberIds ]
         return self.__groupAdmins
       
     @property
     def siteAdmins(self):
-        return self.siteInfo.site_admins
+        if self.__siteAdmins == None:
+            admins = self.siteInfo.site_admins
+            self.__siteAdmins = \
+              [ a for a in admins if a.id in self.memberIds ]
+        return self.__siteAdmins
       
     @property
     def moderators(self):
@@ -141,8 +147,8 @@ class GSGroupMembersInfo(object):
                         isPtnCoach = self.ptnCoach and (self.ptnCoach.id == u.id) or False
                         isGrpAdmin = u.id in [ a.id for a in self.groupAdmins ]
                         isSiteAdmin = u.id in [ a.id for a in self.siteAdmins ]
-                        isModerator = (u in self.moderators)
-                        isBlocked = (u in self.blockedMembers)
+                        isModerator = u.id in [ m.id for m in self.moderators ]
+                        isBlocked = u.id in [ m.id for m in self.blockedMembers ]
                         if (not(isSiteAdmin) and not(isGrpAdmin) and \
                             not(isPtnCoach) and not(isModerator) and not(isBlocked)):
                             moderatees.append(u)
