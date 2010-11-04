@@ -1,4 +1,5 @@
 # coding=utf-8
+# TODO: Move to gs.group.member.base
 from zope.component import createObject
 from zope.interface import implements
 from Products.XWFCore.XWFUtils import sort_by_name
@@ -26,6 +27,8 @@ class GSGroupMembersInfo(object):
         self.__moderators = self.__moderatees = None
         self.__blockedMembers = self.__postingMembers = None
         self.__unverifiedMembers = self.__managers = None
+
+    # TODO: Add a "normalMembers" property (full members - ptnCoach - admin)
 
     @property
     def fullMembers(self):
