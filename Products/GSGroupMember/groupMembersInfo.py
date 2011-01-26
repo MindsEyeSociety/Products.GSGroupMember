@@ -3,6 +3,7 @@
 from zope.component import createObject
 from zope.interface import implements
 from Products.XWFCore.XWFUtils import sort_by_name
+from gs.profile.email.base.emailuser import EmailUser
 from groupmembership import GroupMembers, InvitedGroupMembers
 from interfaces import IGSGroupMembersInfo
 
@@ -194,8 +195,10 @@ class GSGroupMembersInfo(object):
     @property
     def unverifiedMembers(self):
         if self.__unverifiedMembers == None:
-            members = [ m for m in self.members 
-              if not(m.user.get_verifiedEmailAddresses())]
+            emailUsers = [ EmailUser(self.context, m) 
+                           for m in self.members ]
+            members = [ e.userInfo for e in emailUsers 
+              if not(e.get_verified_addresses())]
             members.sort(sort_by_name)
             self.__unverifiedMembers = members
         return self.__unverifiedMembers

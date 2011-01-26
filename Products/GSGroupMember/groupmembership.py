@@ -12,6 +12,7 @@ import time
 from Products.CustomUserFolder.interfaces import IGSUserInfo, ICustomUser
 from Products.XWFCore.XWFUtils import sort_by_name
 from Products.GSGroup.interfaces import IGSGroupInfo, IGSMailingListInfo
+from gs.profile.email.base.emailuser import EmailUser
 from queries import GroupMemberQuery
 
 import logging
@@ -445,7 +446,8 @@ def get_unverified_group_users(context, groupId, excludeGroup=''):
     unverifiedUsers = []
     group_users = get_group_users(context, groupId, excludeGroup)
     for u in group_users:
-        if not u.get_verifiedEmailAddresses():
+        eu = EmailUser(context, u)
+        if not eu.get_verified_addresses():
             unverifiedUsers.append(u)
     retval = unverifiedUsers
     assert type(retval) == list

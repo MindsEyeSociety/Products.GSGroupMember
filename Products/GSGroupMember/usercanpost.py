@@ -15,6 +15,7 @@ from Products.XWFCore.XWFUtils import munge_date, timedelta_to_string, \
   comma_comma_and
 from Products.GSSearch.queries import MessageQuery
 from Products.GSProfile import interfaces as profileinterfaces
+from gs.profile.email.base.emailuser import EmailUser
 from interfaces import IGSPostingUser
 
 #TODO Replace with an audit trail
@@ -123,12 +124,12 @@ class GSGroupMemberPostingInfo(object):
         return retval
 
     def user_has_preferred_email_addresses(self):
-        '''Does the user have at least one preferred (alias default) email
-        address to post. This is mostly a safety catch to ensure that the
-        user has verified the email addresses.
+        '''Does the user have at least one preferred (alias default 
+        delivery) email address to post. This is mostly a safety 
+        catch to ensure that the user has verified the email addresses.
         '''
-        preferredEmailAddresses =\
-          self.userInfo.user.get_defaultDeliveryEmailAddresses()
+        emailUser = EmailUser(self.groupInfo.groupObj, self.userInfo)
+        preferredEmailAddresses = emailUser.get_delivery_addresses()
         retval = len(preferredEmailAddresses) >= 1
         if retval:
             self.__status = u'preferred email addresses'
