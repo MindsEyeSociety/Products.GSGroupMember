@@ -8,10 +8,6 @@
   <class class="OFS.Folder.Folder">
       <implements interface="zope.app.folder.interfaces.IFolder" />
   </class>
-
-  <class class=".usercanpost.GSGroupMemberPostingInfo">
-      <implements interface=".interfaces.IGSPostingUser" />
-  </class>
   
   <!--Vocabularies-->
   <utility
@@ -64,19 +60,6 @@
       name="invite-user-no-id"
       template="browser/templates/invite_user_no_id.pt" />
   </browser:pages>
-
-  <interface 
-    interface=".interfaces.IGSUserCanPostContentProvider"
-    type="zope.contentprovider.interfaces.ITALNamespaceData"/>
-  <adapter
-    factory=".usercanpostcontentprovider.GSUserCanPostContentProvider"
-    provides="zope.contentprovider.interfaces.IContentProvider"
-    name="groupserver.UserCanPost"/>
-    
-  <adapter
-    factory=".usercanpost.GSGroupMemberPostingInfo"
-    for="Products.XWFChat.interfaces.IGSGroupFolder Products.CustomUserFolder.interfaces.IGSUserInfo"
-    provides=".interfaces.IGSPostingUser" />
 
 </configure>
 
