@@ -1,4 +1,4 @@
-import usercanpostcontentprovider
+# coding=utf-8
 from AccessControl import ModuleSecurityInfo
 from AccessControl import allow_class
 
