@@ -1,4 +1,5 @@
 # coding=utf-8
+from zope.cachedescriptors.property import Lazy
 from zope.interface import implements, providedBy
 from zope.component import createObject
 from zope.schema.vocabulary import SimpleTerm
@@ -15,11 +16,17 @@ class SiteMembers(object):
 
     def __init__(self, context):
         self.context = context
-        self.__siteInfo = createObject('groupserver.SiteInfo', context)
-        self.__groupsInfo = createObject('groupserver.GroupsInfo', context)
-        
-        self.__acl_users = self.__members = self.__admin = None
-
+    
+    @Lazy
+    def siteInfo(self):
+        retval = createObject('groupserver.SiteInfo', self.context)
+        return retval
+    
+    @Lazy
+    def groupsInfo(self):
+        retval = createObject('groupserver.GroupsInfo', self.context)
+        return retval
+    
     def __iter__(self):
         """See zope.schema.interfaces.IIterableVocabulary"""
         retval = [SimpleTerm(m.id, m.id, m.name)
@@ -59,43 +66,34 @@ class SiteMembers(object):
                 return retval
         raise LookupError, token
         
-    @property
+    @Lazy
     def acl_users(self):
-        if self.__acl_users == None:
-            sr = self.context.site_root()
-            assert sr, 'No site root'
-            self.__acl_users = sr.acl_users
-        assert self.__acl_users, 'No ACL Users'
-        return self.__acl_users        
+        sr = self.context.site_root()
+        assert sr, 'No site root'
+        retval = sr.acl_users
+        assert retval, 'No ACL Users'
+        return retval
   
     def get_site_member_group_user_ids(self):
-        siteMemberGroupId = '%s_member' % self.__siteInfo.id
-        siteMemberGroup = self.acl_users.getGroupById(siteMemberGroupId)
-        assert siteMemberGroup, \
-          u'Could not get site-member group for %s (%s)' % \
-          (self.__siteInfo.name, self.__siteInfo.id)
+        siteMemberGroupId = '%s_member' % self.siteInfo.id
+        smg = self.acl_users.getGroupById(siteMemberGroupId)
+        assert smg, u'Could not get site-member group for %s (%s)' % \
+          (self.siteInfo.name, self.siteInfo.id)
   
-        retval = [uid for uid in siteMemberGroup.getUsers() 
-                  if self.acl_users.getUser(uid)]
-        assert type(retval) == list, \
-          'Retval is a %s, not a list' % type(siteMemberGroup)
+        retval = [uid for uid in smg.getUsers() 
+                    if self.acl_users.getUser(uid)]
+        assert type(retval) == list
         types = [type(u) == str for u in retval]
         assert reduce(lambda a, b: a and b, types, True), \
           u'Not all strings returned'
         return retval
         
-    @property
+    @Lazy
     def members(self):
         assert self.context
-        assert self.__siteInfo
-        if self.__members == None:
-            m = u'Generating membership list for %s (%s)' % \
-              (self.__siteInfo.name, self.__siteInfo.id)
-            log.info(m)
-            siteMemberGroupIds = self.get_site_member_group_user_ids()
-            self.__members = \
-              [createObject('groupserver.UserFromId', self.context, uid)
-               for uid in siteMemberGroupIds]
-        assert type(self.__members) == list
-        return self.__members
+        siteMemberGroupIds = self.get_site_member_group_user_ids()
+        retval = [createObject('groupserver.UserFromId', self.context, uid)
+                   for uid in siteMemberGroupIds]
+        assert type(retval) == list
+        return retval
 
