@@ -27,7 +27,7 @@
       />
   <utility
       provides="zope.schema.interfaces.IVocabularyFactory"
-      component="Products.GSGroupMember.groupmembership.InviteSiteMembersNonGroupMembers"
+      component="Products.GSGroupMember.sitemembernongroupmember.SiteMembersNonGroupMembers"
       name="groupserver.InviteMembersNonGroupMembers"
       />
   <utility
