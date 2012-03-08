@@ -7,7 +7,7 @@ from zope.schema.interfaces import IVocabulary, \
   IVocabularyTokenized, ITitledTokenizedTerm
 from zope.interface.common.mapping import IEnumerableMapping 
 from gs.profile.email.base.emailuser import EmailUser
-from sitemember import SiteMembers
+from gs.site.member import SiteMembers
 
 import logging
 log = logging.getLogger('SiteMemberNonGroupMembers') #@UndefinedVariable
