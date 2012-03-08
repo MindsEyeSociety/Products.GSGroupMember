@@ -1,11 +1,12 @@
 # coding=utf-8
+from zope.cachedescriptors.property import Lazy
 from zope.interface import implements, providedBy
 from zope.component import createObject
 from zope.schema.vocabulary import SimpleTerm
 from zope.schema.interfaces import IVocabulary, \
   IVocabularyTokenized, ITitledTokenizedTerm
 from zope.interface.common.mapping import IEnumerableMapping 
-
+from gs.profile.email.base.emailuser import EmailUser
 from sitemember import SiteMembers
 
 import logging
@@ -17,13 +18,44 @@ class SiteMembersNonGroupMembers(object):
 
     def __init__(self, context):
         self.context = context
-        self.__siteInfo = createObject('groupserver.SiteInfo', context)
-        self.__groupsInfo = createObject('groupserver.GroupsInfo', context)
-        self.__groupInfo = createObject('groupserver.GroupInfo', context)
+                
+    @Lazy
+    def acl_users(self):
+        sr = self.context.site_root()
+        retval = sr.acl_users
+        assert retval, 'No ACL Users'
+        return retval
+
+    @Lazy
+    def siteInfo(self):
+        retval = createObject('groupserver.SiteInfo', self.context)
+        return retval
+    
+    @Lazy
+    def groupsInfo(self):
+        retval = createObject('groupserver.GroupsInfo', self.context)
+        return retval
+    
+    @Lazy
+    def groupInfo(self):
+        retval = createObject('groupserver.GroupInfo', self.context)
+        return retval
         
-        self.__acl_users = self.__nonMembers = self.__admin = None
-        
-        self.siteMembers = SiteMembers(context)
+    @Lazy
+    def siteMembers(self):
+        return SiteMembers(self.context)
+
+    @Lazy
+    def nonMembers(self):
+        '''Get the members of the current site that are not a member of
+        the group, and who have an email address.'''
+        groupMemberGroupId = '%s_member' % self.groupInfo.id
+        retval = [ui for ui in self.siteMembers.members
+                    if ((groupMemberGroupId not in 
+                            self.acl_users.getUser(ui.id).getGroups())
+                        and (EmailUser(self.context, ui).get_addresses()))]
+        assert type(retval) == list
+        return retval
 
     def __iter__(self):
         """See zope.schema.interfaces.IIterableVocabulary"""
@@ -63,27 +95,4 @@ class SiteMembersNonGroupMembers(object):
                 assert retval.token == retval.value
                 return retval
         raise LookupError, token
-
-    @property
-    def acl_users(self):
-        if self.__acl_users == None:
-            sr = self.context.site_root()
-            assert sr, 'No site root'
-            self.__acl_users = sr.acl_users
-        assert self.__acl_users, 'No ACL Users'
-        return self.__acl_users
-
-    @property
-    def nonMembers(self):
-        m = u'Getting the list of members of %s (%s) who are not members '\
-          u'of %s (%s)' % \
-          (self.__siteInfo.name, self.__siteInfo.id,
-           self.__groupInfo.name, self.__groupInfo.id)
-        log.info(m)
-        
-        groupMemberGroupId = '%s_member' % self.__groupInfo.id
-        retval = [u for u in self.siteMembers.members
-                  if groupMemberGroupId not in 
-                    self.acl_users.getUser(u.id).getGroups()]
-        return retval
 
