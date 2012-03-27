@@ -99,7 +99,7 @@ class InvitationGroupsForSite(JoinableGroupsForSite):
       rights to and the user (context) has not been invited to too much.
     '''
     def __init__(self, user, context):
-        JoinableGroupsForSite.__init__(self, user)
+        JoinableGroupsForSite.__init__(self, context.user)
         self.__groupMemberQuery = self.__groups = None        
         self.viewingUserInfo = createObject('groupserver.LoggedInUser',
           context)
