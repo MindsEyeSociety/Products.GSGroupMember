@@ -33,8 +33,6 @@ setup(name='Products.GSGroupMember',
           'Products.GSSearch',
           'Products.GSAuditTrail',
           'Products.GSContent',
-          'gs.profile.invite',
-          'gs.group.member.invite',
           # -*- Extra requirements: -*-
       ],
       entry_points="""
