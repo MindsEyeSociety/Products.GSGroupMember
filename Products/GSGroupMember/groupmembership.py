@@ -107,9 +107,7 @@ class InvitationGroupsForSite(JoinableGroupsForSite):
     @property
     def groupMemberQuery(self):
         if self.__groupMemberQuery == None:
-            da = self.context.zsqlalchemy 
-            assert da, 'No data-adaptor found'
-            self.__groupMemberQuery = GroupMemberQuery(da)
+            self.__groupMemberQuery = GroupMemberQuery()
         return self.__groupMemberQuery
 
     @property
@@ -372,9 +370,7 @@ class InviteSiteMembersNonGroupMembers(SiteMembersNonGroupMembers):
     @property
     def groupMemberQuery(self):
         if self.__groupMemberQuery == None:
-            da = self.context.zsqlalchemy 
-            assert da, 'No data-adaptor found'
-            self.__groupMemberQuery = GroupMemberQuery(da)
+            self.__groupMemberQuery = GroupMemberQuery()
         return self.__groupMemberQuery
 
     @property
@@ -435,9 +431,7 @@ def get_group_users(context, groupId, excludeGroup=''):
     return retval
 
 def get_invited_members(context, siteId, groupId):
-    da = context.zsqlalchemy 
-    assert da, 'No data-adaptor found'
-    groupMemberQuery = GroupMemberQuery(da)
+    groupMemberQuery = GroupMemberQuery()
     return groupMemberQuery.get_invited_members(siteId, groupId)
 
 def get_unverified_group_users(context, groupId, excludeGroup=''):

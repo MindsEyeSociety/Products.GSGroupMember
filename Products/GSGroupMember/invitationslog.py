@@ -16,9 +16,7 @@ class GSInviationsLog(BrowserView):
         self.groupsInfo = createObject('groupserver.GroupsInfo', context)
         self.userInfo = GSUserInfo(context)
         
-        da = self.context.zsqlalchemy 
-        assert da, 'No data-adaptor found'
-        self.groupMemberQuery = GroupMemberQuery(da)
+        self.groupMemberQuery = GroupMemberQuery()
         
         self.__currentInvitations = None
         self.__pastInvitations = None
