@@ -1,11 +1,13 @@
 # coding=utf-8
 import sqlalchemy as sa
+from gs.database import getTable, getSession
+
 import logging
 log = logging.getLogger("GroupMemberQuery") #@UndefinedVariable
 
 class GroupMemberQuery(object):
     def __init__(self, da):
-        self.userInvitationTable = da.createTable('user_group_member_invitation')
+        self.userInvitationTable = getTable('user_group_member_invitation')
 
     def get_count_current_invitations_in_group(self, siteId, groupId, userId):
         uit = self.userInvitationTable
@@ -17,7 +19,8 @@ class GroupMemberQuery(object):
         s.append_whereclause(uit.c.withdrawn_date == None)
         s.append_whereclause(uit.c.response_date == None)
 
-        r = s.execute()
+        session = getSession()
+        r = session.execute(s)
         retval = r.scalar()
         if retval == None:
             retval = 0
@@ -34,7 +37,8 @@ class GroupMemberQuery(object):
         s.append_whereclause(uit.c.withdrawn_date == None)
         s.append_whereclause(uit.c.response_date == None)
         
-        r = s.execute()
+        session = getSession()
+        r = session.execute(s)
         retval = []
         if r.rowcount:
             retval = [ x['user_id'] for x in r ]
