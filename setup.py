@@ -25,6 +25,7 @@ setup(name='Products.GSGroupMember',
       zip_safe=False,
       install_requires=[
           'setuptools',
+          'gs.database',
           'Products.GSGroup',
           'Products.XWFCore',
           'Products.CustomUserFolder',
