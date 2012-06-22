@@ -6,7 +6,7 @@ import logging
 log = logging.getLogger("GroupMemberQuery") #@UndefinedVariable
 
 class GroupMemberQuery(object):
-    def __init__(self, da):
+    def __init__(self, da=None):
         self.userInvitationTable = getTable('user_group_member_invitation')
 
     def get_count_current_invitations_in_group(self, siteId, groupId, userId):
