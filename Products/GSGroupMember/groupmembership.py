@@ -14,6 +14,7 @@ from Products.XWFCore.XWFUtils import sort_by_name
 from Products.GSGroup.interfaces import IGSGroupInfo, IGSMailingListInfo
 from gs.profile.email.base.emailuser import EmailUser
 from queries import GroupMemberQuery
+from zope.cachedescriptors.property import Lazy
 
 import logging
 log = logging.getLogger('GSGroupMember GroupMembership') #@UndefinedVariable
@@ -265,15 +266,21 @@ class GroupMembers(object):
                 return retval
         raise LookupError, token
 
+    @Lazy
+    def member_ids(self):
+        assert self.context
+        userIds = get_group_userids(self.context, self.groupInfo.id)
+        return userIds
+
     @property
     def members(self):
         assert self.context
         
         if self.__members == None:
             # Get all members of the group
-            users = get_group_users(self.context, self.groupInfo.id)
+            member_ids = self.member_ids
             self.__members = [ createObject('groupserver.UserFromId',
-                                  u, u.getId()) for u in users ]
+                                  self.context, mid) for mid in member_ids ]
         assert type(self.__members) == list
         #assert reduce(lambda a, b: a and b, 
         #    [IGSUserInfo.providedBy(u) for u in self.__members], True)
@@ -390,6 +397,22 @@ class InviteSiteMembersNonGroupMembers(SiteMembersNonGroupMembers):
             self.__members.sort(sort_by_name)
         assert type(self.__members) == list
         return self.__members
+
+def get_group_userids(context, groupId):
+    '''Get the user Ids of members of a user group.
+    '''
+    assert context
+    assert groupId
+    assert type(groupId) == str
+    
+    memberGroupId = member_id(groupId)
+
+    site_root = context.site_root()
+    assert site_root, 'No site_root'
+    assert hasattr(site_root, 'acl_users'), 'No acl_users at site_root'
+    acl_users = site_root.acl_users
+    memberGroup = acl_users.getGroupById(memberGroupId, [])
+    return memberGroup.getUsers()
 
 def get_group_users(context, groupId, excludeGroup=''):
     '''Get the Members of a User Group
