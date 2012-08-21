@@ -1,5 +1,6 @@
 # coding=utf-8
 from Products.XWFCore.XWFUtils import getOption
+from gs.profile.notify.interfaces import IGSNotifyUser
 
 def inform_ptn_coach_of_join(ptnCoachInfo, newUserInfo, groupInfo):
     assert ptnCoachInfo
@@ -20,6 +21,6 @@ def inform_ptn_coach_of_join(ptnCoachInfo, newUserInfo, groupInfo):
         'joining_group': groupInfo.groupObj,
     }
     if not ptnCoachInfo.anonymous:
-        ptnCoachInfo.user.send_notification('join_group_admin',
-                                            groupInfo.id, n_dict)
+        notify = IGSNotifyUser(ptnCoachInfo)
+        notify.send_notification('join_group_admin', groupInfo.id, n_dict)
 
