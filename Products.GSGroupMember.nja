@@ -1,0 +1,7 @@
+{
+  "venv": "/opt/groupserver/bin/python", 
+  "project-type": "Import from sources", 
+  "name": "Products.GSGroupMember", 
+  "license": "GNU General Public License v3", 
+  "description": "The old group-member code for GroupServer"
+}
