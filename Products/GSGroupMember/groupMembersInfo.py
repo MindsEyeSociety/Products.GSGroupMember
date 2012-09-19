@@ -50,14 +50,11 @@ class GSGroupMembersInfo(object):
     @Lazy
     def members(self):
         allMembers = self.fullMembers + self.invitedMembers
-        fullMemberIds = set([m.id for m in self.fullMembers])
-        invitedMemberIds = set([m.id for m in self.invitedMembers])
-        distinctMemberIds = fullMemberIds.union(invitedMemberIds)
-        members = []
-        for uId in distinctMemberIds:
-            member = [m for m in allMembers if m.id == uId][0]
-            members.append(member)
-        return members
+        d = {}
+        for member in allMembers:
+            d[member.id] = member
+        retval = d.values()
+        return retval
 
     @Lazy
     def memberIds(self):
@@ -104,7 +101,7 @@ class GSGroupMembersInfo(object):
                 else:
                     retval.append(createObject('groupserver.UserFromId',
                                                    self.context, uId))
-        return self.__moderators
+        return retval
 
     @Lazy
     def moderatees(self):
