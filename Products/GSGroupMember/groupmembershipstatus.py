@@ -1,10 +1,11 @@
 # coding=utf-8
-from zope.component import createObject, adapts
+from zope.component import adapts
 from zope.interface import implements
 from Products.CustomUserFolder.interfaces import IGSUserInfo
 from Products.XWFCore.XWFUtils import comma_comma_and
 from Products.GSGroupMember.interfaces import IGSGroupMembershipStatus, \
   IGSGroupMembersInfo
+
 
 class GSGroupMembershipStatus(object):
     adapts(IGSUserInfo, IGSGroupMembersInfo)
@@ -15,7 +16,7 @@ class GSGroupMembershipStatus(object):
           u'%s is not a GSUserInfo' % userInfo
         assert IGSGroupMembersInfo.providedBy(membersInfo), \
           u'%s is not a GSGroupMembersInfo' % membersInfo
-        
+
         self.userInfo = userInfo
         self.membersInfo = membersInfo
         self.groupInfo = membersInfo.groupInfo
@@ -23,16 +24,16 @@ class GSGroupMembershipStatus(object):
         self.groupIsModerated = membersInfo.mlistInfo.is_moderated
         self.postingIsSpecial = (self.groupInfo.group_type == 'announcement')
         self.numPostingMembers = len(membersInfo.postingMembers)
-        
+
         self.__status_label = self.__isNormalMember = None
         self.__isSiteAdmin = self.__isGroupAdmin = None
         self.__isPtnCoach = self.__isPostingMember = None
         self.__isModerator = self.__isModerated = None
-        self.__isBlocked = self.__isInvited =None
+        self.__isBlocked = self.__isInvited = None
         self.__isMember = self.__isFullMember = None
         self.__isConfused = self.__isOddlyConfigured = None
         self.__isUnverified = None
-        
+
     def __bool__(self):
         return bool(self.isMember)
 
@@ -41,8 +42,8 @@ class GSGroupMembershipStatus(object):
 
     @property
     def status_label(self):
-        if self.__status_label == None:
-            label = ''            
+        if self.__status_label is None:
+            label = ''
             statuses = []
             if self.isSiteAdmin:
                 statuses.append('Site Administrator')
@@ -59,7 +60,8 @@ class GSGroupMembershipStatus(object):
             if self.isBlocked:
                 statuses.append('Blocked Member')
             if self.isConfused:
-                statuses.append('Invited Member (despite already being in the group)')
+                label = 'Invited Member (despite already being in the group)'
+                statuses.append(label)
             elif self.isInvited:
                 statuses.append('Invited Member')
             label = comma_comma_and(statuses)
@@ -87,7 +89,7 @@ class GSGroupMembershipStatus(object):
 
     @property
     def isNormalMember(self):
-        if self.__isNormalMember == None:
+        if self.__isNormalMember is None:
             # AM: A member is normal if they fulfil ALL of the
             #  following criteria:
             #  * do not hold an administration/management position,
@@ -106,25 +108,25 @@ class GSGroupMembershipStatus(object):
                 not(self.isInvited) and \
                 not(self.isOddlyConfigured)
         return self.__isNormalMember
-    
+
     @property
     def isOddlyConfigured(self):
-        if self.__isOddlyConfigured == None:
+        if self.__isOddlyConfigured is None:
             # AM: A member is oddly configured if they hold an
-            #  administration/management position AND: 
-            #  * are subjected to posting restrictions, or 
-            #  * are not a full member of the group, i.e. 
+            #  administration/management position AND:
+            #  * are subjected to posting restrictions, or
+            #  * are not a full member of the group, i.e.
             #    have only been invited, or have no verified addresses
             # A member is also oddly configured if they are any
             # combination of posting restrictions with only being invited.
             self.__isOddlyConfigured = \
               (self.isConfused or
-               (self.isSiteAdmin or 
-                self.isGroupAdmin or \
-                self.isPtnCoach or \
-                (self.isPostingMember and self.postingIsSpecial) or \
-                self.isModerator) \
-               and \
+               (self.isSiteAdmin or
+                self.isGroupAdmin or
+                self.isPtnCoach or
+                (self.isPostingMember and self.postingIsSpecial) or
+                self.isModerator)
+               and
                (self.isModerated or self.isBlocked or self.isInvited)) \
               or (self.isModerated and (self.isBlocked or self.isInvited)) \
               or (self.isBlocked and self.isInvited)
@@ -132,84 +134,82 @@ class GSGroupMembershipStatus(object):
 
     @property
     def isSiteAdmin(self):
-        if self.__isSiteAdmin == None:
+        if self.__isSiteAdmin is None:
             self.__isSiteAdmin = 'DivisionAdmin' in \
               self.userInfo.user.getRolesInContext(self.groupInfo.groupObj)
         return self.__isSiteAdmin
-        
+
     @property
     def isGroupAdmin(self):
-        if self.__isGroupAdmin == None:
+        if self.__isGroupAdmin is None:
             self.__isGroupAdmin = 'GroupAdmin' in \
               self.userInfo.user.getRolesInContext(self.groupInfo.groupObj)
         return self.__isGroupAdmin
 
     @property
     def isPtnCoach(self):
-        if self.__isPtnCoach == None:
+        if self.__isPtnCoach is None:
             self.__isPtnCoach = self.membersInfo.ptnCoach and \
               (self.membersInfo.ptnCoach.id == self.userInfo.id) or False
         return self.__isPtnCoach
 
     @property
     def isPostingMember(self):
-        if self.__isPostingMember == None:
+        if self.__isPostingMember is None:
             self.__isPostingMember = self.userInfo.id in \
               [m.id for m in self.membersInfo.postingMembers]
         return self.__isPostingMember
 
     @property
     def isModerator(self):
-        if self.__isModerator == None:
+        if self.__isModerator is None:
             self.__isModerator = self.userInfo.id in \
               [m.id for m in self.membersInfo.moderators]
         return self.__isModerator
 
     @property
     def isModerated(self):
-        if self.__isModerated == None:
+        if self.__isModerated is None:
             self.__isModerated = self.userInfo.id in \
               [m.id for m in self.membersInfo.moderatees]
         return self.__isModerated
 
     @property
     def isBlocked(self):
-        if self.__isBlocked == None:
+        if self.__isBlocked is None:
             self.__isBlocked = self.userInfo.id in \
               [m.id for m in self.membersInfo.blockedMembers]
         return self.__isBlocked
-    
+
     @property
     def isUnverified(self):
-        if self.__isUnverified == None:
+        if self.__isUnverified is None:
             self.__isUnverified = self.userInfo.id in \
               [m.id for m in self.membersInfo.unverifiedMembers]
         return self.__isUnverified
 
     @property
     def isInvited(self):
-        if self.__isInvited == None:
+        if self.__isInvited is None:
             self.__isInvited = self.userInfo.id in \
               [m.id for m in self.membersInfo.invitedMembers]
         return self.__isInvited
-    
+
     @property
     def isFullMember(self):
-        if self.__isFullMember == None:
+        if self.__isFullMember is None:
             self.__isFullMember = self.userInfo.id in \
               [m.id for m in self.membersInfo.fullMembers]
         return self.__isFullMember
-    
+
     @property
     def isMember(self):
-        if self.__isMember == None:
+        if self.__isMember is None:
             self.__isMember = (self.isFullMember or self.isInvited)
         return self.__isMember
-    
+
     @property
     def isConfused(self):
-        if self.__isConfused == None:
+        if self.__isConfused is None:
             self.__isConfused = (self.isFullMember and self.isInvited)
         return self.__isConfused
-    
-    
