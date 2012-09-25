@@ -36,7 +36,8 @@ class GSGroupMembersInfo(object):
 
     @property
     def fullMemberCount(self):
-        return len(self.fullMembers)
+        member_ids = GroupMembers(self.context).member_ids
+        return len(member_ids)
 
     @Lazy
     def invitedMembers(self):
