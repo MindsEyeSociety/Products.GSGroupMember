@@ -4,7 +4,7 @@ from zope.component import createObject
 from zope.schema.vocabulary import SimpleTerm
 from zope.schema.interfaces import IVocabulary, \
   IVocabularyTokenized, ITitledTokenizedTerm
-from zope.interface.common.mapping import IEnumerableMapping 
+from zope.interface.common.mapping import IEnumerableMapping
 from Products.XWFCore.XWFUtils import getOption
 from Products.GSGroupMember.utils import inform_ptn_coach_of_join
 import time
@@ -17,9 +17,10 @@ from queries import GroupMemberQuery
 from zope.cachedescriptors.property import Lazy
 
 import logging
-log = logging.getLogger('GSGroupMember GroupMembership') #@UndefinedVariable
+log = logging.getLogger('GSGroupMember GroupMembership')
 
 GROUP_FOLDER_TYPES = ('Folder', 'Folder (Ordered)')
+
 
 class JoinableGroupsForSite(object):
     implements(IVocabulary, IVocabularyTokenized)
@@ -31,14 +32,14 @@ class JoinableGroupsForSite(object):
                                      user, user.getId())
         self.__groupsInfo = createObject('groupserver.GroupsInfo', user)
         self.siteInfo = createObject('groupserver.SiteInfo', user)
-        
+
         self.__groups = None
-       
+
     def __iter__(self):
         """See zope.schema.interfaces.IIterableVocabulary"""
         retval = [SimpleTerm(g.get_id(), g.get_id(),
                              '%s: %s' % (g.get_name(),
-                                             g.get_property('description', '')))
+                                         g.get_property('description', '')))
                   for g in self.groups]
         for term in retval:
             assert term
@@ -63,7 +64,7 @@ class JoinableGroupsForSite(object):
     def getTerm(self, value):
         """See zope.schema.interfaces.IBaseVocabulary"""
         return self.getTermByToken(value)
-        
+
     def getTermByToken(self, token):
         """See zope.schema.interfaces.IVocabularyTokenized"""
         for g in self.groups:
@@ -73,27 +74,28 @@ class JoinableGroupsForSite(object):
                 assert ITitledTokenizedTerm in providedBy(retval)
                 assert retval.token == retval.value
                 return retval
-        raise LookupError, token
+        raise LookupError(token)
 
     @property
     def groups(self):
         assert self.context
         assert self.__groupsInfo
-        
-        if self.__groups == None:
+
+        if self.__groups is None:
             gs = self.__groupsInfo.get_joinable_groups_for_user(self.context)
             self.__groups = [createObject('groupserver.GroupInfo', g)
                              for g in gs]
         assert type(self.__groups) == list
         return self.__groups
-        
+
+
 class InvitationGroupsForSite(JoinableGroupsForSite):
     '''Get the invitation groups for the current site
-    
+
     DESCRIPTION
       Invitation groups are those that the user can be invited
       to join by the viewing user.
-      
+
       Technically, they are groups the user ("context") is not a member
       of, but the viewing user
       ("AccessControl.getSecurityManager().getUser()") has administrator
@@ -101,19 +103,19 @@ class InvitationGroupsForSite(JoinableGroupsForSite):
     '''
     def __init__(self, user, context):
         JoinableGroupsForSite.__init__(self, context.user)
-        self.__groupMemberQuery = self.__groups = None        
+        self.__groupMemberQuery = self.__groups = None
         self.viewingUserInfo = createObject('groupserver.LoggedInUser',
           context)
 
     @property
     def groupMemberQuery(self):
-        if self.__groupMemberQuery == None:
+        if self.__groupMemberQuery is None:
             self.__groupMemberQuery = GroupMemberQuery()
         return self.__groupMemberQuery
 
     @property
     def groups(self):
-        if self.__groups == None:
+        if self.__groups is None:
             self.__groups = [createObject('groupserver.GroupInfo', g)
                              for g in self.get_invitation_groups()]
             self.__groups.sort(sort_by_name)
@@ -123,14 +125,14 @@ class InvitationGroupsForSite(JoinableGroupsForSite):
     def get_invitation_groups(self):
         assert self.siteInfo
         top = time.time()
-        
+
         siteGroups = get_groups_on_site(self.siteInfo.siteObj)
         user = self.userInfo.user
         admin = self.viewingUserInfo.user
         c = self.groupMemberQuery.get_count_current_invitations_in_group
         u = self.userInfo
         n = getOption(user, 'max_invites_to_group', 5)
-        retval = [g for g in siteGroups 
+        retval = [g for g in siteGroups
                   if (not(user_member_of_group(user, g))
                       and user_admin_of_group(admin, g)
                       and (c(self.siteInfo.id, g.getId(), u.id) <= n))]
@@ -141,18 +143,20 @@ class InvitationGroupsForSite(JoinableGroupsForSite):
           (self.userInfo.name, self.userInfo.id,
            self.viewingUserInfo.name, self.viewingUserInfo.id,
            self.siteInfo.name, self.siteInfo.id, (bottom - top) * 1000.0)
-        log.info(m)        
+        log.info(m)
 
         assert type(retval) == list
         return retval
 
+
 class InvitationGroupsForSiteAndCurrentUser(InvitationGroupsForSite):
     def __init__(self, context):
         InvitationGroupsForSite.__init__(self, context, context)
-        
+
 ###########
 # Members #
 ###########
+
 
 class InvitedGroupMembers(object):
     implements(IVocabulary, IVocabularyTokenized)
@@ -161,26 +165,30 @@ class InvitedGroupMembers(object):
     def __init__(self, context, siteInfo):
         self.context = context
         self.siteInfo = siteInfo
-        self.groupInfo = createObject('groupserver.GroupInfo', context)
-        self.__members = None
-       
+        assert self.context
+
+    @Lazy
+    def groupInfo(self):
+            retval = createObject('groupserver.GroupInfo', self.context)
+            return retval
+
     def __iter__(self):
         """See zope.schema.interfaces.IIterableVocabulary"""
-        retval = [SimpleTerm(u.id, u.id, u.name)
-                  for u in self.members]
-        for term in retval:
-            assert term
-            assert ITitledTokenizedTerm in providedBy(term)
-            assert term.token == term.value
-        return iter(retval)
+        for uid in self.memberIds:
+            u = createObject('groupserver.UserFromId', self.context, uid)
+            retval = SimpleTerm(u.id, u.id, u.name)
+            assert retval
+            assert ITitledTokenizedTerm in providedBy(retval)
+            assert retval.token == retval.value
+            yield retval
 
     def __len__(self):
         """See zope.schema.interfaces.IIterableVocabulary"""
-        return len(self.members)
+        return len(self.memberIds)
 
     def __contains__(self, value):
         """See zope.schema.interfaces.IBaseVocabulary"""
-        retval = value in [u.id for u in self.members]
+        retval = value in self.memberIds
         assert type(retval) == bool
         return retval
 
@@ -191,32 +199,35 @@ class InvitedGroupMembers(object):
     def getTerm(self, value):
         """See zope.schema.interfaces.IBaseVocabulary"""
         return self.getTermByToken(value)
-        
+
     def getTermByToken(self, token):
         """See zope.schema.interfaces.IVocabularyTokenized"""
-        for u in self.members:
-            if u.id == token:
-                retval = SimpleTerm(u.id, u.id, u.name)
-                assert retval
-                assert ITitledTokenizedTerm in providedBy(retval)
-                assert retval.token == retval.value
-                return retval
-        raise LookupError, token
+        if token in self:
+            u = createObject('groupserver.UserFromId', self.context, token)
+            retval = SimpleTerm(u.id, u.id, u.name)
+        else:
+            raise LookupError(token)
+        assert retval
+        assert ITitledTokenizedTerm in providedBy(retval)
+        assert retval.token == retval.value
+        return retval
 
-    @property
+    @Lazy
+    def memberIds(self):
+        retval = get_invited_members(self.context, self.siteInfo.id,
+                                        self.groupInfo.id)
+        return retval
+
+    @Lazy
     def members(self):
-        assert self.context
-        if self.__members == None:
-            userIds = get_invited_members(self.context,
-              self.siteInfo.id, self.groupInfo.id)
-            self.__members = [ createObject('groupserver.UserFromId',
-                               self.context, uId) for uId in userIds ]
-            self.__members = [m for m in self.__members 
-                                if not m.anonymous]
-        assert type(self.__members) == list
-        #assert reduce(lambda a, b: a and b, 
+        ms = [createObject('groupserver.UserFromId', self.context, uId)
+                    for uId in self.memberIds]
+        retval = [m for m in ms if not m.anonymous]
+        assert type(retval) == list
+        #assert reduce(lambda a, b: a and b,
         #    [IGSUserInfo.providedBy(u) for u in self.__members], True)
-        return self.__members
+        return retval
+
 
 class GroupMembers(object):
     implements(IVocabulary, IVocabularyTokenized)
@@ -224,26 +235,31 @@ class GroupMembers(object):
 
     def __init__(self, context):
         self.context = context
-        self.groupInfo = createObject('groupserver.GroupInfo', context)
         self.__members = None
-       
+        assert self.context
+
+    @Lazy
+    def groupInfo(self):
+        retval = createObject('groupserver.GroupInfo', self.context)
+        return retval
+
     def __iter__(self):
         """See zope.schema.interfaces.IIterableVocabulary"""
-        retval = [SimpleTerm(u.id, u.id, u.name)
-                  for u in self.members]
-        for term in retval:
+        for uid in self.memberIds:
+            u = createObject('groupserver.UserFromId', self.context, uid)
+            term = SimpleTerm(u.id, u.id, u.name)
             assert term
             assert ITitledTokenizedTerm in providedBy(term)
             assert term.token == term.value
-        return iter(retval)
+            yield term
 
     def __len__(self):
         """See zope.schema.interfaces.IIterableVocabulary"""
-        return len(self.members)
+        return len(self.member_ids)
 
     def __contains__(self, value):
         """See zope.schema.interfaces.IBaseVocabulary"""
-        retval = value in [u.id for u in self.members]
+        retval = value in self.member_ids
         assert type(retval) == bool
         return retval
 
@@ -254,17 +270,18 @@ class GroupMembers(object):
     def getTerm(self, value):
         """See zope.schema.interfaces.IBaseVocabulary"""
         return self.getTermByToken(value)
-        
+
     def getTermByToken(self, token):
         """See zope.schema.interfaces.IVocabularyTokenized"""
-        for u in self.members:
-            if u.id == token:
-                retval = SimpleTerm(u.id, u.id, u.name)
-                assert retval
-                assert ITitledTokenizedTerm in providedBy(retval)
-                assert retval.token == retval.value
-                return retval
-        raise LookupError, token
+        if token in self.member_ids:
+            u = createObject('groupserver.UserFromId', self.context, token)
+            retval = SimpleTerm(u.id, u.id, u.name)
+        else:
+            raise LookupError(token)
+        assert retval
+        assert ITitledTokenizedTerm in providedBy(retval)
+        assert retval.token == retval.value
+        return retval
 
     @Lazy
     def member_ids(self):
@@ -274,17 +291,16 @@ class GroupMembers(object):
 
     @property
     def members(self):
-        assert self.context
-        
-        if self.__members == None:
+        if self.__members is None:
             # Get all members of the group
             member_ids = self.member_ids
-            self.__members = [ createObject('groupserver.UserFromId',
-                                  self.context, mid) for mid in member_ids ]
+            self.__members = [createObject('groupserver.UserFromId',
+                                  self.context, mid) for mid in member_ids]
         assert type(self.__members) == list
-        #assert reduce(lambda a, b: a and b, 
+        #assert reduce(lambda a, b: a and b,
         #    [IGSUserInfo.providedBy(u) for u in self.__members], True)
         return self.__members
+
 
 class SiteMembers(object):
     implements(IVocabulary, IVocabularyTokenized)
@@ -292,27 +308,30 @@ class SiteMembers(object):
 
     def __init__(self, context):
         self.context = context
-        self.siteInfo = createObject('groupserver.SiteInfo', context)
-        
-        self.__members = None
-       
+        assert self.context
+
+    @Lazy
+    def siteInfo(self):
+        retval = createObject('groupserver.SiteInfo', self.context)
+        return retval
+
     def __iter__(self):
         """See zope.schema.interfaces.IIterableVocabulary"""
-        retval = [SimpleTerm(u.id, u.id, u.name)
-                  for u in self.members]
-        for term in retval:
-            assert term
-            assert ITitledTokenizedTerm in providedBy(term)
-            assert term.token == term.value
-        return iter(retval)
+        for uid in self.memberIds:
+            u = createObject('groupserver.UserFromId', self.context, uid)
+            retval = SimpleTerm(u.id, u.id, u.name)
+            assert retval
+            assert ITitledTokenizedTerm in providedBy(retval)
+            assert retval.token == retval.value
+            yield retval
 
     def __len__(self):
         """See zope.schema.interfaces.IIterableVocabulary"""
-        return len(self.members)
+        return len(self.memberIds)
 
     def __contains__(self, value):
         """See zope.schema.interfaces.IBaseVocabulary"""
-        retval = value in [u.id for u in self.members]
+        retval = value in self.memberIds
         assert type(retval) == bool
         return retval
 
@@ -323,80 +342,77 @@ class SiteMembers(object):
     def getTerm(self, value):
         """See zope.schema.interfaces.IBaseVocabulary"""
         return self.getTermByToken(value)
-        
+
     def getTermByToken(self, token):
         """See zope.schema.interfaces.IVocabularyTokenized"""
-        for u in self.members:
-            if u.id == token:
-                retval = SimpleTerm(u.id, u.id, u.name)
-                assert retval
-                assert ITitledTokenizedTerm in providedBy(retval)
-                assert retval.token == retval.value
-                return retval
-        raise LookupError, token
+        if token in self:
+            u = createObject('groupserver.UserFromId', self.context, token)
+            retval = SimpleTerm(u.id, u.id, u.name)
+        else:
+            raise LookupError(token)
+        assert retval
+        assert ITitledTokenizedTerm in providedBy(retval)
+        assert retval.token == retval.value
+        return retval
 
-    @property
+    @Lazy
+    def memberIds(self):
+        retval = get_group_userids(self.context, self.siteInfo.id)
+        return retval
+
+    @Lazy
     def members(self):
-        assert self.context
-        
-        if self.__members == None:
-            # Get all members of the site, who are not members of the group
-            users = get_group_users(self.context, self.siteInfo.id)
-            self.__members = [createObject('groupserver.UserFromId',
-                                            self.context, u.getId()) 
-                             for u in users]
-        assert type(self.__members) == list
-        return self.__members
+        # Get all members of the site, who are not members of the group
+        retval = [createObject('groupserver.UserFromId', self.context, uid)
+                    for uid in self.memberIds]
+        assert type(retval) == list
+        return self.retval
+
 
 class SiteMembersNonGroupMembers(SiteMembers):
     def __init__(self, context):
         SiteMembers.__init__(self, context)
-        self.groupInfo = createObject('groupserver.GroupInfo', context)
-        
-        self.__members = None
 
-    @property
+    @Lazy
+    def groupInfo(self):
+        retval = createObject('groupserver.GroupInfo', self.context)
+        return retval
+
+    @Lazy
     def members(self):
-        assert self.context
-        
-        if self.__members == None:
-            users = get_group_users(self.context, self.siteInfo.id,
-                                    self.groupInfo.id)
-            self.__members = [createObject('groupserver.UserFromId',
-                                            self.context, u.getId()) 
-                             for u in users]
-        assert type(self.__members) == list
-        return self.__members
+        users = get_group_userids(self.context, self.siteInfo.id,
+                                self.groupInfo.id)
+        retval = [createObject('groupserver.UserFromId', self.context, uid)
+                    for uid in users]
+        assert type(retval) == list
+        return retval
+
 
 class InviteSiteMembersNonGroupMembers(SiteMembersNonGroupMembers):
     def __init__(self, context):
         SiteMembersNonGroupMembers.__init__(self, context)
-        
-        self.__members = self.__groupMemberQuery = None
-        
-    @property
-    def groupMemberQuery(self):
-        if self.__groupMemberQuery == None:
-            self.__groupMemberQuery = GroupMemberQuery()
-        return self.__groupMemberQuery
 
-    @property
+    @Lazy
+    def groupMemberQuery(self):
+        retval = GroupMemberQuery()
+        return retval
+
+    @Lazy
     def members(self):
         assert self.context
         c = self.groupMemberQuery.get_count_current_invitations_in_group
         n = getOption(self.siteInfo.siteObj, 'max_invites_to_group', 5)
         sid = self.siteInfo.id
         gid = self.groupInfo.id
-        if self.__members == None:
-            # Get all members of the site, who are not members of the group
-            users = get_group_users(self.context, sid, gid)
-            self.__members = [createObject('groupserver.UserFromId',
-                                            self.context, u.getId()) 
-                             for u in users
-                             if (c(sid, gid, u.getId()) <= n)]
-            self.__members.sort(sort_by_name)
-        assert type(self.__members) == list
-        return self.__members
+
+        # Get all members of the site, who are not members of the group
+        users = get_group_userids(self.context, sid, gid)
+        retval = [createObject('groupserver.UserFromId', self.context, uid)
+                    for uid in users if (c(sid, gid, uid) <= n)]
+        retval.sort(sort_by_name)
+        assert type(retval) == list
+        return retval
+
 
 def get_group_userids(context, groupId):
     '''Get the user Ids of members of a user group.
@@ -404,7 +420,7 @@ def get_group_userids(context, groupId):
     assert context
     assert groupId
     assert type(groupId) == str
-    
+
     memberGroupId = member_id(groupId)
 
     site_root = context.site_root()
@@ -412,11 +428,15 @@ def get_group_userids(context, groupId):
     assert hasattr(site_root, 'acl_users'), 'No acl_users at site_root'
     acl_users = site_root.acl_users
     memberGroup = acl_users.getGroupById(memberGroupId, [])
-    return memberGroup.getUsers()
+    retval = memberGroup.getUsers()
+
+    assert type(retval) == list, 'retval is a %s, not a list.' % type(retval)
+    return retval
+
 
 def get_group_users(context, groupId, excludeGroup=''):
     '''Get the Members of a User Group
-    
+
     Get the members of the user-group, identified by "groupId" who are
     not members of "excludeGroup"
     '''
@@ -425,19 +445,14 @@ def get_group_users(context, groupId, excludeGroup=''):
     #     group.users_with_local_role('GroupMember')
     #   * All users of all groups that have the GroupMember role
     #     group.groups_with_local_role('GroupMember')
-    assert context # What *is* the context?
-    assert groupId
-    assert type(groupId) == str
     assert type(excludeGroup) == str
-    
-    memberGroupId = member_id(groupId)
 
     site_root = context.site_root()
     assert site_root, 'No site_root'
     assert hasattr(site_root, 'acl_users'), 'No acl_users at site_root'
     acl_users = site_root.acl_users
-    memberGroup = acl_users.getGroupById(memberGroupId, [])
-    users = [acl_users.getUser(uid) for uid in memberGroup.getUsers()]
+    users = [acl_users.getUser(uid)
+                for uid in get_group_userids(context, groupId)]
 
     if excludeGroup != '':
         memberExcludeGroup = member_id(excludeGroup)
@@ -449,17 +464,19 @@ def get_group_users(context, groupId, excludeGroup=''):
         retval = users
     assert type(retval) == list
     # --=mpj17=-- I should really check that I am actually returning users.
-    #assert reduce(lambda a, b: a and b, 
+    #assert reduce(lambda a, b: a and b,
     #              [ICustomUser.providedBy(u) for u in retval], True)
     return retval
+
 
 def get_invited_members(context, siteId, groupId):
     groupMemberQuery = GroupMemberQuery()
     return groupMemberQuery.get_invited_members(siteId, groupId)
 
+
 def get_unverified_group_users(context, groupId, excludeGroup=''):
     # AM: To be removed when the new Manage Members code is deployed
-    #  and the old admin pages removed. 
+    #  and the old admin pages removed.
     unverifiedUsers = []
     group_users = get_group_users(context, groupId, excludeGroup)
     for u in group_users:
@@ -478,18 +495,20 @@ def get_unverified_group_users(context, groupId, excludeGroup=''):
 def member_id(groupId):
     assert type(groupId) == str
     assert groupId != ''
-    
+
     retval = '%s_member' % groupId
-    
+
     assert type(retval) == str
     return retval
+
 
 def groupInfo_to_group(g):
     if IGSGroupInfo.providedBy(g):
         group = g.groupObj
     else:
         group = g
-    return group    
+    return group
+
 
 def userInfo_to_user(u):
     if IGSUserInfo.providedBy(u):
@@ -498,6 +517,7 @@ def userInfo_to_user(u):
         user = u
     return user
 
+
 def user_to_userInfo(u):
     if ICustomUser.providedBy(u):
         user = IGSUserInfo(u)
@@ -505,10 +525,11 @@ def user_to_userInfo(u):
         user = u
     return user
 
+
 def get_groups_on_site(site):
     assert hasattr(site, 'groups'), u'No groups on the site %s' % site.getId()
     groups = getattr(site, 'groups')
-    retval = [g for g in \
+    retval = [g for g in
               groups.objectValues(GROUP_FOLDER_TYPES)
               if g.getProperty('is_group', False)]
     assert type(retval) == list
@@ -518,21 +539,22 @@ def get_groups_on_site(site):
 # Membership Checks #
 #####################
 
+
 def user_member_of_group(u, g):
     '''Is the user the member of the group
-    
+
     ARGUMENTS
         "user":  A Custom User.
         "group": A GroupServer group-folder.
-        
+
     RETURNS
         True if the user is the member of the group. False otherwise.
     '''
     group = groupInfo_to_group(g)
     user = userInfo_to_user(u)
-    
+
     retval = 'GroupMember' in user.getRolesInContext(group)
-    
+
     # Thundering great sanity check
     memberGroup = member_id(group.getId())
     userGroups = user.getGroups()
@@ -541,26 +563,29 @@ def user_member_of_group(u, g):
           (user.getId(), group.getId(), memberGroup)
         log.error(m)
     elif not(retval) and (memberGroup in userGroups):
-        m = u'(%s) is in %s, but does not have the GroupMember role in (%s)' % \
-          (user.getId(), memberGroup, group.getId())
+        m = u'(%s) is in %s, but does not have the GroupMember role in '\
+            u'(%s)' % (user.getId(), memberGroup, group.getId())
         log.error(m)
-        
+
     assert type(retval) == bool
     return retval
     return user
-    
+
+
 def user_member_of_site(user, site):
     retval = 'DivisionMember' in user.getRolesInContext(site)
     assert type(retval) == bool
     return retval
 
+
 def user_admin_of_group(u, g):
     group = groupInfo_to_group(g)
     user = userInfo_to_user(u)
-    retval = (user_group_admin_of_group(user, group) or 
+    retval = (user_group_admin_of_group(user, group) or
               user_division_admin_of_group(user, group))
     assert type(retval) == bool
     return retval
+
 
 def user_group_admin_of_group(u, g):
     group = groupInfo_to_group(g)
@@ -569,12 +594,14 @@ def user_group_admin_of_group(u, g):
     assert type(retval) == bool
     return retval
 
+
 def user_division_admin_of_group(u, g):
     group = groupInfo_to_group(g)
     user = userInfo_to_user(u)
     retval = ('DivisionAdmin' in user.getRolesInContext(group))
     assert type(retval) == bool
     return retval
+
 
 def user_participation_coach_of_group(userInfo, groupInfo):
     assert IGSUserInfo.providedBy(userInfo), '%s is not a IGSUserInfo' % \
@@ -585,6 +612,7 @@ def user_participation_coach_of_group(userInfo, groupInfo):
       and (userInfo.id == ptnCoachId)
     assert type(retval) == bool
     return retval
+
 
 def user_unverified_member_of_group(userInfo, groupInfo):
     assert IGSUserInfo.providedBy(userInfo), \
@@ -599,6 +627,7 @@ def user_unverified_member_of_group(userInfo, groupInfo):
     assert type(retval) == bool
     return retval
 
+
 def user_invited_member_of_group(userInfo, groupInfo, siteInfo):
     assert IGSUserInfo.providedBy(userInfo), \
       '%s is not a IGSUserInfo' % userInfo
@@ -607,10 +636,11 @@ def user_invited_member_of_group(userInfo, groupInfo, siteInfo):
     context = groupInfo.groupObj
     invited_group_members = \
       InvitedGroupMembers(context, siteInfo).members
-    retval = userInfo.id in [ m.id for m in invited_group_members ]
+    retval = userInfo.id in [m.id for m in invited_group_members]
     assert type(retval) == bool
     return retval
-    
+
+
 def user_moderator_of_group(userInfo, groupInfo):
     assert IGSUserInfo.providedBy(userInfo), \
       '%s is not an IGSUserInfo' % userInfo
@@ -619,10 +649,11 @@ def user_moderator_of_group(userInfo, groupInfo):
     context = groupInfo.groupObj
     mlistInfo = IGSMailingListInfo(context)
     retval = user_member_of_group(userInfo, groupInfo) and \
-      (userInfo.id in [ m.id for m in mlistInfo.moderators ])
+      (userInfo.id in [m.id for m in mlistInfo.moderators])
     assert type(retval) == bool
     return retval
-    
+
+
 def user_moderated_member_of_group(userInfo, groupInfo):
     assert IGSUserInfo.providedBy(userInfo), \
       '%s is not an IGSUserInfo' % userInfo
@@ -631,10 +662,11 @@ def user_moderated_member_of_group(userInfo, groupInfo):
     context = groupInfo.groupObj
     mlistInfo = IGSMailingListInfo(context)
     retval = user_member_of_group(userInfo, groupInfo) and \
-      (userInfo.id in [ m.id for m in mlistInfo.moderatees ])
+      (userInfo.id in [m.id for m in mlistInfo.moderatees])
     assert type(retval) == bool
     return retval
-    
+
+
 def user_blocked_member_of_group(userInfo, groupInfo):
     assert IGSUserInfo.providedBy(userInfo), \
       '%s is not an IGSUserInfo' % userInfo
@@ -643,9 +675,10 @@ def user_blocked_member_of_group(userInfo, groupInfo):
     context = groupInfo.groupObj
     mlistInfo = createObject('groupserver.MailingListInfo', context)
     retval = user_member_of_group(userInfo, groupInfo) and \
-      (userInfo.id in [ m.id for m in mlistInfo.blocked_members ])
+      (userInfo.id in [m.id for m in mlistInfo.blocked_members])
     assert type(retval) == bool
     return retval
+
 
 def user_posting_member_of_group(userInfo, groupInfo):
     assert IGSUserInfo.providedBy(userInfo), \
@@ -655,24 +688,25 @@ def user_posting_member_of_group(userInfo, groupInfo):
     context = groupInfo.groupObj
     mlistInfo = IGSMailingListInfo(context)
     retval = user_member_of_group(userInfo, groupInfo) and \
-      (userInfo.id in [ m.id for m in mlistInfo.posting_members ])
+      (userInfo.id in [m.id for m in mlistInfo.posting_members])
     assert type(retval) == bool
     return retval
 
+
 def join_group(u, groupInfo):
     '''Join the user to a group
-    
+
     DESCRIPTION
-      Joins the user to a group, and the site the group is in 
+      Joins the user to a group, and the site the group is in
       (if necessary).
-      
+
     ARGUMENTS
       "user":       The user that is joined to the group.
       "groupInfo":  The group that the user is joined to.
-      
+
     RETURNS
       None.
-      
+
     SIDE EFFECTS
       The user is a member of the group, and a member of the site that the
       group belongs to.
@@ -684,7 +718,7 @@ def join_group(u, groupInfo):
     assert not(user_member_of_group(user, groupInfo.groupObj)), \
       u'User %s (%s) already in %s (%s)' % \
       (userInfo.name, userInfo.id, groupInfo.name, groupInfo.name)
-    
+
     siteInfo = groupInfo.siteInfo
 
     m = u'join_group: adding the user %s (%s) to the group %s (%s) '\
@@ -712,4 +746,3 @@ def join_group(u, groupInfo):
 
     assert user_member_of_group(user, groupInfo.groupObj)
     assert user_member_of_site(user, siteInfo.siteObj)
-
