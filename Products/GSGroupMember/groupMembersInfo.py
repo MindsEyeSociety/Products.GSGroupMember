@@ -16,12 +16,30 @@ class GSGroupMembersInfo(object):
     implements(IGSGroupMembersInfo)
 
     def __init__(self, group):
-        self.context = group
-        self.group = group
-        self.mlistInfo = createObject('groupserver.MailingListInfo', group)
-        self.groupInfo = self.mlistInfo.groupInfo
-        self.siteInfo = createObject('groupserver.SiteInfo', group)
+        self.context = self.group = group
+        assert self.context
+
+    @Lazy
+    def mlistInfo(self):
+        retval = createObject('groupserver.MailingListInfo', self.group)
+        return retval
+
+    @Lazy
+    def groupInfo(self):
+        retval = self.mlistInfo.groupInfo
+        return retval
+
+    @Lazy
+    def siteInfo(self):
+        retval = createObject('groupserver.SiteInfo', self.group)
+        return retval
+
     # TODO: Add a "normalMembers" property (full members - ptnCoach - admin)
+
+    @Lazy
+    def groupMembers(self):
+        retval = GroupMembers(self.context)
+        return retval
 
     @Lazy
     def sortedMembers(self):
@@ -31,13 +49,13 @@ class GSGroupMembersInfo(object):
 
     @Lazy
     def fullMembers(self):
-        members = GroupMembers(self.context).members
+        members = self.groupMembers.members
         return members
 
     @property
     def fullMemberCount(self):
-        member_ids = GroupMembers(self.context).member_ids
-        return len(member_ids)
+        retval = len(self.groupMembers)
+        return retval
 
     @Lazy
     def invitedMembers(self):
