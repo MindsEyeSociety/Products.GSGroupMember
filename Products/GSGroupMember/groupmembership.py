@@ -76,7 +76,7 @@ class JoinableGroupsForSite(object):
     def getTermByToken(self, token):
         """See zope.schema.interfaces.IVocabularyTokenized"""
         if token in self:
-            g = createObject('groupserver.GroupInfo', token)
+            g = createObject('groupserver.GroupInfo', self.context, token)
             n = '%s: %s' % (g.name, g.get_property('description', ''))
             retval = SimpleTerm(g.id, g.id, n)
         else:
