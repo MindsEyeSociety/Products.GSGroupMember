@@ -256,7 +256,7 @@ class GroupMembers(object):
 
     def __iter__(self):
         """See zope.schema.interfaces.IIterableVocabulary"""
-        for uid in self.memberIds:
+        for uid in self.member_ids:
             u = createObject('groupserver.UserFromId', self.context, uid)
             term = SimpleTerm(u.id, u.id, u.name)
             assert term
