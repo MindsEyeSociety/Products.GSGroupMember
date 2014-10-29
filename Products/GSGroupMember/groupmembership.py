@@ -8,7 +8,6 @@ from zope.schema.vocabulary import SimpleTerm
 from zope.schema.interfaces import IVocabulary, \
     IVocabularyTokenized, ITitledTokenizedTerm
 from Products.XWFCore.XWFUtils import getOption
-from Products.GSGroupMember.utils import inform_ptn_coach_of_join
 from Products.CustomUserFolder.interfaces import IGSUserInfo, ICustomUser
 from Products.XWFCore.XWFUtils import sort_by_name
 from Products.GSGroup.interfaces import IGSGroupInfo, IGSMailingListInfo
@@ -32,7 +31,7 @@ class JoinableGroupsForSite(object):
     @Lazy
     def userInfo(self):
         retval = createObject('groupserver.UserFromId', self.user,
-                            self.user.getId())
+                              self.user.getId())
         return retval
 
     @Lazy
@@ -128,7 +127,7 @@ class InvitationGroupsForSite(JoinableGroupsForSite):
     @Lazy
     def groups(self):
         retval = [createObject('groupserver.GroupInfo', g)
-                     for g in self.get_invitation_groups()]
+                  for g in self.get_invitation_groups()]
         retval.sort(sort_by_name)
         assert type(retval) == list
         return retval
@@ -150,10 +149,10 @@ class InvitationGroupsForSite(JoinableGroupsForSite):
 
         bottom = time.time()
         m = u'Generated invitation groups of %s (%s) for %s (%s) on %s '\
-          u'(%s) in %.2fms' % \
-          (self.userInfo.name, self.userInfo.id,
-           self.viewingUserInfo.name, self.viewingUserInfo.id,
-           self.siteInfo.name, self.siteInfo.id, (bottom - top) * 1000.0)
+            u'(%s) in %.2fms' % \
+            (self.userInfo.name, self.userInfo.id,
+             self.viewingUserInfo.name, self.viewingUserInfo.id,
+             self.siteInfo.name, self.siteInfo.id, (bottom - top) * 1000.0)
         log.info(m)
 
         assert type(retval) == list
@@ -226,13 +225,13 @@ class InvitedGroupMembers(object):
     @Lazy
     def memberIds(self):
         retval = get_invited_members(self.context, self.siteInfo.id,
-                                        self.groupInfo.id)
+                                     self.groupInfo.id)
         return retval
 
     @Lazy
     def members(self):
         ms = [createObject('groupserver.UserFromId', self.context, uId)
-                    for uId in self.memberIds]
+              for uId in self.memberIds]
         retval = [m for m in ms if not m.anonymous]
         assert type(retval) == list
         #assert reduce(lambda a, b: a and b,
@@ -306,7 +305,7 @@ class GroupMembers(object):
             # Get all members of the group
             member_ids = self.member_ids
             self.__members = [createObject('groupserver.UserFromId',
-                                  self.context, mid) for mid in member_ids]
+                              self.context, mid) for mid in member_ids]
         assert type(self.__members) == list
         #assert reduce(lambda a, b: a and b,
         #    [IGSUserInfo.providedBy(u) for u in self.__members], True)
@@ -375,7 +374,7 @@ class SiteMembers(object):
     def members(self):
         # Get all members of the site, who are not members of the group
         retval = [createObject('groupserver.UserFromId', self.context, uid)
-                    for uid in self.memberIds]
+                  for uid in self.memberIds]
         assert type(retval) == list
         return self.retval
 
@@ -392,9 +391,9 @@ class SiteMembersNonGroupMembers(SiteMembers):
     @Lazy
     def members(self):
         users = get_group_userids(self.context, self.siteInfo.id,
-                                self.groupInfo.id)
+                                  self.groupInfo.id)
         retval = [createObject('groupserver.UserFromId', self.context, uid)
-                    for uid in users]
+                  for uid in users]
         assert type(retval) == list
         return retval
 
@@ -419,7 +418,7 @@ class InviteSiteMembersNonGroupMembers(SiteMembersNonGroupMembers):
         # Get all members of the site, who are not members of the group
         users = get_group_userids(self.context, sid, gid)
         retval = [createObject('groupserver.UserFromId', self.context, uid)
-                    for uid in users if (c(sid, gid, uid) <= n)]
+                  for uid in users if (c(sid, gid, uid) <= n)]
         retval.sort(sort_by_name)
         assert type(retval) == list
         return retval
@@ -441,7 +440,8 @@ def get_group_userids(context, groupId):
     memberGroup = acl_users.getGroupById(memberGroupId, [])
     retval = list(memberGroup.getUsers())
 
-    assert type(retval) == list, 'retval is a %s, not a list.' % type(retval)
+    assert type(retval) == list, \
+        'retval is a %s, not a list.' % type(retval)
     return retval
 
 
@@ -463,7 +463,7 @@ def get_group_users(context, groupId, excludeGroup=''):
     assert hasattr(site_root, 'acl_users'), 'No acl_users at site_root'
     acl_users = site_root.acl_users
     users = [acl_users.getUser(uid)
-                for uid in get_group_userids(context, groupId)]
+             for uid in get_group_userids(context, groupId)]
 
     if excludeGroup != '':
         memberExcludeGroup = member_id(excludeGroup)
@@ -538,7 +538,8 @@ def user_to_userInfo(u):
 
 
 def get_groups_on_site(site):
-    assert hasattr(site, 'groups'), u'No groups on the site %s' % site.getId()
+    assert hasattr(site, 'groups'),\
+        u'No groups on the site %s' % site.getId()
     groups = getattr(site, 'groups')
     retval = [g for g in
               groups.objectValues(GROUP_FOLDER_TYPES)
@@ -571,7 +572,7 @@ def user_member_of_group(u, g):
     userGroups = user.getGroups()
     if retval and (memberGroup not in userGroups):
         m = u'(%s) has the GroupMember role for (%s) but is not in  %s' % \
-          (user.getId(), group.getId(), memberGroup)
+            (user.getId(), group.getId(), memberGroup)
         log.error(m)
     elif not(retval) and (memberGroup in userGroups):
         m = u'(%s) is in %s, but does not have the GroupMember role in '\
@@ -616,37 +617,38 @@ def user_division_admin_of_group(u, g):
 
 def user_participation_coach_of_group(userInfo, groupInfo):
     assert IGSUserInfo.providedBy(userInfo), '%s is not a IGSUserInfo' % \
-      userInfo
+        userInfo
     assert IGSGroupInfo.providedBy(groupInfo)
     ptnCoachId = groupInfo.get_property('ptn_coach_id', '')
-    retval = user_member_of_group(userInfo, groupInfo)\
-      and (userInfo.id == ptnCoachId)
+    retval = (user_member_of_group(userInfo, groupInfo)
+              and (userInfo.id == ptnCoachId))
     assert type(retval) == bool
     return retval
 
 
 def user_unverified_member_of_group(userInfo, groupInfo):
     assert IGSUserInfo.providedBy(userInfo), \
-      '%s is not a IGSUserInfo' % userInfo
+        '%s is not a IGSUserInfo' % userInfo
     assert IGSGroupInfo.providedBy(groupInfo), \
-      '%s is not an IGSGroupInfo' % groupInfo
+        '%s is not an IGSGroupInfo' % groupInfo
     context = groupInfo.groupObj
     unverified_group_members = \
-      get_unverified_group_users(context, groupInfo.id)
-    retval = user_member_of_group(userInfo, groupInfo)\
-      and (userInfo.id in [m.getId() for m in unverified_group_members])
+        get_unverified_group_users(context, groupInfo.id)
+    retval = (user_member_of_group(userInfo, groupInfo) and
+              (userInfo.id in [m.getId()
+                               for m in unverified_group_members]))
     assert type(retval) == bool
     return retval
 
 
 def user_invited_member_of_group(userInfo, groupInfo, siteInfo):
     assert IGSUserInfo.providedBy(userInfo), \
-      '%s is not a IGSUserInfo' % userInfo
+        '%s is not a IGSUserInfo' % userInfo
     assert IGSGroupInfo.providedBy(groupInfo), \
-      '%s is not an IGSGroupInfo' % groupInfo
+        '%s is not an IGSGroupInfo' % groupInfo
     context = groupInfo.groupObj
     invited_group_members = \
-      InvitedGroupMembers(context, siteInfo).members
+        InvitedGroupMembers(context, siteInfo).members
     retval = userInfo.id in [m.id for m in invited_group_members]
     assert type(retval) == bool
     return retval
@@ -654,51 +656,51 @@ def user_invited_member_of_group(userInfo, groupInfo, siteInfo):
 
 def user_moderator_of_group(userInfo, groupInfo):
     assert IGSUserInfo.providedBy(userInfo), \
-      '%s is not an IGSUserInfo' % userInfo
+        '%s is not an IGSUserInfo' % userInfo
     assert IGSGroupInfo.providedBy(groupInfo), \
-      '%s is not an IGSGroupInfo' % groupInfo
+        '%s is not an IGSGroupInfo' % groupInfo
     context = groupInfo.groupObj
     mlistInfo = IGSMailingListInfo(context)
-    retval = user_member_of_group(userInfo, groupInfo) and \
-      (userInfo.id in [m.id for m in mlistInfo.moderators])
+    retval = (user_member_of_group(userInfo, groupInfo) and
+              (userInfo.id in [m.id for m in mlistInfo.moderators]))
     assert type(retval) == bool
     return retval
 
 
 def user_moderated_member_of_group(userInfo, groupInfo):
     assert IGSUserInfo.providedBy(userInfo), \
-      '%s is not an IGSUserInfo' % userInfo
+        '%s is not an IGSUserInfo' % userInfo
     assert IGSGroupInfo.providedBy(groupInfo), \
-      '%s is not an IGSGroupInfo' % groupInfo
+        '%s is not an IGSGroupInfo' % groupInfo
     context = groupInfo.groupObj
     mlistInfo = IGSMailingListInfo(context)
-    retval = user_member_of_group(userInfo, groupInfo) and \
-      (userInfo.id in [m.id for m in mlistInfo.moderatees])
+    retval = (user_member_of_group(userInfo, groupInfo) and
+              (userInfo.id in [m.id for m in mlistInfo.moderatees]))
     assert type(retval) == bool
     return retval
 
 
 def user_blocked_member_of_group(userInfo, groupInfo):
     assert IGSUserInfo.providedBy(userInfo), \
-      '%s is not an IGSUserInfo' % userInfo
+        '%s is not an IGSUserInfo' % userInfo
     assert IGSGroupInfo.providedBy(groupInfo), \
-      '%s is not an IGSGroupInfo' % groupInfo
+        '%s is not an IGSGroupInfo' % groupInfo
     context = groupInfo.groupObj
     mlistInfo = createObject('groupserver.MailingListInfo', context)
-    retval = user_member_of_group(userInfo, groupInfo) and \
-      (userInfo.id in [m.id for m in mlistInfo.blocked_members])
+    retval = (user_member_of_group(userInfo, groupInfo) and
+              (userInfo.id in [m.id for m in mlistInfo.blocked_members]))
     assert type(retval) == bool
     return retval
 
 
 def user_posting_member_of_group(userInfo, groupInfo):
     assert IGSUserInfo.providedBy(userInfo), \
-      '%s is not an IGSUserInfo' % userInfo
+        '%s is not an IGSUserInfo' % userInfo
     assert IGSGroupInfo.providedBy(groupInfo), \
-      '%s is not an IGSGroupInfo' % groupInfo
+        '%s is not an IGSGroupInfo' % groupInfo
     context = groupInfo.groupObj
     mlistInfo = IGSMailingListInfo(context)
-    retval = user_member_of_group(userInfo, groupInfo) and \
-      (userInfo.id in [m.id for m in mlistInfo.posting_members])
+    retval = (user_member_of_group(userInfo, groupInfo) and
+              (userInfo.id in [m.id for m in mlistInfo.posting_members]))
     assert type(retval) == bool
     return retval
