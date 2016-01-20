@@ -5,13 +5,13 @@ from zope.component import createObject
 from zope.interface import implements, providedBy
 from zope.interface.common.mapping import IEnumerableMapping
 from zope.schema.vocabulary import SimpleTerm
-from zope.schema.interfaces import IVocabulary, \
-    IVocabularyTokenized, ITitledTokenizedTerm
+from zope.schema.interfaces import (IVocabulary, IVocabularyTokenized, ITitledTokenizedTerm)
+from gs.core import to_unicode_or_bust
+from gs.profile.email.base.emailuser import EmailUser
 from Products.XWFCore.XWFUtils import getOption
 from Products.CustomUserFolder.interfaces import IGSUserInfo, ICustomUser
 from Products.XWFCore.XWFUtils import sort_by_name
 from Products.GSGroup.interfaces import IGSGroupInfo, IGSMailingListInfo
-from gs.profile.email.base.emailuser import EmailUser
 from queries import GroupMemberQuery
 
 import logging
@@ -47,8 +47,10 @@ class JoinableGroupsForSite(object):
     def __iter__(self):
         """See zope.schema.interfaces.IIterableVocabulary"""
         for g in self.groups:
-            n = '%s: %s' % (g.name, g.get_property('description', ''))
-            retval = SimpleTerm(g.id, g.id, n)
+            n = u'{0}: {1}'
+            name = n.format(to_unicode_or_bust(g.name),
+                            to_unicode_or_bust(g.get_property('description', '')))
+            retval = SimpleTerm(g.id, g.id, name)
             assert ITitledTokenizedTerm in providedBy(retval)
             assert retval.token == retval.value
             assert retval.token == g.id
