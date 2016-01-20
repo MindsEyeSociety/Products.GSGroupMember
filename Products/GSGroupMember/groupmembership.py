@@ -44,16 +44,22 @@ class JoinableGroupsForSite(object):
         retval = createObject('groupserver.GroupsInfo', self.user)
         return retval
 
+    @staticmethod
+    def create_term(g):
+        n = u'{0}: {1}'
+        name = n.format(to_unicode_or_bust(g.name),
+                        to_unicode_or_bust(g.get_property('description', '')))
+        retval = SimpleTerm(g.id, g.id, name)
+        assert retval
+        assert ITitledTokenizedTerm in providedBy(retval)
+        assert retval.token == retval.value
+        assert retval.token == g.id
+        return retval
+
     def __iter__(self):
         """See zope.schema.interfaces.IIterableVocabulary"""
         for g in self.groups:
-            n = u'{0}: {1}'
-            name = n.format(to_unicode_or_bust(g.name),
-                            to_unicode_or_bust(g.get_property('description', '')))
-            retval = SimpleTerm(g.id, g.id, name)
-            assert ITitledTokenizedTerm in providedBy(retval)
-            assert retval.token == retval.value
-            assert retval.token == g.id
+            retval = self.create_term(g)
             yield retval
 
     def __len__(self):
@@ -78,14 +84,9 @@ class JoinableGroupsForSite(object):
         """See zope.schema.interfaces.IVocabularyTokenized"""
         if token in self:
             g = createObject('groupserver.GroupInfo', self.context, token)
-            n = '%s: %s' % (g.name, g.get_property('description', ''))
-            retval = SimpleTerm(g.id, g.id, n)
+            retval = self.create_term(g)
         else:
             raise LookupError(token)
-        assert retval
-        assert ITitledTokenizedTerm in providedBy(retval)
-        assert retval.token == retval.value
-        assert retval.token == token
         return retval
 
     @Lazy
