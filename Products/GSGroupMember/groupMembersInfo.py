@@ -141,18 +141,19 @@ class GSGroupMembersInfo(object):
                     else:
                         retval.append(createObject('groupserver.UserFromId',
                                                        self.context, uId))
-            elif not(self.mlistInfo.is_moderate_new):
-                for u in self.fullMembers:
-                    isPtnCoach = self.ptnCoach and (self.ptnCoach.id == u.id)\
-                        or False
-                    isGrpAdmin = u.id in [a.id for a in self.groupAdmins]
-                    isSiteAdmin = u.id in [a.id for a in self.siteAdmins]
-                    isModerator = u.id in [m.id for m in self.moderators]
-                    isBlocked = u.id in [m.id for m in self.blockedMembers]
-                    if (not(isSiteAdmin) and not(isGrpAdmin) and
-                        not(isPtnCoach) and not(isModerator) and
-                        not(isBlocked)):
-                        retval.append(u)
+            #We do not want to moderate all members if no members are moderated
+            #elif not(self.mlistInfo.is_moderate_new):
+            #    for u in self.fullMembers:
+            #        isPtnCoach = self.ptnCoach and (self.ptnCoach.id == u.id)\
+            #            or False
+            #        isGrpAdmin = u.id in [a.id for a in self.groupAdmins]
+            #        isSiteAdmin = u.id in [a.id for a in self.siteAdmins]
+            #        isModerator = u.id in [m.id for m in self.moderators]
+            #        isBlocked = u.id in [m.id for m in self.blockedMembers]
+            #        if (not(isSiteAdmin) and not(isGrpAdmin) and
+            #            not(isPtnCoach) and not(isModerator) and
+            #            not(isBlocked)):
+            #            retval.append(u)
         return retval
 
     @Lazy
